@@ -1,0 +1,37 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "rootDir": "../",
+    "baseUrl": "../",
+    "outDir": "../../dist/sdk",
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "types": ["react", "jest", "node"],
+    "paths": {
+      "@components/*": ["components/*"],
+      "@hooks/*": ["hooks/*"],
+      "@utils/*": ["utils/*"],
+      "@types/*": ["types/*"],
+      "@contexts/*": ["contexts/*"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx",
+    "../types/**/*.ts",
+    "../components/**/*.ts",
+    "../components/**/*.tsx"
+  ],
+  "exclude": [
+    "**/__tests__/**/*",
+    "**/*.test.*",
+    "**/*.spec.*"
+  ],
+  "references": [
+    { "path": "../types" },
+    { "path": "../components" }
+  ]
+}
