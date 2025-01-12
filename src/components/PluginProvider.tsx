@@ -23,11 +23,11 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const value: PluginContextType = {
+  const value: PluginContextType = React.useMemo(() => ({
     installPlugin: manager.installPlugin.bind(manager),
     getPlugin: manager.getPlugin.bind(manager),
     isPluginReady: manager.isInitialized.bind(manager)
-  };
+  }), [manager]);
 
   if (!isInitialized) {
     return null;
