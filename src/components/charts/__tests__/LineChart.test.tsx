@@ -200,7 +200,11 @@ describe('LineChart', () => {
 
     const points = screen.getAllByTestId('line-chart-point');
     points.forEach((point, index) => {
-      const date = new Date(mockData[index].timestamp).toLocaleDateString();
+      const date = new Date(mockData[index].timestamp).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
       expect(point).toHaveAttribute('role', 'button');
       expect(point).toHaveAttribute('aria-label', 
         `Data point for ${date}: ${mockData[index].value}`
