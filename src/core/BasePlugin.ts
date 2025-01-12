@@ -1,4 +1,5 @@
-import { PluginConfig, PluginHealthCheck, Event } from '../types';
+import type { PluginConfig, PluginHealthCheck } from '../types/plugin';
+import type { Event } from '../events/types';
 import { EventBus } from '../events/EventBus';
 import { Logger } from '../logger';
 import { ComponentRegistry } from './ComponentRegistry';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { PluginManager } from '../core/plugin/PluginManager'
-import { usePermissions } from '@/hooks/usePermissions'
+import { usePermissions } from './usePermissions'
 
 export function usePluginPermissions(pluginName: string) {
   const [permissions, setPermissions] = useState<string[]>([])
@@ -11,8 +11,7 @@ export function usePluginPermissions(pluginName: string) {
     const plugin = manager.getPlugin(pluginName)
     if (plugin?.permissions) {
       const grantedPermissions = plugin.permissions
-        .filter(p => hasPermission(`plugin:${pluginName}:${p.name}`))
-        .map(p => p.name)
+        .filter(p => hasPermission(`plugin:${pluginName}:${p}`))
       setPermissions(grantedPermissions)
     }
   }, [pluginName, hasPermission])

@@ -1,17 +1,23 @@
-import { useNavigate } from 'react-router-dom'
-import { PluginRouter } from '../core/routing/PluginRouter'
+import { useNavigate } from 'react-router-dom';
+import { PluginRouter } from '../core/routing/PluginRouter';
+import type { RouteConfig } from '../core/routing/types';
 
-export function usePluginNavigation(pluginName: string) {
-  const navigate = useNavigate()
+interface UsePluginNavigationResult {
+  navigateToRoute: (path: string) => void;
+  getRoutes: () => RouteConfig[];
+}
+
+export function usePluginNavigation(pluginName: string): UsePluginNavigationResult {
+  const navigate = useNavigate();
 
   return {
     navigateToRoute: (path: string) => {
-      const routes = PluginRouter.getRoutes(pluginName)
-      const route = routes.find(r => r.path === path)
+      const routes = PluginRouter.getRoutes(pluginName);
+      const route = routes.find(r => r.path === path);
       if (route) {
-        navigate(path)
+        navigate(path);
       }
     },
     getRoutes: () => PluginRouter.getRoutes(pluginName),
-  }
+  };
 }

@@ -1,7 +1,7 @@
 import { usePlugin } from '../hooks/usePlugin'
 import { usePluginUIStore } from '../core/store/PluginUIStore'
 import { DynamicLayout } from './DynamicLayout'
-import { LoadingSpinner } from '../../components/common/LoadingSpinner'
+import { LoadingSpinner } from './common/LoadingSpinner'
 
 interface PluginContainerProps {
   pluginName: string

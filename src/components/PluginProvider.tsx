@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { PluginManager } from '../core/plugin/PluginManager';
-import { Plugin } from '../core/types';
-import { ErrorBoundary } from '../../components/common/ErrorBoundary';
+import { Plugin } from '../types/plugin';
+import { ErrorBoundary } from './common/ErrorBoundary';
 
 interface PluginContextType {
   installPlugin: (plugin: Plugin) => Promise<void>;

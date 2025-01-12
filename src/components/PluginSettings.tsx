@@ -1,9 +1,9 @@
 import { usePlugin } from '../hooks/usePlugin';
 import { usePluginUIStore } from '../core/store/PluginUIStore';
-import { Card } from '../../components/common/Card';
-import { Switch } from '../../components/common/Switch';
-import { Select } from '../../components/common/Select';
-import { PluginLayout, PluginPreference } from '../core/types';
+import { Card } from './common/Card';
+import { Switch } from './common/Switch';
+import { Select } from './common/Select';
+import { PluginLayout, PluginPreference } from '../types/plugin';
 
 interface PluginSettingsProps {
   pluginName: string;

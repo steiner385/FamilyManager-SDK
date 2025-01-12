@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "../../dist",
+    "rootDir": "..",
+    "tsBuildInfoFile": "../../dist/hooks/.tsbuildinfo",
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["*"],
+      "@core/*": ["core/*"],
+      "@components/*": ["components/*"],
+      "@hooks/*": ["hooks/*"],
+      "@utils/*": ["utils/*"],
+      "@testing/*": ["testing/*"],
+      "@types/*": ["types/*"],
+      "@contexts/*": ["contexts/*"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx"
+  ],
+  "references": [
+    { "path": "../types" },
+    { "path": "../core" }
+  ]
+}

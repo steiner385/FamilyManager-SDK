@@ -1,19 +1,28 @@
-interface Theme {
-  colors: {
-    [key: string]: string
-  }
-  typography?: {
-    [key: string]: string | number
-  }
-  [key: string]: any
-}
+import type { Theme } from '../../types/base';
 
 export class ThemeManager {
-  private static instance: ThemeManager
+  private static instance: ThemeManager;
   private currentTheme: Theme = {
-    colors: {},
-    typography: {}
-  }
+    colors: {
+      primary: '#000000',
+      secondary: '#666666',
+      background: '#ffffff',
+      text: '#000000'
+    },
+    typography: {
+      fontFamily: 'system-ui, sans-serif',
+      fontSize: {
+        small: '0.875rem',
+        medium: '1rem',
+        large: '1.25rem'
+      }
+    },
+    spacing: {
+      small: '0.5rem',
+      medium: '1rem',
+      large: '2rem'
+    }
+  };
 
   private constructor() {}
 

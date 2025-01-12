@@ -1,13 +1,4 @@
-interface LayoutConfig {
-  id: string
-  areas: string[][]
-  components: {
-    [key: string]: {
-      componentId: string
-      props?: Record<string, any>
-    }
-  }
-}
+import type { LayoutConfig } from './types';
 
 export class LayoutManager {
   private static instance: LayoutManager

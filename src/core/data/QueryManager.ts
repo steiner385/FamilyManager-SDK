@@ -44,11 +44,14 @@ export class QueryManager {
   }
 
   prefetchQuery(queryKey: any[], queryFn: () => Promise<any>) {
-    return this.queryClient.prefetchQuery(queryKey, queryFn)
+    return this.queryClient.prefetchQuery({
+      queryKey,
+      queryFn
+    })
   }
 
   invalidateQueries(queryKey: any[]) {
-    return this.queryClient.invalidateQueries(queryKey)
+    return this.queryClient.invalidateQueries({ queryKey })
   }
 
   clearCache() {

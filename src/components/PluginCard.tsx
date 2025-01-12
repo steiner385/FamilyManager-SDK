@@ -1,7 +1,7 @@
-import { Card } from '../../components/common/Card';
-import { Badge } from '../../components/common/Badge';
-import { Button } from '../../components/common/Button';
-import { PluginMetadata } from '../core/types';
+import { Card } from './common/Card';
+import { Badge } from './common/Badge';
+import { Button } from './common/Button';
+import { PluginMetadata } from '../types/plugin';
 
 interface PluginCardProps {
   metadata: PluginMetadata & {
@@ -57,23 +57,22 @@ export function PluginCard({
           {isInstalled ? (
             <>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="small"
                 onClick={isEnabled ? onDisable : onEnable}
               >
                 {isEnabled ? 'Disable' : 'Enable'}
               </Button>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="small"
                 onClick={onConfigure}
               >
                 Configure
               </Button>
               <Button
-                variant="outline"
+                variant="danger"
                 size="small"
-                className="text-error-500 border-error-500 hover:bg-error-50"
                 onClick={onUninstall}
               >
                 Uninstall

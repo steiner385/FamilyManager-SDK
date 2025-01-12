@@ -1,26 +1,16 @@
-interface PerformanceMetric {
-  type: string
-  value: number
-  timestamp: number
-  metadata?: Record<string, any>
-}
-
-interface PerformanceSubscriber {
-  callback: (metric: PerformanceMetric) => void
-  filter?: (metric: PerformanceMetric) => boolean
-}
+import type { PerformanceMetric, PerformanceSubscriber, TimeRange } from './types';
 
 export class PerformanceMonitor {
-  private static instance: PerformanceMonitor
-  private metrics: PerformanceMetric[] = []
-  private subscribers: PerformanceSubscriber[] = []
-  private readonly metricsLimit = 10000
+  private static instance: PerformanceMonitor;
+  private metrics: PerformanceMetric[] = [];
+  private subscribers: PerformanceSubscriber[] = [];
+  private readonly metricsLimit = 10000;
 
   static getInstance(): PerformanceMonitor {
     if (!PerformanceMonitor.instance) {
-      PerformanceMonitor.instance = new PerformanceMonitor()
+      PerformanceMonitor.instance = new PerformanceMonitor();
     }
-    return PerformanceMonitor.instance
+    return PerformanceMonitor.instance;
   }
 
   trackMetric(
@@ -33,57 +23,57 @@ export class PerformanceMonitor {
       value,
       timestamp: Date.now(),
       metadata
-    }
+    };
 
-    this.metrics.push(metric)
+    this.metrics.push(metric);
     if (this.metrics.length > this.metricsLimit) {
-      this.metrics.shift()
+      this.metrics.shift();
     }
 
-    this.notifySubscribers(metric)
+    this.notifySubscribers(metric);
   }
 
   subscribe(
     callback: (metric: PerformanceMetric) => void,
     filter?: (metric: PerformanceMetric) => boolean
   ) {
-    const subscriber = { callback, filter }
-    this.subscribers.push(subscriber)
-    return () => this.unsubscribe(subscriber)
+    const subscriber: PerformanceSubscriber = { callback, filter };
+    this.subscribers.push(subscriber);
+    return () => this.unsubscribe(subscriber);
   }
 
   private unsubscribe(subscriber: PerformanceSubscriber) {
-    const index = this.subscribers.indexOf(subscriber)
+    const index = this.subscribers.indexOf(subscriber);
     if (index > -1) {
-      this.subscribers.splice(index, 1)
+      this.subscribers.splice(index, 1);
     }
   }
 
   private notifySubscribers(metric: PerformanceMetric) {
     this.subscribers.forEach(subscriber => {
       if (!subscriber.filter || subscriber.filter(metric)) {
-        subscriber.callback(metric)
+        subscriber.callback(metric);
       }
-    })
+    });
   }
 
   getMetrics(
     filter?: (metric: PerformanceMetric) => boolean,
-    timeRange?: { start: number; end: number }
+    timeRange?: TimeRange
   ): PerformanceMetric[] {
-    let filtered = filter ? this.metrics.filter(filter) : [...this.metrics]
+    let filtered = filter ? this.metrics.filter(filter) : [...this.metrics];
     
     if (timeRange) {
       filtered = filtered.filter(metric => 
         metric.timestamp >= timeRange.start && 
         metric.timestamp <= timeRange.end
-      )
+      );
     }
 
-    return filtered
+    return filtered;
   }
 
   clearMetrics() {
-    this.metrics = []
+    this.metrics = [];
   }
 }

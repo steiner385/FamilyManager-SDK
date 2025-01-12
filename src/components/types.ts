@@ -1,4 +1,4 @@
-import type { BaseProps } from '@/types/common'
+import type { BaseProps } from '../types/base';
 
 export interface ButtonProps extends BaseProps {
   /** Button variant style */

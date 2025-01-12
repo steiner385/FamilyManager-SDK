@@ -1,5 +1,5 @@
 import { BasePlugin } from '../../core/BasePlugin';
-import { PluginConfig, PluginHealthCheck } from '../../core/types';
+import type { PluginConfig, PluginHealthCheck } from '../../types/plugin';
 import { Event } from '../../events/types';
 import { z } from 'zod';
 
@@ -20,19 +20,15 @@ export class BasicPlugin extends BasePlugin {
   constructor() {
     // Define plugin configuration
     const config: PluginConfig = {
+      id: 'basic-plugin',
+      name: 'basic-plugin',
+      version: '1.0.0',
       metadata: {
+        id: 'basic-plugin',
         name: 'basic-plugin',
         version: '1.0.0',
         description: 'A basic example plugin',
-        author: 'FamilyManager',
-        license: 'MIT'
-      },
-      // Configuration schema for validation
-      config: configSchema,
-      // Event subscriptions
-      events: {
-        subscriptions: ['user.created', 'family.updated'],
-        publications: ['basic-plugin.greeting']
+        author: 'FamilyManager'
       }
     };
 
@@ -123,63 +119,54 @@ export class BasicPlugin extends BasePlugin {
       const isHealthy = Boolean(config.greeting);
 
       return {
-        status: isHealthy ? 'healthy' : 'degraded',
+        status: isHealthy ? 'healthy' : 'unhealthy',
         timestamp: Date.now(),
-        message: isHealthy ? 'Plugin is healthy' : 'Missing greeting configuration',
-        metrics: {
-          eventCount: 0, // Example metric
-          lastEventTimestamp: Date.now()
-        }
+        message: isHealthy ? 'Plugin is healthy' : 'Missing greeting configuration'
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         timestamp: Date.now(),
-        error,
         message: 'Health check failed'
       };
     }
   }
 }
 
-// Example usage
-if (require.main === module) {
-  async function run() {
-    // Create plugin instance
-    const plugin = new BasicPlugin();
+// Example usage in a separate file
+export async function runExample() {
+  // Create plugin instance
+  const plugin = new BasicPlugin();
 
-    try {
-      // Initialize with configuration
-      plugin.context.config = {
-        greeting: 'Hello from Basic Plugin!',
-        logLevel: 'info'
-      };
+  try {
+    // Initialize with configuration
+    plugin.context.config = {
+      greeting: 'Hello from Basic Plugin!',
+      logLevel: 'info'
+    };
 
-      // Initialize plugin
-      await plugin.init();
-      console.log('Plugin initialized');
+    // Initialize plugin
+    await plugin.init();
+    console.log('Plugin initialized');
 
-      // Start plugin
-      await plugin.start();
-      console.log('Plugin started');
+    // Start plugin
+    await plugin.start();
+    console.log('Plugin started');
 
-      // Update configuration
-      await plugin.updateConfig({
-        greeting: 'Updated greeting!',
-        logLevel: 'debug'
-      });
+    // Update configuration
+    await plugin.updateConfig({
+      greeting: 'Updated greeting!',
+      logLevel: 'debug'
+    });
 
-      // Wait a bit
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait a bit
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Stop plugin
-      await plugin.stop();
-      console.log('Plugin stopped');
-    } catch (error) {
-      console.error('Plugin error:', error);
-      process.exit(1);
-    }
+    // Stop plugin
+    await plugin.stop();
+    console.log('Plugin stopped');
+  } catch (error) {
+    console.error('Plugin error:', error);
+    throw error;
   }
-
-  run().catch(console.error);
 }

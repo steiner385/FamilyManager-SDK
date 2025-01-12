@@ -1,5 +1,7 @@
 import { ComponentType } from 'react';
-import { Plugin, PluginConfig, PluginState } from '../types';
+import type { Plugin, PluginConfig, PluginState, PluginMetrics } from '../../types/plugin';
+
+export type { Plugin };
 
 export class PluginManager {
   private static instance: PluginManager;
@@ -33,7 +35,7 @@ export class PluginManager {
       }
 
       // Validate dependencies
-      await this.validateDependencies(plugin.config.dependencies?.required || {});
+      await this.validateDependencies(plugin.config.metadata.dependencies?.required || {});
 
       // Register the plugin
       await this.registerPlugin(plugin);
@@ -46,7 +48,7 @@ export class PluginManager {
 
   private async registerPlugin(plugin: Plugin): Promise<void> {
     const name = plugin.name;
-    await this.validateDependencies(plugin.config.dependencies?.required || {});
+    await this.validateDependencies(plugin.config.metadata.dependencies?.required || {});
     this.plugins.set(name, plugin);
   }
 
@@ -56,14 +58,16 @@ export class PluginManager {
     if (this.initialized.has(name)) return;
 
     // Initialize dependencies first
-    if (plugin.config.dependencies?.required) {
-      for (const [dep] of Object.entries(plugin.config.dependencies.required)) {
+    if (plugin.config.metadata.dependencies?.required) {
+      for (const [dep] of Object.entries(plugin.config.metadata.dependencies.required)) {
         await this.initializePlugin(dep);
       }
     }
 
     try {
-      await plugin.onInit();
+      if (plugin.onInit) {
+        await plugin.onInit();
+      }
       this.initialized.add(name);
     } catch (error) {
       this.logger.error('Plugin initialization failed:', error);
@@ -110,11 +114,50 @@ export class PluginManager {
 
   isPluginEnabled(name: string): boolean {
     const plugin = this.plugins.get(name);
-    return plugin?.state === PluginState.STARTED;
+    return plugin?.state.status === 'started';
   }
 
   isPluginInstalled(name: string): boolean {
     return this.plugins.has(name);
+  }
+
+  async getPluginMetrics(pluginName: string, timeRange: string): Promise<PluginMetrics> {
+    const plugin = this.plugins.get(pluginName);
+    if (!plugin) {
+      throw new Error(`Plugin ${pluginName} not found`);
+    }
+
+    if (!plugin.getHealth) {
+      throw new Error(`Plugin ${pluginName} does not support health metrics`);
+    }
+
+    // Get current health check
+    const health = await plugin.getHealth();
+    
+    // Generate sample metrics (in a real implementation, these would come from monitoring)
+    const now = Date.now();
+    const history = Array.from({ length: 10 }, (_, i) => ({
+      timestamp: now - i * 60000,
+      value: Math.random() * 100
+    }));
+
+    return {
+      memory: {
+        current: Math.random() * 100,
+        trend: 0.5,
+        history: history
+      },
+      cpu: {
+        current: Math.random() * 100,
+        trend: -0.2,
+        history: history
+      },
+      responseTime: {
+        current: Math.random() * 1000,
+        trend: 0.1,
+        history: history
+      }
+    };
   }
 
   hasCircularDependency(
@@ -132,7 +175,7 @@ export class PluginManager {
     const plugin = this.plugins.get(pluginName);
     if (!plugin) return false;
 
-    const dependencies = Object.keys(plugin.config.dependencies?.required || {});
+    const dependencies = Object.keys(plugin.config.metadata.dependencies?.required || {});
     for (const dep of dependencies) {
       if (this.hasCircularDependency(dep, visited, [...path])) {
         return true;

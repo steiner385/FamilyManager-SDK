@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { AccessibilityManager } from '../core/accessibility/AccessibilityManager'
+import { useEffect } from 'react';
+import { AccessibilityManager, type A11yConfig } from '../core/accessibility/AccessibilityManager';
 
 export function useAccessibility(componentId: string, config: A11yConfig) {
   useEffect(() => {

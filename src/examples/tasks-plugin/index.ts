@@ -1,10 +1,16 @@
 import { BasePlugin } from '../../core/BasePlugin';
-import { PluginConfig, PluginHealthCheck } from '../../core/types';
-import { Event } from '../../events/types';
+import type { PluginConfig, PluginHealthCheck } from '../../types/plugin';
+import type { Event } from '../../events/types';
+import type { BaseRouteConfig } from '../../types/base';
+
+interface TaskRouteConfig extends BaseRouteConfig {
+  handler: (c: Context) => Promise<Response>;
+  description: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+}
 import { z } from 'zod';
 import { prisma, CustomPrismaClient } from './prisma/client';
 import { Context } from 'hono';
-import { RouteDefinition } from '../../core/routes';
 
 /**
  * Task schema for validation
@@ -61,12 +67,15 @@ export class TasksPlugin extends BasePlugin {
 
   constructor() {
     const baseConfig: PluginConfig = {
+      id: 'tasks-plugin',
+      name: 'tasks-plugin',
+      version: '1.0.0',
       metadata: {
+        id: 'tasks-plugin',
         name: 'tasks-plugin',
         version: '1.0.0',
         description: 'Task management plugin',
-        author: 'FamilyManager',
-        license: 'MIT'
+        author: 'FamilyManager'
       },
       config: configSchema,
       events: {
@@ -76,9 +85,6 @@ export class TasksPlugin extends BasePlugin {
     };
 
     super(baseConfig);
-
-    // Add routes after super() call
-    this.config.routes = this.getRoutes();
   }
 
   /**
@@ -139,29 +145,33 @@ export class TasksPlugin extends BasePlugin {
   /**
    * Define plugin routes
    */
-  private getRoutes(): RouteDefinition[] {
+  private getRoutes(): TaskRouteConfig[] {
     return [
       {
         path: '/api/tasks',
         method: 'GET',
+        component: () => null, // Placeholder component
         handler: this.getTasks.bind(this),
         description: 'Get all tasks'
       },
       {
         path: '/api/tasks',
         method: 'POST',
+        component: () => null, // Placeholder component
         handler: this.createTask.bind(this),
         description: 'Create a new task'
       },
       {
         path: '/api/tasks/:id',
         method: 'PUT',
+        component: () => null, // Placeholder component
         handler: this.updateTask.bind(this),
         description: 'Update a task'
       },
       {
         path: '/api/tasks/:id',
         method: 'DELETE',
+        component: () => null, // Placeholder component
         handler: this.deleteTask.bind(this),
         description: 'Delete a task'
       }
@@ -363,14 +373,12 @@ export class TasksPlugin extends BasePlugin {
       return {
         status: 'healthy',
         timestamp: Date.now(),
-        message: 'Plugin is healthy',
-        metrics: this.taskMetrics
+        message: 'Plugin is healthy'
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         timestamp: Date.now(),
-        error,
         message: 'Database connection failed'
       };
     }

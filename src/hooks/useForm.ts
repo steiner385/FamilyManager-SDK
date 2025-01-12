@@ -20,8 +20,11 @@ export function useForm<T extends Record<string, any>>(config: UseFormConfig<T>)
   }))
 
   useEffect(() => {
-    return formManager.subscribe(setFormState)
-  }, [formManager])
+    const unsubscribe = formManager.subscribe(setFormState);
+    return () => {
+      unsubscribe();
+    };
+  }, [formManager]);
 
   return {
     values: formState.values,

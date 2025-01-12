@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { StatePersistenceManager } from '../core/state/StatePersistenceManager'
+import { useState, useEffect } from 'react';
+import { StatePersistenceManager } from '../core/state/StatePersistenceManager';
+import type { PersistenceConfig } from './types';
 
 export function usePersistentState<T>(
   key: string,

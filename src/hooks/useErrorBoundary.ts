@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from 'react'
-import { ErrorBoundaryManager } from '../core/error/ErrorBoundaryManager'
+import { useCallback, useEffect } from 'react';
+import { ErrorBoundaryManager, type ErrorConfig } from '../core/error/ErrorBoundaryManager';
 
 export function useErrorBoundary(componentId: string, config?: ErrorConfig) {
   const manager = ErrorBoundaryManager.getInstance()

@@ -1,4 +1,4 @@
-interface StateConfig {
+export interface StateConfig {
   persist?: boolean
   scope?: 'local' | 'session' | 'memory'
   version?: number
