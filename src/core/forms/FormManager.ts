@@ -40,6 +40,8 @@ export class FormManager<T extends Record<string, any>> {
 
   subscribe(callback: (state: FormState<T>) => void) {
     this.subscribers.add(callback)
+    // Immediately notify the new subscriber with current state
+    callback(this.state)
     return () => this.subscribers.delete(callback)
   }
 
