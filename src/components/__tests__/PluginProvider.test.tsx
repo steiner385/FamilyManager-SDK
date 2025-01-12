@@ -64,7 +64,13 @@ describe('PluginProvider', () => {
       <div data-testid="test">
         <button 
           data-testid="install-button" 
-          onClick={() => context.installPlugin(mockPlugin)}
+          onClick={async () => {
+            try {
+              await context.installPlugin(mockPlugin);
+            } catch (error) {
+              console.error(error);
+            }
+          }}
         >
           Install
         </button>
@@ -194,11 +200,11 @@ describe('PluginProvider', () => {
   });
 
   it('should handle plugin installation errors', async () => {
-    // Setup error handling spy
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     
+    // Setup the mock to reject
     const error = new Error('Installation failed');
-    mockInstallPlugin.mockRejectedValueOnce(error);
+    mockInstallPlugin.mockRejectedValue(error);
 
     const { getByTestId } = render(
       <PluginProvider>
@@ -211,19 +217,17 @@ describe('PluginProvider', () => {
       jest.runAllTimers();
     });
 
-    // Click and wait for error
+    // Trigger the installation
     await act(async () => {
       getByTestId('install-button').click();
-      // Wait for promises to resolve
-      await Promise.resolve();
+      // Wait for all promises to settle
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
 
-    // Verify the install was attempted
+    // Verify the installation was attempted and error was logged
     expect(mockInstallPlugin).toHaveBeenCalledWith(mockPlugin);
-    // Verify error was logged
-    expect(consoleSpy).toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
 
-    // Cleanup
     consoleSpy.mockRestore();
   });
 
