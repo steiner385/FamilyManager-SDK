@@ -23,29 +23,28 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const value: PluginContextType = React.useMemo(() => {
-    // Create stable function references using useCallback
-    const installPlugin = React.useCallback(
-      (plugin: Plugin) => manager.installPlugin(plugin),
-      [manager]
-    );
-    
-    const getPlugin = React.useCallback(
-      (name: string) => manager.getPlugin(name),
-      [manager]
-    );
-    
-    const isPluginReady = React.useCallback(
-      (name: string) => manager.isInitialized(name),
-      [manager]
-    );
+  // Define callbacks at the top level
+  const installPlugin = React.useCallback(
+    (plugin: Plugin) => manager.installPlugin(plugin),
+    [manager]
+  );
+  
+  const getPlugin = React.useCallback(
+    (name: string) => manager.getPlugin(name),
+    [manager]
+  );
+  
+  const isPluginReady = React.useCallback(
+    (name: string) => manager.isInitialized(name),
+    [manager]
+  );
 
-    return {
-      installPlugin,
-      getPlugin,
-      isPluginReady
-    };
-  }, [manager]);
+  // Create the context value using the stable callbacks
+  const value = React.useMemo(() => ({
+    installPlugin,
+    getPlugin,
+    isPluginReady
+  }), [installPlugin, getPlugin, isPluginReady]);
 
   if (!isInitialized) {
     return null;
