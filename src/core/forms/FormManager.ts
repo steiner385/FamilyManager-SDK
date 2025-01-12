@@ -110,7 +110,8 @@ export class FormManager<T extends Record<string, any>> {
       },
       isDirty: true
     }
-    this.validateField(name)
+    this.notify() // Notify subscribers of value change
+    this.validateField(name) // This will trigger separate notification after validation
   }
 
   handleBlur(name: keyof T) {
