@@ -31,7 +31,6 @@ export class FormManager<T extends Record<string, any>> {
       isDirty: false
     }
     this.subscribers = new Set()
-    this.notify()
   }
 
   private notify() {
