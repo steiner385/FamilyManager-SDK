@@ -46,34 +46,37 @@ export class FormManager<T extends Record<string, any>> {
 
   async validateField(name: keyof T) {
     if (!this.config.validationSchema) {
-      // If no validation schema, we need to notify here
+      // If no validation schema, just notify with current state
       this.notify()
       return
     }
 
     try {
       await this.config.validationSchema.parseAsync(this.state.values)
+      // Preserve existing state while updating validation-related fields
       this.state = {
         ...this.state,
         errors: {
           ...this.state.errors,
           [name]: undefined
-        }
+        },
+        isValid: true
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldError = error.errors.find(e => e.path[0] === name)
+        // Preserve existing state while updating validation-related fields
         this.state = {
           ...this.state,
           errors: {
             ...this.state.errors,
             [name]: fieldError?.message || undefined
-          }
+          },
+          isValid: false
         }
       }
     }
 
-    this.state.isValid = Object.values(this.state.errors).every(error => !error)
     this.notify()
   }
 
@@ -103,7 +106,7 @@ export class FormManager<T extends Record<string, any>> {
   }
 
   handleChange(name: keyof T, value: any) {
-    // Update state
+    // Update all state properties at once
     this.state = {
       ...this.state,
       values: {
@@ -113,7 +116,7 @@ export class FormManager<T extends Record<string, any>> {
       isDirty: true
     }
     
-    // Validate the field - this will call notify() internally
+    // Validate after state update
     this.validateField(name)
   }
 
