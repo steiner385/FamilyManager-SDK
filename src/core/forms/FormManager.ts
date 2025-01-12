@@ -110,7 +110,6 @@ export class FormManager<T extends Record<string, any>> {
       },
       isDirty: true
     }
-    this.notify()
     this.validateField(name)
   }
 
