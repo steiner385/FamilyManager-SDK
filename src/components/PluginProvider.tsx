@@ -23,11 +23,29 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const value: PluginContextType = React.useMemo(() => ({
-    installPlugin: manager.installPlugin.bind(manager),
-    getPlugin: manager.getPlugin.bind(manager),
-    isPluginReady: manager.isInitialized.bind(manager)
-  }), [manager]);
+  const value: PluginContextType = React.useMemo(() => {
+    // Create stable function references using useCallback
+    const installPlugin = React.useCallback(
+      (plugin: Plugin) => manager.installPlugin(plugin),
+      [manager]
+    );
+    
+    const getPlugin = React.useCallback(
+      (name: string) => manager.getPlugin(name),
+      [manager]
+    );
+    
+    const isPluginReady = React.useCallback(
+      (name: string) => manager.isInitialized(name),
+      [manager]
+    );
+
+    return {
+      installPlugin,
+      getPlugin,
+      isPluginReady
+    };
+  }, [manager]);
 
   if (!isInitialized) {
     return null;
