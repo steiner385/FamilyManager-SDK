@@ -16,7 +16,11 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    setIsInitialized(true);
+    // Add a small delay to ensure state updates properly
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const value: PluginContextType = {

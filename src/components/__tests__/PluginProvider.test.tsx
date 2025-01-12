@@ -195,7 +195,7 @@ describe('PluginProvider', () => {
 
   it('should handle plugin installation errors', async () => {
     const error = new Error('Installation failed');
-    mockInstallPlugin.mockImplementation(() => Promise.reject(error));
+    mockInstallPlugin.mockRejectedValueOnce(error);
 
     const { getByTestId } = render(
       <PluginProvider>
