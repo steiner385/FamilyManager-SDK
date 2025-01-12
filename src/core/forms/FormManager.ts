@@ -23,7 +23,7 @@ export class FormManager<T extends Record<string, any>> {
   constructor(config: FormConfig<T>) {
     this.config = config
     this.state = {
-      values: { ...config.initialValues }, // Clone initial values
+      values: { ...config.initialValues },
       errors: {},
       touched: {},
       isSubmitting: false,
@@ -31,8 +31,7 @@ export class FormManager<T extends Record<string, any>> {
       isDirty: false
     }
     this.subscribers = new Set()
-    // Notify subscribers of initial state
-    setTimeout(() => this.notify(), 0) // Use setTimeout to ensure subscription is set up
+    this.notify()
   }
 
   private notify() {
@@ -45,20 +44,29 @@ export class FormManager<T extends Record<string, any>> {
   }
 
   async validateField(name: keyof T) {
-    if (!this.config.validationSchema) return
+    if (!this.config.validationSchema) {
+      this.notify()
+      return
+    }
 
     try {
       await this.config.validationSchema.parseAsync(this.state.values)
-      this.state.errors = {
-        ...this.state.errors,
-        [name]: undefined
+      this.state = {
+        ...this.state,
+        errors: {
+          ...this.state.errors,
+          [name]: undefined
+        }
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldError = error.errors.find(e => e.path[0] === name)
-        this.state.errors = {
-          ...this.state.errors,
-          [name]: fieldError?.message || undefined
+        this.state = {
+          ...this.state,
+          errors: {
+            ...this.state.errors,
+            [name]: fieldError?.message || undefined
+          }
         }
       }
     }
@@ -101,13 +109,20 @@ export class FormManager<T extends Record<string, any>> {
       },
       isDirty: true
     }
+    this.notify()
     this.validateField(name)
   }
 
   handleBlur(name: keyof T) {
-    this.state.touched[name] = true
-    this.validateField(name)
+    this.state = {
+      ...this.state,
+      touched: {
+        ...this.state.touched,
+        [name]: true
+      }
+    }
     this.notify()
+    this.validateField(name)
   }
 
   async handleSubmit(e?: React.FormEvent) {
@@ -138,7 +153,7 @@ export class FormManager<T extends Record<string, any>> {
 
   reset() {
     this.state = {
-      values: this.config.initialValues,
+      values: { ...this.config.initialValues },
       errors: {},
       touched: {},
       isSubmitting: false,
