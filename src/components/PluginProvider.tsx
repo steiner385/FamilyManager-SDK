@@ -12,8 +12,10 @@ interface PluginContextType {
 const PluginContext = createContext<PluginContextType | undefined>(undefined);
 
 export function PluginProvider({ children }: { children: React.ReactNode }) {
-  const manager = PluginManager.getInstance();
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Memoize the manager instance
+  const manager = React.useMemo(() => PluginManager.getInstance(), []);
 
   useEffect(() => {
     // Add a small delay to ensure state updates properly
@@ -23,28 +25,12 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // Define callbacks at the top level
-  const installPlugin = React.useCallback(
-    (plugin: Plugin) => manager.installPlugin(plugin),
-    [manager]
-  );
-  
-  const getPlugin = React.useCallback(
-    (name: string) => manager.getPlugin(name),
-    [manager]
-  );
-  
-  const isPluginReady = React.useCallback(
-    (name: string) => manager.isInitialized(name),
-    [manager]
-  );
-
-  // Create the context value using the stable callbacks
+  // Create the context value directly with memoized functions
   const value = React.useMemo(() => ({
-    installPlugin,
-    getPlugin,
-    isPluginReady
-  }), [installPlugin, getPlugin, isPluginReady]);
+    installPlugin: (plugin: Plugin) => manager.installPlugin(plugin),
+    getPlugin: (name: string) => manager.getPlugin(name),
+    isPluginReady: (name: string) => manager.isInitialized(name)
+  }), [manager]);
 
   if (!isInitialized) {
     return null;
