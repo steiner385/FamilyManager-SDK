@@ -2,6 +2,9 @@ import { PluginManager } from '../../plugin/PluginManager'
 import { ComponentRegistry } from '../../registry/ComponentRegistry'
 import { ThemeManager } from '../../theme/ThemeManager'
 import { createMockPlugin } from '../../testing/utils/testHelpers'
+import { Theme } from '../../../types/base'
+import '@testing-library/jest-dom'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 
 describe('Plugin System Integration', () => {
   let pluginManager: PluginManager
@@ -17,8 +20,9 @@ describe('Plugin System Integration', () => {
     // @ts-ignore
     ThemeManager.instance = null
 
-    pluginManager = PluginManager.getInstance()
-    componentRegistry = ComponentRegistry.getInstance()
+pluginManager = PluginManager.getInstance()
+pluginManager.initialize()
+componentRegistry = ComponentRegistry.getInstance()
     themeManager = ThemeManager.getInstance()
   })
 
@@ -32,18 +36,35 @@ describe('Plugin System Integration', () => {
       },
       theme: {
         colors: {
+          primary: '#007bff',
+          secondary: '#6c757d',
+          background: '#ffffff',
+          text: '#000000',
           custom: '#ff0000'
+        },
+        typography: {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: {
+            small: '12px',
+            medium: '16px',
+            large: '20px'
+          }
+        },
+        spacing: {
+          small: '8px',
+          medium: '16px',
+          large: '24px'
         }
-      }
+      } satisfies Theme
     })
 
-    // Install plugin
-    await pluginManager.installPlugin(mockPlugin)
-    expect(pluginManager.isPluginInstalled('test-plugin')).toBe(true)
+await pluginManager.registerPlugin(mockPlugin)
+    const pluginId = `mock-${mockPlugin.name}`
+    expect(pluginManager.isPluginInstalled(pluginId)).toBe(true)
 
     // Initialize plugin
-    await pluginManager.initializePlugin('test-plugin')
-    expect(pluginManager.isInitialized('test-plugin')).toBe(true)
+    await pluginManager.initializePlugin(pluginId)
+    expect(pluginManager.isInitialized(pluginId)).toBe(true)
 
     // Verify components are registered
     expect(componentRegistry.get('TestComponent')).toBeTruthy()
@@ -53,8 +74,8 @@ describe('Plugin System Integration', () => {
     expect(currentTheme.colors?.custom).toBe('#ff0000')
 
     // Uninstall plugin
-    await pluginManager.uninstallPlugin('test-plugin')
-    expect(pluginManager.isPluginInstalled('test-plugin')).toBe(false)
+    await pluginManager.uninstallPlugin(pluginId)
+    expect(pluginManager.isPluginInstalled(pluginId)).toBe(false)
   })
 
   it('handles plugin dependencies correctly', async () => {
@@ -69,14 +90,15 @@ describe('Plugin System Integration', () => {
       dependencies: ['dependency-plugin']
     })
 
-    // Install dependency first
-    await pluginManager.installPlugin(dependencyPlugin)
-    await pluginManager.initializePlugin('dependency-plugin')
+    const depId = `mock-${dependencyPlugin.name}`
+    const mainId = `mock-${mainPlugin.name}`
 
-    // Install main plugin
-    await pluginManager.installPlugin(mainPlugin)
-    await pluginManager.initializePlugin('main-plugin')
+    await pluginManager.registerPlugin(dependencyPlugin)
+    await pluginManager.initializePlugin(depId)
 
-    expect(pluginManager.isInitialized('main-plugin')).toBe(true)
+    await pluginManager.registerPlugin(mainPlugin)
+    await pluginManager.initializePlugin(mainId)
+
+    expect(pluginManager.isInitialized(mainId)).toBe(true)
   })
 })

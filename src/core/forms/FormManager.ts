@@ -33,59 +33,37 @@ export class FormManager<T extends Record<string, any>> {
     this.subscribers = new Set()
   }
 
-  private notify() {
-    this.subscribers.forEach(subscriber => subscriber(this.state))
+  private notify(force = false) {
+    const stateCopy = { ...this.state }
+    this.subscribers.forEach(subscriber => subscriber(stateCopy))
   }
 
   subscribe(callback: (state: FormState<T>) => void) {
     this.subscribers.add(callback)
-    // Immediately notify the new subscriber with current state
-    callback(this.state)
-    return () => this.subscribers.delete(callback)
+    callback({ ...this.state }) // Initial notification
+    return () => {
+      this.subscribers.delete(callback)
+      return true
+    }
   }
 
-  async validateField(name: keyof T) {
+  private async validateState() {
     if (!this.config.validationSchema) {
-      return
-    }
-
-    try {
-      await this.config.validationSchema.parseAsync(this.state.values)
-      // Only update validation-related state
       this.state = {
         ...this.state,
-        errors: {
-          ...this.state.errors,
-          [name]: undefined
-        },
-        isValid: true
+        isValid: true,
+        errors: {}
       }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const fieldError = error.errors.find(e => e.path[0] === name)
-        // Only update validation-related state
-        this.state = {
-          ...this.state,
-          errors: {
-            ...this.state.errors,
-            [name]: fieldError?.message || undefined
-          },
-          isValid: false
-        }
-      }
+      return true
     }
-
-    // Single notification after validation
-    this.notify()
-  }
-
-  async validateForm() {
-    if (!this.config.validationSchema) return true
 
     try {
       await this.config.validationSchema.parseAsync(this.state.values)
-      this.state.errors = {}
-      this.state.isValid = true
+      this.state = {
+        ...this.state,
+        isValid: true,
+        errors: {}
+      }
       return true
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -95,18 +73,68 @@ export class FormManager<T extends Record<string, any>> {
             newErrors[err.path[0] as keyof T] = err.message
           }
         })
-        this.state.errors = newErrors
-        this.state.isValid = false
+        this.state = {
+          ...this.state,
+          isValid: false,
+          errors: newErrors
+        }
       }
       return false
-    } finally {
-      this.notify()
     }
   }
 
-  handleChange(name: keyof T, value: any) {
-    // Update state in one operation
-    const newState = {
+  async validateField(name: keyof T) {
+    if (!this.config.validationSchema) {
+      return true
+    }
+
+    try {
+      await this.config.validationSchema.parseAsync(this.state.values)
+      // Form is valid, update state
+      this.state = {
+        ...this.state,
+        errors: {
+          ...this.state.errors,
+          [name]: undefined
+        },
+        isValid: true
+      }
+      this.notify()
+      return true
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const fieldError = error.errors.find(e => 
+          Array.isArray(e.path) && e.path[0] === name
+        )
+        
+        // Update state with field error if present
+        this.state = {
+          ...this.state,
+          errors: {
+            ...this.state.errors,
+            [name]: fieldError?.message
+          },
+          isValid: !fieldError
+        }
+        this.notify()
+        return !fieldError
+      }
+      return true
+    }
+  }
+
+  async validateForm() {
+    const isValid = await this.validateState()
+    this.notify(true)
+    return isValid
+  }
+
+  async handleChange(name: keyof T, value: any) {
+    const prevValue = this.state.values[name]
+    if (prevValue === value) return
+
+    // Update values and mark as dirty
+    this.state = {
       ...this.state,
       values: {
         ...this.state.values,
@@ -114,20 +142,26 @@ export class FormManager<T extends Record<string, any>> {
       },
       isDirty: true
     }
-    
-    // Set state once
-    this.state = newState
-    
-    // Single notification
+
+    // Notify for value change
     this.notify()
-    
-    // Validate if needed
+
+    // Then validate if needed
     if (this.config.validationSchema) {
-      this.validateField(name)
+      await this.validateField(name)
+    } else {
+      // If no validation schema, mark as valid
+      this.state = {
+        ...this.state,
+        isValid: true,
+        errors: {}
+      }
+      this.notify()
     }
   }
 
-  handleBlur(name: keyof T) {
+  async handleBlur(name: keyof T) {
+    // Update touched state
     this.state = {
       ...this.state,
       touched: {
@@ -135,8 +169,15 @@ export class FormManager<T extends Record<string, any>> {
         [name]: true
       }
     }
+
+    // Notify for touched state
     this.notify()
-    this.validateField(name)
+
+    // Then validate
+    const isValid = await this.validateField(name)
+    if (!isValid) {
+      this.notify() // Notify again if validation failed
+    }
   }
 
   async handleSubmit(e?: React.FormEvent) {
@@ -153,7 +194,6 @@ export class FormManager<T extends Record<string, any>> {
 
       await this.config.onSubmit(this.state.values)
     } catch (error) {
-      // Update error state if submission fails
       this.state.errors = {
         ...this.state.errors,
         submit: error instanceof Error ? error.message : 'Submission failed'
@@ -166,8 +206,7 @@ export class FormManager<T extends Record<string, any>> {
   }
 
   reset() {
-    // Ensure complete reset of all state
-    this.state = {
+    const newState = {
       values: { ...this.config.initialValues },
       errors: {},
       touched: {},
@@ -175,7 +214,9 @@ export class FormManager<T extends Record<string, any>> {
       isValid: true,
       isDirty: false
     }
-    // Single notification
-    this.notify()
+    
+    // Force state update and notification on reset
+    this.state = newState
+    this.notify(true)
   }
 }

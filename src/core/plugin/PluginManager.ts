@@ -1,129 +1,153 @@
-import type { Plugin, PluginContext } from './types';
-import type { Env } from 'hono/types';
-import { pluginRegistry } from './registry';
-import { Logger } from '../logging/Logger';
+import { logger } from '../utils/logger';
+import { Plugin } from './types';
+import { routeRegistry } from '../routing/RouteRegistry';
+import { eventBus } from '../events/EventBus';
 
 export class PluginManager {
-  private static instance: PluginManager;
-  private context: PluginContext<any>;
-  private logger: Logger;
-  
+  private static instance: PluginManager | null = null;
+  private installedPlugins: Map<string, Plugin>;
+  private activePlugins: Set<string>;
+  private initialized: boolean;
+
   private constructor() {
-    this.context = {} as PluginContext<any>;
-    this.logger = Logger.getInstance();
+    this.installedPlugins = new Map();
+    this.activePlugins = new Set();
+    this.initialized = false;
   }
 
-  public static getInstance(): PluginManager {
+  initialize(context?: any): void {
+    if (this.initialized) {
+      logger.warn('PluginManager already initialized');
+      return;
+    }
+    this.initialized = true;
+    logger.debug('PluginManager initialized');
+  }
+
+  clearPlugins(): void {
+    this.installedPlugins.clear();
+    this.activePlugins.clear();
+    logger.debug('Cleared all plugins');
+  }
+
+  static getInstance(): PluginManager {
     if (!PluginManager.instance) {
       PluginManager.instance = new PluginManager();
     }
     return PluginManager.instance;
   }
 
-  public initialize(context: PluginContext<any>): void {
-    this.context = context;
-  }
-
-  private validatePluginMetadata(plugin: Plugin): void {
-    const { metadata } = plugin;
-    if (!metadata.name || typeof metadata.name !== 'string') {
-      throw new Error('Plugin metadata must include a valid name');
-    }
-    if (!metadata.version || typeof metadata.version !== 'string') {
-      throw new Error('Plugin metadata must include a valid version');
-    }
-    if (!metadata.description || typeof metadata.description !== 'string') {
-      throw new Error('Plugin metadata must include a valid description');
-    }
-  }
-
-  private async validateDependencies(plugin: Plugin): Promise<void> {
-    const { metadata } = plugin;
-    if (!metadata.dependencies?.length) return;
-
-    const missingDeps = metadata.dependencies.filter(dep => !pluginRegistry.hasPlugin(dep));
-    if (missingDeps.length > 0) {
-      throw new Error(`Missing required dependency: ${missingDeps[0]}`);
+  async registerPlugin(plugin: Plugin, context?: any): Promise<void> {
+    if (!this.initialized) {
+      throw new Error('PluginManager must be initialized before registering plugins');
     }
 
-    if (metadata.optionalDependencies?.length) {
-      metadata.optionalDependencies.forEach(dep => {
-        if (!pluginRegistry.hasPlugin(dep)) {
-          this.logger.warn(`Optional dependency ${dep} not found for plugin ${metadata.name}`);
+    if (!plugin.id || !plugin.name) {
+      throw new Error('Plugin must have both id and name');
+    }
+
+    if (this.installedPlugins.has(plugin.id)) {
+      throw new Error(`Plugin ${plugin.id} is already registered`);
+    }
+
+    // Validate plugin dependencies
+    if (plugin.dependencies) {
+      for (const dep of plugin.dependencies) {
+        if (!this.installedPlugins.has(dep)) {
+          throw new Error(`Missing required dependency: ${dep}`);
         }
-      });
-    }
-  }
-
-  async registerPlugin(plugin: Plugin<any>): Promise<void> {
-    try {
-      this.validatePluginMetadata(plugin);
-      await this.validateDependencies(plugin);
-
-      this.logger.debug(`Starting initialization for plugin ${plugin.metadata.name}`);
-      try {
-        await Promise.race([
-          (async () => {
-            this.logger.debug(`Running initialize for plugin ${plugin.metadata.name}`);
-            await plugin.initialize(this.context);
-            this.logger.debug(`Completed initialize for plugin ${plugin.metadata.name}`);
-          })(),
-          new Promise((_, reject) => 
-            setTimeout(() => {
-              this.logger.error(`Plugin initialization timed out for ${plugin.metadata.name}`);
-              reject(new Error('Plugin initialization timed out'));
-            }, 30000)
-          )
-        ]);
-      } catch (error) {
-        throw new Error(`Failed to initialize plugin ${plugin.metadata.name}: ${error instanceof Error ? error.message : String(error)}`);
       }
-      
-      pluginRegistry.register(plugin);
-      
-      this.logger.info(`Plugin ${plugin.metadata.name} registered successfully`, {
-        version: plugin.metadata.version,
-        dependencies: plugin.metadata.dependencies,
-        optionalDependencies: plugin.metadata.optionalDependencies
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to register plugin ${plugin.metadata.name}: ${errorMessage}`);
-      throw error;
     }
+
+    // Register plugin routes
+    if (plugin.routes) {
+      for (const route of plugin.routes) {
+        routeRegistry.registerRoute(plugin.id, route);
+      }
+    }
+
+    // Store plugin
+    this.installedPlugins.set(plugin.id, plugin);
+    logger.info(`Registered plugin: ${plugin.name} (${plugin.id})`);
   }
 
-  async unregisterPlugin(pluginName: string): Promise<void> {
-    const plugin = pluginRegistry.getPlugin(pluginName);
+  async uninstallPlugin(pluginId: string): Promise<void> {
+    if (!this.initialized) {
+      throw new Error('PluginManager must be initialized before unregistering plugins');
+    }
+
+    const plugin = this.installedPlugins.get(pluginId);
     if (!plugin) {
-      throw new Error(`Plugin ${pluginName} is not registered`);
+      throw new Error(`Plugin ${pluginId} is not registered`);
     }
 
-    // Check if other plugins depend on this one
-    for (const dep of pluginRegistry.getAll()) {
-      if (dep.metadata.dependencies?.includes(pluginName)) {
-        throw new Error(`Cannot unregister ${pluginName}: ${dep.metadata.name} depends on it`);
+    // Check for dependent plugins
+    for (const [id, p] of this.installedPlugins) {
+      if (p.dependencies?.includes(pluginId)) {
+        throw new Error(`Cannot unregister plugin ${pluginId} because it is required by ${id}`);
       }
     }
 
+    // Cleanup plugin
     if (plugin.teardown) {
       await plugin.teardown();
     }
 
-    pluginRegistry.unregister(pluginName);
-    this.logger.info(`Plugin ${pluginName} unregistered successfully`);
+    // Remove routes
+    if (plugin.routes) {
+      for (const route of plugin.routes) {
+        routeRegistry.unregisterRoute(pluginId, route);
+      }
+    }
+
+    this.installedPlugins.delete(pluginId);
+    this.activePlugins.delete(pluginId);
+    logger.info(`Unregistered plugin: ${pluginId}`);
   }
 
-  getPlugin(name: string): Plugin | undefined {
-    return pluginRegistry.getPlugin(name);
+  async initializePlugin(pluginId: string): Promise<void> {
+    const plugin = this.installedPlugins.get(pluginId);
+    if (!plugin) {
+      throw new Error(`Plugin ${pluginId} is not installed`);
+    }
+
+    if (this.activePlugins.has(pluginId)) {
+      logger.warn(`Plugin ${pluginId} is already initialized`);
+      return;
+    }
+
+    // Initialize plugin
+    if (plugin.initialize || plugin.onInit) {
+      await (plugin.initialize || plugin.onInit)?.();
+    }
+
+    this.activePlugins.add(pluginId);
+    logger.info(`Initialized plugin: ${plugin.name} (${pluginId})`);
+  }
+
+  isInitialized(pluginId: string): boolean {
+    return this.activePlugins.has(pluginId);
+  }
+
+  isPluginInstalled(pluginId: string): boolean {
+    return this.installedPlugins.has(pluginId);
+  }
+
+  isPluginActive(pluginId: string): boolean {
+    return this.activePlugins.has(pluginId);
+  }
+
+  getPlugin(pluginId: string): Plugin | undefined {
+    return this.installedPlugins.get(pluginId);
   }
 
   getAllPlugins(): Plugin[] {
-    return pluginRegistry.getAll();
+    return Array.from(this.installedPlugins.values());
   }
 
-  // For testing purposes
-  clearPlugins(): void {
-    pluginRegistry.clear();
+  static resetInstance(): void {
+    PluginManager.instance = null;
   }
 }
+
+export const pluginManager = PluginManager.getInstance();

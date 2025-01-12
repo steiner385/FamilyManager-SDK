@@ -6,7 +6,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
-import './types';
+import './types.d.ts';
 
 // Re-export testing utilities
 export { 
@@ -17,12 +17,14 @@ export {
 };
 
 // Export test functions from Jest
-export const describe = global.describe;
-export const it = global.it;
-export const expect = global.expect;
-export const beforeEach = global.beforeEach;
-export const afterEach = global.afterEach;
-export const jest = global.jest;
+export { 
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  jest
+} from '@jest/globals';
 
 // Custom render function with default providers
 export const render = (ui: React.ReactElement, options = {}) => {

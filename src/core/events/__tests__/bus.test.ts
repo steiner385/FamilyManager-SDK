@@ -1,148 +1,378 @@
+import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { EventBus } from '../EventBus';
-import { EventDeliveryStatus } from '../types';
-import { createTestEvent } from '../utils/test-helpers';
+import { BaseEvent, EventDeliveryStatus, EventHandler } from '../types';
+import { logger } from '../../logging/Logger';
+
+// Mock dependencies
+jest.mock('../../logging/Logger', () => ({
+  logger: {
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+// Helper function to create typed mock handlers
+const createMockHandler = () => {
+  return jest.fn().mockImplementation(() => Promise.resolve()) as unknown as EventHandler;
+};
 
 describe('EventBus', () => {
   let eventBus: EventBus;
-  const TEST_CHANNEL = 'test-channel';
 
-  beforeEach(async () => {
-    // Clean up any existing instance
-    if (EventBus['instance']) {
-      const instance = EventBus.getInstance();
-      if (instance.getRunningState()) {
-        await instance.stop();
-      }
-      EventBus.resetInstance();
-    }
-
-    // Create new instance
-    eventBus = EventBus.getInstance({
-      validateEvents: true,
-      maxRetries: 3,
-      batchSize: 10,
-      flushInterval: 100
-    });
-    await eventBus.start();
-    
-    // Register test channel
-    eventBus.registerChannel(TEST_CHANNEL);
-  });
-
-  afterEach(async () => {
-    if (eventBus.getRunningState()) {
-      await eventBus.stop();
-    }
+  beforeEach(() => {
+    // Reset singleton instance
     EventBus.resetInstance();
+    eventBus = EventBus.getInstance();
+    jest.clearAllMocks();
   });
 
-  it('should be a singleton', () => {
-    const instance1 = EventBus.getInstance();
-    const instance2 = EventBus.getInstance();
-    expect(instance1).toBe(instance2);
+  describe('Singleton Pattern', () => {
+    it('should maintain singleton instance', () => {
+      const instance1 = EventBus.getInstance();
+      const instance2 = EventBus.getInstance();
+      expect(instance1).toBe(instance2);
+    });
+
+    it('should create new instance after reset', () => {
+      const instance1 = EventBus.getInstance();
+      EventBus.resetInstance();
+      const instance2 = EventBus.getInstance();
+      expect(instance1).not.toBe(instance2);
+    });
+
+    it('should maintain configuration across getInstance calls', () => {
+      const config = { maxRetries: 5, retryDelay: 2000 };
+      const instance1 = EventBus.getInstance(config);
+      const instance2 = EventBus.getInstance();
+      expect(instance1).toBe(instance2);
+    });
   });
 
-  it('should publish and subscribe to events', async () => {
-    const handler = jest.fn();
-    await eventBus.subscribe(TEST_CHANNEL, handler);
+  describe('Running State', () => {
+    it('should start in stopped state', () => {
+      expect(eventBus.getRunningState()).toBe(false);
+    });
 
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    const result = await eventBus.publish(TEST_CHANNEL, event);
+    it('should change state on start/stop', async () => {
+      await eventBus.start();
+      expect(eventBus.getRunningState()).toBe(true);
 
-    expect(result.status).toBe(EventDeliveryStatus.Success);
-    expect(handler).toHaveBeenCalledWith(event);
+      await eventBus.stop();
+      expect(eventBus.getRunningState()).toBe(false);
+    });
+
+    it('should log state changes', async () => {
+      await eventBus.start();
+      expect(logger.info).toHaveBeenCalledWith('EventBus started');
+
+      await eventBus.stop();
+      expect(logger.info).toHaveBeenCalledWith('EventBus stopped');
+    });
+
+    it('should clear subscriptions on stop', async () => {
+      await eventBus.start();
+      eventBus.registerChannel('test-channel');
+      const handler = createMockHandler();
+      eventBus.subscribe('test-channel', handler);
+
+      await eventBus.stop();
+      expect(eventBus.getSubscriptionCount('test-channel')).toBe(0);
+    });
   });
 
-  it('should handle multiple subscribers', async () => {
-    const handler1 = jest.fn();
-    const handler2 = jest.fn();
+  describe('Channel Registration', () => {
+    beforeEach(async () => {
+      await eventBus.start();
+    });
 
-    await eventBus.subscribe(TEST_CHANNEL, handler1);
-    await eventBus.subscribe(TEST_CHANNEL, handler2);
+    it('should register new channels', () => {
+      eventBus.registerChannel('test-channel');
+      expect(() => eventBus.registerChannel('test-channel')).toThrow();
+      expect(logger.debug).toHaveBeenCalledWith('Registered channel: test-channel');
+    });
 
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    const result = await eventBus.publish(TEST_CHANNEL, event);
+    it('should prevent duplicate channel registration', () => {
+      eventBus.registerChannel('test-channel');
+      expect(() => eventBus.registerChannel('test-channel')).toThrow(
+        'Channel test-channel is already registered'
+      );
+    });
 
-    expect(result.status).toBe(EventDeliveryStatus.Success);
-    expect(handler1).toHaveBeenCalledWith(event);
-    expect(handler2).toHaveBeenCalledWith(event);
+    it('should require channel registration before subscription', () => {
+      const handler = createMockHandler();
+      expect(() => eventBus.subscribe('unregistered-channel', handler)).toThrow(
+        'Channel unregistered-channel is not registered'
+      );
+    });
   });
 
-  it('should unsubscribe handlers', async () => {
-    const handler = jest.fn();
-    const unsubscribe = eventBus.subscribe(TEST_CHANNEL, handler);
-    unsubscribe();
+  describe('Event Subscription', () => {
+    beforeEach(async () => {
+      await eventBus.start();
+      eventBus.registerChannel('test-channel');
+    });
 
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    await eventBus.publish(TEST_CHANNEL, event);
+    it('should subscribe to events', () => {
+      const handler = createMockHandler();
+      const subscriptionId = eventBus.subscribe('test-channel', handler);
+      expect(typeof subscriptionId).toBe('string');
+      expect(eventBus.getSubscriptionCount('test-channel')).toBe(1);
+    });
 
-    expect(handler).not.toHaveBeenCalled();
+    it('should prevent subscription when stopped', async () => {
+      await eventBus.stop();
+      const handler = createMockHandler();
+      expect(() => eventBus.subscribe('test-channel', handler)).toThrow(
+        'Cannot subscribe while EventBus is stopped'
+      );
+    });
+
+    it('should unsubscribe from events', () => {
+      const handler = createMockHandler();
+      const subscriptionId = eventBus.subscribe('test-channel', handler);
+      expect(eventBus.getSubscriptionCount('test-channel')).toBe(1);
+
+      eventBus.unsubscribe(subscriptionId);
+      expect(eventBus.getSubscriptionCount('test-channel')).toBe(0);
+    });
+
+    it('should handle multiple subscriptions to same channel', () => {
+      const handler1 = createMockHandler();
+      const handler2 = createMockHandler();
+      eventBus.subscribe('test-channel', handler1);
+      eventBus.subscribe('test-channel', handler2);
+      expect(eventBus.getSubscriptionCount('test-channel')).toBe(2);
+    });
   });
 
-  it('should handle subscriber errors', async () => {
-    const error = new Error('Handler failed');
-    const handler = jest.fn().mockRejectedValue(error);
+  describe('Event Emission', () => {
+    beforeEach(async () => {
+      await eventBus.start();
+      eventBus.registerChannel('test-channel');
+    });
 
-    await eventBus.subscribe(TEST_CHANNEL, handler);
+    it('should emit events to subscribers', async () => {
+      const handler = createMockHandler();
+      eventBus.subscribe('test-channel', handler);
 
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    const result = await eventBus.publish(TEST_CHANNEL, event);
+      const event: BaseEvent = {
+        type: 'test-channel',
+        timestamp: Date.now(),
+        data: { test: true },
+      };
 
-    expect(result.status).toBe(EventDeliveryStatus.Failed);
-    expect(result.errors).toContain('Handler failed');
+      await eventBus.emit(event);
+      expect(handler).toHaveBeenCalledWith(event);
+    });
+
+    it('should prevent emission when stopped', async () => {
+      await eventBus.stop();
+      const event: BaseEvent = {
+        type: 'test-channel',
+        timestamp: Date.now(),
+        data: {},
+      };
+
+      await expect(eventBus.emit(event)).rejects.toThrow(
+        'Cannot emit events while EventBus is stopped'
+      );
+    });
+
+    it('should handle events with no subscribers', async () => {
+      const event: BaseEvent = {
+        type: 'test-channel',
+        timestamp: Date.now(),
+        data: {},
+      };
+
+      const status = await eventBus.emit(event);
+      expect(status).toBe(EventDeliveryStatus.SUCCESS);
+      expect(logger.debug).toHaveBeenCalledWith('No subscribers for event test-channel');
+    });
+
+    it('should deliver events to multiple subscribers', async () => {
+      const handler1 = createMockHandler();
+      const handler2 = createMockHandler();
+      eventBus.subscribe('test-channel', handler1);
+      eventBus.subscribe('test-channel', handler2);
+
+      const event: BaseEvent = {
+        type: 'test-channel',
+        timestamp: Date.now(),
+        data: { test: true },
+      };
+
+      await eventBus.emit(event);
+      expect(handler1).toHaveBeenCalledWith(event);
+      expect(handler2).toHaveBeenCalledWith(event);
+    });
   });
 
-  it('should not publish when stopped', async () => {
-    await eventBus.stop();
+  describe('Retry Mechanism', () => {
+    let handler: EventHandler;
+    let event: BaseEvent;
 
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    await expect(eventBus.publish(TEST_CHANNEL, event)).rejects.toThrow('Event bus is not running');
+    beforeEach(async () => {
+      await eventBus.start();
+      eventBus.registerChannel('test-channel');
+      handler = createMockHandler();
+      event = {
+        type: 'test-channel',
+        timestamp: Date.now(),
+        data: { test: true },
+      };
+    });
+
+    it('should retry failed deliveries', async () => {
+      const mockHandler = handler as jest.Mock;
+      mockHandler
+        .mockImplementationOnce(() => Promise.reject(new Error('First attempt failed')))
+        .mockImplementationOnce(() => Promise.reject(new Error('Second attempt failed')))
+        .mockImplementationOnce(() => Promise.resolve());
+
+      eventBus.subscribe('test-channel', handler);
+      await eventBus.emit(event);
+
+      expect(handler).toHaveBeenCalledTimes(3);
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Retrying event delivery'),
+        expect.any(Object)
+      );
+    });
+
+    it('should respect maxRetries configuration', async () => {
+      EventBus.resetInstance();
+      eventBus = EventBus.getInstance({ maxRetries: 2 });
+      await eventBus.start();
+      eventBus.registerChannel('test-channel');
+
+      const mockHandler = handler as jest.Mock;
+      mockHandler
+        .mockImplementationOnce(() => Promise.reject(new Error('First attempt failed')))
+        .mockImplementationOnce(() => Promise.reject(new Error('Second attempt failed')))
+        .mockImplementationOnce(() => Promise.reject(new Error('Third attempt failed')));
+
+      eventBus.subscribe('test-channel', handler);
+      const status = await eventBus.emit(event);
+
+      expect(handler).toHaveBeenCalledTimes(3);
+      expect(status).toBe(EventDeliveryStatus.PARTIAL);
+    });
+
+    it('should respect retryDelay configuration', async () => {
+      const retryDelay = 100;
+      EventBus.resetInstance();
+      eventBus = EventBus.getInstance({ retryDelay });
+      await eventBus.start();
+      eventBus.registerChannel('test-channel');
+
+      const mockHandler = handler as jest.Mock;
+      mockHandler
+        .mockImplementationOnce(() => Promise.reject(new Error('First attempt failed')))
+        .mockImplementationOnce(() => Promise.resolve());
+
+      eventBus.subscribe('test-channel', handler);
+      const start = Date.now();
+      await eventBus.emit(event);
+      const duration = Date.now() - start;
+
+      expect(duration).toBeGreaterThanOrEqual(retryDelay);
+    });
   });
 
-  it('should not subscribe when stopped', async () => {
-    await eventBus.stop();
+  describe('Error Handling', () => {
+    beforeEach(async () => {
+      await eventBus.start();
+      eventBus.registerChannel('test-channel');
+    });
 
-    const handler = jest.fn();
-    expect(() => {
-      eventBus.subscribe(TEST_CHANNEL, handler);
-    }).toThrow('Event bus is not running');
+    it('should handle partial delivery failures', async () => {
+      const successHandler = createMockHandler();
+      const failureHandler = createMockHandler();
+      (failureHandler as jest.Mock).mockImplementation(() =>
+        Promise.reject(new Error('Handler failed'))
+      );
+
+      eventBus.subscribe('test-channel', successHandler);
+      eventBus.subscribe('test-channel', failureHandler);
+
+      const event: BaseEvent = {
+        type: 'test-channel',
+        timestamp: Date.now(),
+        data: {},
+      };
+
+      const status = await eventBus.emit(event);
+      expect(status).toBe(EventDeliveryStatus.PARTIAL);
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it('should handle invalid channel emissions', async () => {
+      const event: BaseEvent = {
+        type: 'invalid-channel',
+        timestamp: Date.now(),
+        data: {},
+      };
+
+      await expect(eventBus.emit(event)).rejects.toThrow(
+        'Channel invalid-channel is not registered'
+      );
+    });
+
+    it('should handle subscriber cleanup on unsubscribe', () => {
+      const handler = createMockHandler();
+      const subscriptionId = eventBus.subscribe('test-channel', handler);
+
+      // Unsubscribe multiple times should not throw
+      eventBus.unsubscribe(subscriptionId);
+      eventBus.unsubscribe(subscriptionId);
+
+      expect(eventBus.getSubscriptionCount('test-channel')).toBe(0);
+    });
   });
 
-  it('should clear subscribers on stop', async () => {
-    const handler = jest.fn();
-    await eventBus.subscribe(TEST_CHANNEL, handler);
-    await eventBus.stop();
-    await eventBus.start();
-    eventBus.registerChannel(TEST_CHANNEL);
+  describe('Performance', () => {
+    beforeEach(async () => {
+      await eventBus.start();
+      eventBus.registerChannel('test-channel');
+    });
 
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    await eventBus.publish(TEST_CHANNEL, event);
+    it('should handle rapid event emissions', async () => {
+      const handler = createMockHandler();
+      eventBus.subscribe('test-channel', handler);
 
-    expect(handler).not.toHaveBeenCalled();
-  });
+      const events = Array.from({ length: 100 }, (_, i) => ({
+        type: 'test-channel',
+        timestamp: Date.now(),
+        data: { index: i },
+      }));
 
-  it('should handle invalid channel', async () => {
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    await expect(eventBus.publish('invalid-channel', event)).rejects.toThrow('Channel invalid-channel not found');
-  });
+      await Promise.all(events.map(event => eventBus.emit(event)));
+      expect(handler).toHaveBeenCalledTimes(100);
+    });
 
-  it('should register new channels', async () => {
-    const NEW_CHANNEL = 'new-channel';
-    eventBus.registerChannel(NEW_CHANNEL);
+    it('should handle concurrent subscriptions and emissions', async () => {
+      const handlers = Array.from({ length: 10 }, () => createMockHandler());
 
-    const handler = jest.fn();
-    await eventBus.subscribe(NEW_CHANNEL, handler);
+      // Subscribe handlers
+      handlers.forEach(handler => eventBus.subscribe('test-channel', handler));
 
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    const result = await eventBus.publish(NEW_CHANNEL, event);
+      // Create and emit events
+      const events = Array.from({ length: 10 }, (_, i) => ({
+        type: 'test-channel',
+        timestamp: Date.now(),
+        data: { index: i },
+      }));
 
-    expect(result.status).toBe(EventDeliveryStatus.Success);
-    expect(handler).toHaveBeenCalledWith(event);
-  });
+      // Emit events concurrently
+      await Promise.all(events.map(event => eventBus.emit(event)));
 
-  it('should not register duplicate channels', () => {
-    expect(() => {
-      eventBus.registerChannel(TEST_CHANNEL);
-    }).toThrow(`Channel ${TEST_CHANNEL} already exists`);
+      // Verify all handlers were called correctly
+      handlers.forEach(handler => {
+        expect(handler).toHaveBeenCalledTimes(10);
+      });
+    });
   });
 });

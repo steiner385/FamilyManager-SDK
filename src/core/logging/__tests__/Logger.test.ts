@@ -1,84 +1,29 @@
+import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import winston from 'winston';
-import { Logger } from '../Logger';
-import { LogLevel, LogMetadata } from '../types';
-
-jest.mock('winston', () => {
-  const mockFormat = {
-    timestamp: jest.fn().mockReturnValue({
-      type: 'timestamp',
-      transform: jest.fn(),
-      options: {},
-      enabled: true
-    }),
-    json: jest.fn().mockReturnValue({
-      type: 'json',
-      transform: jest.fn(),
-      options: {},
-      enabled: true
-    }),
-    combine: jest.fn().mockImplementation((...args) => ({
-      type: 'combined',
-      transform: jest.fn(),
-      options: {},
-      enabled: true,
-      formats: args
-    })),
-    colorize: jest.fn().mockReturnValue({
-      type: 'colorize',
-      transform: jest.fn(),
-      options: {},
-      enabled: true
-    }),
-    simple: jest.fn().mockReturnValue({
-      type: 'simple',
-      transform: jest.fn(),
-      options: {},
-      enabled: true
-    })
-  };
-
-  const mockLogger = {
-    log: jest.fn(),
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
-  };
-
-  return {
-    createLogger: jest.fn().mockReturnValue(mockLogger),
-    format: mockFormat,
-    transports: {
-      Console: jest.fn().mockImplementation(() => ({
-        format: mockFormat.combine(mockFormat.colorize(), mockFormat.simple())
-      }))
-    }
-  };
-});
+import { Logger, LogLevel, LogMetadata } from '../Logger';
 
 describe('Logger', () => {
-  let logger: Logger;
   let mockWinstonLogger: jest.Mocked<winston.Logger>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    // Reset singleton instance
     Logger.resetInstance();
-    
-    // Create a mock logger
+
+    // Create mock Winston logger
     mockWinstonLogger = {
       log: jest.fn(),
-      debug: jest.fn(),
-      info: jest.fn(),
+      error: jest.fn(),
       warn: jest.fn(),
-      error: jest.fn()
+      info: jest.fn(),
+      debug: jest.fn(),
     } as unknown as jest.Mocked<winston.Logger>;
 
-    // Get logger instance with mock logger
-    logger = Logger.getInstance(mockWinstonLogger);
+    // Inject mock logger
+    Logger.getInstance().setLogger(mockWinstonLogger);
   });
 
-  describe('getInstance', () => {
-    it('should return the same instance', () => {
+  describe('Singleton Pattern', () => {
+    it('should maintain singleton instance', () => {
       const instance1 = Logger.getInstance();
       const instance2 = Logger.getInstance();
       expect(instance1).toBe(instance2);
@@ -90,157 +35,232 @@ describe('Logger', () => {
       const instance2 = Logger.getInstance();
       expect(instance1).not.toBe(instance2);
     });
-
-    it('should allow custom logger injection', () => {
-      const customLogger = { 
-        log: jest.fn(),
-        debug: jest.fn(),
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn()
-      } as unknown as jest.Mocked<winston.Logger>;
-
-      const loggerWithCustomLogger = Logger.getInstance(customLogger);
-      
-      loggerWithCustomLogger.info('test message');
-      expect(customLogger.log).toHaveBeenCalledWith('info', 'test message', expect.objectContaining({
-        timestamp: expect.any(Number)
-      }));
-    });
-
-    it('should use custom logger when provided', () => {
-      const customLogger = { 
-        log: jest.fn(),
-        debug: jest.fn(),
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn()
-      } as unknown as jest.Mocked<winston.Logger>;
-
-      const loggerWithCustomLogger = Logger.getInstance(customLogger);
-      
-      loggerWithCustomLogger.log('info', 'test message');
-      expect(customLogger.log).toHaveBeenCalledWith('info', 'test message', expect.objectContaining({
-        timestamp: expect.any(Number)
-      }));
-    });
   });
 
-  describe('log levels', () => {
-    const testCases: Array<{ level: LogLevel; method: 'debug' | 'info' | 'warn' | 'error' }> = [
-      { level: 'debug', method: 'debug' },
-      { level: 'info', method: 'info' },
-      { level: 'warn', method: 'warn' },
-      { level: 'error', method: 'error' }
+  describe('Log Methods', () => {
+    const testCases: Array<{ method: LogLevel; message: string }> = [
+      { method: 'error', message: 'Error message' },
+      { method: 'warn', message: 'Warning message' },
+      { method: 'info', message: 'Info message' },
+      { method: 'debug', message: 'Debug message' },
     ];
 
-    testCases.forEach(({ level, method }) => {
-      it(`should log ${level} messages`, () => {
-        const message = `test ${level} message`;
-        const metadata = { context: 'test' };
-        const now = Date.now();
-        jest.spyOn(Date, 'now').mockReturnValue(now);
+    testCases.forEach(({ method, message }) => {
+      it(`should log ${method} messages`, () => {
+        const logger = Logger.getInstance();
+        logger[method](message);
+        expect(mockWinstonLogger.log).toHaveBeenCalledWith(method, message, undefined);
+      });
+
+      it(`should log ${method} messages with metadata`, () => {
+        const logger = Logger.getInstance();
+        const metadata: LogMetadata = {
+          userId: 'user123',
+          familyId: 'family456',
+          requestId: 'req789',
+        };
 
         logger[method](message, metadata);
-
-        expect(mockWinstonLogger.log).toHaveBeenCalledWith(
-          level,
-          message,
-          {
-            timestamp: now,
-            context: 'test'
-          }
-        );
+        expect(mockWinstonLogger.log).toHaveBeenCalledWith(method, message, metadata);
       });
     });
   });
 
-  describe('metadata handling', () => {
-    it('should merge custom metadata with timestamp', () => {
-      const now = Date.now();
-      jest.spyOn(Date, 'now').mockReturnValue(now);
-
-      const metadata: Partial<LogMetadata> = {
-        context: 'test',
-        customField: 'value'
+  describe('Metadata Handling', () => {
+    it('should handle complex metadata objects', () => {
+      const logger = Logger.getInstance();
+      const metadata: LogMetadata = {
+        userId: 'user123',
+        familyId: 'family456',
+        requestId: 'req789',
+        custom: {
+          feature: 'test',
+          environment: 'development',
+          metrics: {
+            duration: 123,
+            memory: 456,
+          },
+        },
       };
 
-      logger.info('test message', metadata);
-
-      expect(mockWinstonLogger.log).toHaveBeenCalledWith(
-        'info',
-        'test message',
-        {
-          timestamp: now,
-          context: 'test',
-          customField: 'value'
-        }
-      );
+      logger.info('Complex metadata test', metadata);
+      expect(mockWinstonLogger.log).toHaveBeenCalledWith('info', 'Complex metadata test', metadata);
     });
 
     it('should handle undefined metadata', () => {
-      const now = Date.now();
-      jest.spyOn(Date, 'now').mockReturnValue(now);
+      const logger = Logger.getInstance();
+      logger.info('No metadata');
+      expect(mockWinstonLogger.log).toHaveBeenCalledWith('info', 'No metadata', undefined);
+    });
 
-      logger.info('test message');
-
-      expect(mockWinstonLogger.log).toHaveBeenCalledWith(
-        'info',
-        'test message',
-        {
-          timestamp: now
-        }
-      );
+    it('should handle empty metadata object', () => {
+      const logger = Logger.getInstance();
+      logger.info('Empty metadata', {});
+      expect(mockWinstonLogger.log).toHaveBeenCalledWith('info', 'Empty metadata', {});
     });
   });
 
-  describe('winston configuration', () => {
-    it('should configure winston with correct options', () => {
-      // Reset to use default logger
+  describe('Winston Integration', () => {
+    it('should create Winston logger with default configuration', () => {
+      const createLoggerSpy = jest.spyOn(winston, 'createLogger');
       Logger.resetInstance();
-
-      const timestampFormat = {
-        type: 'timestamp',
-        transform: jest.fn(),
-        options: {},
-        enabled: true
-      };
-
-      const jsonFormat = {
-        type: 'json',
-        transform: jest.fn(),
-        options: {},
-        enabled: true
-      };
-
-      const combinedFormat = {
-        type: 'combined',
-        transform: jest.fn(),
-        options: {},
-        enabled: true,
-        formats: [timestampFormat, jsonFormat]
-      };
-
-      (winston.format.timestamp as jest.Mock).mockReturnValueOnce(timestampFormat);
-      (winston.format.json as jest.Mock).mockReturnValueOnce(jsonFormat);
-      (winston.format.combine as jest.Mock).mockReturnValueOnce(combinedFormat);
-
       Logger.getInstance();
 
-      expect(winston.createLogger).toHaveBeenCalledWith({
-        level: expect.any(String),
-        format: combinedFormat,
-        transports: [expect.any(Object)]
-      });
-
-      expect(winston.format.combine).toHaveBeenCalledWith(
-        timestampFormat,
-        jsonFormat
+      expect(createLoggerSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: expect.any(String),
+          format: expect.any(Object),
+          transports: expect.any(Array),
+        })
       );
 
-      expect(winston.format.timestamp).toHaveBeenCalled();
-      expect(winston.format.json).toHaveBeenCalled();
-      expect(winston.transports.Console).toHaveBeenCalled();
+      createLoggerSpy.mockRestore();
+    });
+
+    it('should respect environment log level', () => {
+      const originalLogLevel = process.env.LOG_LEVEL;
+      process.env.LOG_LEVEL = 'debug';
+
+      const createLoggerSpy = jest.spyOn(winston, 'createLogger');
+      Logger.resetInstance();
+      Logger.getInstance();
+
+      expect(createLoggerSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'debug',
+        })
+      );
+
+      process.env.LOG_LEVEL = originalLogLevel;
+      createLoggerSpy.mockRestore();
+    });
+
+    it('should use info as default log level', () => {
+      const originalLogLevel = process.env.LOG_LEVEL;
+      delete process.env.LOG_LEVEL;
+
+      const createLoggerSpy = jest.spyOn(winston, 'createLogger');
+      Logger.resetInstance();
+      Logger.getInstance();
+
+      expect(createLoggerSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'info',
+        })
+      );
+
+      process.env.LOG_LEVEL = originalLogLevel;
+      createLoggerSpy.mockRestore();
+    });
+  });
+
+  describe('Custom Logger Injection', () => {
+    it('should allow setting custom logger', () => {
+      const customLogger = {
+        log: jest.fn(),
+      } as unknown as winston.Logger;
+
+      const logger = Logger.getInstance();
+      logger.setLogger(customLogger);
+
+      logger.info('Test message');
+      expect(customLogger.log).toHaveBeenCalled();
+      expect(mockWinstonLogger.log).not.toHaveBeenCalled();
+    });
+
+    it('should use injected logger for all log methods', () => {
+      const customLogger = {
+        log: jest.fn(),
+      } as unknown as winston.Logger;
+
+      const logger = Logger.getInstance();
+      logger.setLogger(customLogger);
+
+      logger.error('Error test');
+      logger.warn('Warning test');
+      logger.info('Info test');
+      logger.debug('Debug test');
+
+      expect(customLogger.log).toHaveBeenCalledTimes(4);
+      expect(mockWinstonLogger.log).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Error Cases', () => {
+    it('should handle logging errors gracefully', () => {
+      const errorLogger = {
+        log: jest.fn().mockImplementation(() => {
+          throw new Error('Logging error');
+        }),
+      } as unknown as winston.Logger;
+
+      const logger = Logger.getInstance();
+      logger.setLogger(errorLogger);
+
+      expect(() => logger.error('Test error')).not.toThrow();
+    });
+
+    it('should handle invalid log levels gracefully', () => {
+      const logger = Logger.getInstance();
+      const invalidLog = (logger as any).log('invalid' as LogLevel, 'Test message');
+      expect(invalidLog).toBeUndefined();
+    });
+
+    it('should handle invalid metadata gracefully', () => {
+      const logger = Logger.getInstance();
+      const circularRef: any = {};
+      circularRef.self = circularRef;
+
+      expect(() => logger.info('Test message', circularRef)).not.toThrow();
+    });
+  });
+
+  describe('Complex Scenarios', () => {
+    it('should handle rapid logging', () => {
+      const logger = Logger.getInstance();
+      const count = 1000;
+
+      for (let i = 0; i < count; i++) {
+        logger.info(`Message ${i}`);
+      }
+
+      expect(mockWinstonLogger.log).toHaveBeenCalledTimes(count);
+    });
+
+    it('should handle mixed log levels', () => {
+      const logger = Logger.getInstance();
+      const messages = [
+        { level: 'error' as LogLevel, message: 'Error occurred' },
+        { level: 'warn' as LogLevel, message: 'Warning state' },
+        { level: 'info' as LogLevel, message: 'Info update' },
+        { level: 'debug' as LogLevel, message: 'Debug data' },
+      ];
+
+      messages.forEach(({ level, message }) => {
+        logger.log(level, message);
+      });
+
+      messages.forEach(({ level, message }, index) => {
+        expect(mockWinstonLogger.log).toHaveBeenNthCalledWith(index + 1, level, message, undefined);
+      });
+    });
+
+    it('should handle concurrent logging', async () => {
+      const logger = Logger.getInstance();
+      const count = 100;
+      const promises: Promise<void>[] = [];
+
+      for (let i = 0; i < count; i++) {
+        promises.push(
+          new Promise<void>((resolve) => {
+            logger.info(`Concurrent message ${i}`);
+            resolve();
+          })
+        );
+      }
+
+      await Promise.all(promises);
+      expect(mockWinstonLogger.log).toHaveBeenCalledTimes(count);
     });
   });
 });

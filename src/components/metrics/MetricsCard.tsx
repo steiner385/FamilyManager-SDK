@@ -84,13 +84,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
         value,
         trend,
         change,
-        timeframe,
-        formatters,
-        styles,
-        loading,
-        error,
-        tooltip,
-        ariaLabel
+        timeframe
       });
     }
   };

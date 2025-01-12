@@ -1,202 +1,167 @@
-import { BaseEvent, EventDeliveryStatus, EventHandler, EventBusConfig, EventEmitter } from './types';
-import { Logger } from '../logging/Logger';
+import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../logging/Logger';
+import { BaseEvent, EventDeliveryStatus, EventHandler, EventSubscription, EventEmitterConfig } from './types';
 
-export class EventBus implements EventEmitter {
-  private static instance: EventBus | null = null;
-  private isRunning: boolean = false;
-  private handlers: Map<string, Set<EventHandler<any>>> = new Map();
-  private logger: Logger;
+export class EventBus {
+  private static instance: EventBus;
+  private subscriptions: Map<string, EventSubscription[]>;
+  private channels: Set<string>;
+  private config: EventEmitterConfig;
+  private isRunning: boolean;
 
-  private constructor(_config: EventBusConfig = {}) {
-    this.logger = Logger.getInstance();
+  private constructor(config: EventEmitterConfig = {}) {
+    this.subscriptions = new Map();
+    this.channels = new Set();
+    this.isRunning = false;
+    this.config = {
+      maxRetries: config.maxRetries || 3,
+      retryDelay: config.retryDelay || 1000,
+    };
   }
 
-  static getInstance(config?: EventBusConfig): EventBus {
+  public static getInstance(config?: EventEmitterConfig): EventBus {
     if (!EventBus.instance) {
       EventBus.instance = new EventBus(config);
     }
     return EventBus.instance;
   }
 
-  static resetInstance(): void {
-    if (EventBus.instance) {
-      EventBus.instance.stop().catch(() => {
-        // Silently handle any stop errors
-      });
-      
-      // Explicitly reset all internal state
-      EventBus.instance.handlers = new Map();
-      EventBus.instance.isRunning = false;
-      
-      // Nullify the instance to force recreation
-      EventBus.instance = null;
-    }
+  public static resetInstance(): void {
+    EventBus.instance = new EventBus();
   }
 
-  async start(): Promise<void> {
-    if (this.isRunning) {
-      this.logger.warn('EventBus is already running');
-      return;
-    }
-
-    this.isRunning = true;
-    this.logger.debug('Starting event bus...');
-    
-    // Initialize handlers if empty
-    if (this.handlers.size === 0) {
-      this.handlers = new Map();
-    }
-  }
-
-  async stop(): Promise<void> {
-    if (!this.isRunning) return;
-    
-    this.isRunning = false;
-    this.handlers.clear();
-    
-    this.logger.debug('Event bus stopped');
-    await new Promise(resolve => setTimeout(resolve, 0));
-  }
-
-  async restart(): Promise<void> {
-    await this.stop();
-    await this.start();
-  }
-
-  registerChannel(channel: string): void {
-    if (!this.isRunning) {
-      throw new Error('Event bus is not running');
-    }
-
-    if (this.handlers.has(channel)) {
-      throw new Error(`Channel ${channel} already exists`);
-    }
-
-    this.handlers.set(channel, new Set());
-    this.logger.debug(`Registered channel: ${channel}`);
-  }
-
-  async publish<T>(channel: string, event: BaseEvent<T>): Promise<{ status: EventDeliveryStatus; errors?: string[] }> {
-    if (!this.isRunning) {
-      throw new Error('Event bus is not running');
-    }
-
-    if (!this.handlers.has(channel)) {
-      throw new Error(`Channel ${channel} not found`);
-    }
-
-    const handlers = this.handlers.get(channel) || new Set();
-    const errors: string[] = [];
-
-    try {
-      for (const handler of handlers) {
-        try {
-          await handler(event);
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          errors.push(errorMessage);
-          this.logger.error(`Handler error in channel ${channel}`, { error: errorMessage });
-        }
-      }
-
-      return {
-        status: errors.length === 0 ? EventDeliveryStatus.Success : EventDeliveryStatus.Failed,
-        errors: errors.length > 0 ? errors : undefined
-      };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Failed to publish event in channel ${channel}`, { error: errorMessage });
-      
-      return {
-        status: EventDeliveryStatus.Failed,
-        errors: [errorMessage]
-      };
-    }
-  }
-
-  subscribe<T>(
-    channelOrHandler: string | EventHandler<T>, 
-    handler?: EventHandler<T>
-  ): () => void {
-    if (!this.isRunning) {
-      throw new Error('Event bus is not running');
-    }
-
-    let channel: string;
-    let eventHandler: EventHandler<T>;
-
-    // Handle different method signatures
-    if (typeof channelOrHandler === 'string') {
-      channel = channelOrHandler;
-      eventHandler = handler!;
-    } else {
-      channel = 'default';
-      eventHandler = channelOrHandler;
-    }
-
-    if (!this.handlers.has(channel)) {
-      throw new Error(`Channel ${channel} not found`);
-    }
-
-    const handlers = this.handlers.get(channel)!;
-    handlers.add(eventHandler as EventHandler<any>);
-    
-    this.logger.debug(`Subscribed handler to channel: ${channel}`);
-
-    return () => {
-      const currentHandlers = this.handlers.get(channel);
-      if (currentHandlers?.has(eventHandler as EventHandler<any>)) {
-        currentHandlers.delete(eventHandler as EventHandler<any>);
-        this.logger.debug(`Unsubscribed handler from channel: ${channel}`);
-      }
-    };
-  }
-
-  unsubscribe<T>(
-    channelOrHandler: string | EventHandler<T>, 
-    handler?: EventHandler<T>
-  ): void {
-    let channel: string;
-    let eventHandler: EventHandler<T>;
-
-    // Handle different method signatures
-    if (typeof channelOrHandler === 'string') {
-      channel = channelOrHandler;
-      eventHandler = handler!;
-    } else {
-      channel = 'default';
-      eventHandler = channelOrHandler;
-    }
-
-    const handlers = this.handlers.get(channel);
-    if (handlers?.has(eventHandler as EventHandler<any>)) {
-      handlers.delete(eventHandler as EventHandler<any>);
-      this.logger.debug(`Unsubscribed handler from channel: ${channel}`);
-    }
-  }
-
-  getRunningState(): boolean {
+  public getRunningState(): boolean {
     return this.isRunning;
   }
 
-  getChannels(): string[] {
-    return Array.from(this.handlers.keys());
+  public async start(): Promise<void> {
+    this.isRunning = true;
+    logger.info('EventBus started');
+  }
+
+  public async stop(): Promise<void> {
+    this.isRunning = false;
+    this.clearSubscriptions();
+    logger.info('EventBus stopped');
+  }
+
+  public registerChannel(channel: string): void {
+    if (this.channels.has(channel)) {
+      throw new Error(`Channel ${channel} is already registered`);
+    }
+    this.channels.add(channel);
+    logger.debug(`Registered channel: ${channel}`);
+  }
+
+  public subscribe(eventType: string, handler: EventHandler): string {
+    if (!this.isRunning) {
+      throw new Error('Cannot subscribe while EventBus is stopped');
+    }
+
+    if (!this.channels.has(eventType)) {
+      throw new Error(`Channel ${eventType} is not registered`);
+    }
+    const subscription: EventSubscription = {
+      id: uuidv4(),
+      eventType,
+      handler,
+    };
+
+    if (!this.subscriptions.has(eventType)) {
+      this.subscriptions.set(eventType, []);
+    }
+
+    this.subscriptions.get(eventType)!.push(subscription);
+    logger.debug(`Subscribed to event ${eventType}`, { subscriptionId: subscription.id });
+
+    return subscription.id;
+  }
+
+  public unsubscribe(subscriptionId: string): void {
+    for (const [eventType, subs] of this.subscriptions.entries()) {
+      const index = subs.findIndex(sub => sub.id === subscriptionId);
+      if (index !== -1) {
+        subs.splice(index, 1);
+        logger.debug(`Unsubscribed from event ${eventType}`, { subscriptionId });
+        if (subs.length === 0) {
+          this.subscriptions.delete(eventType);
+        }
+        return;
+      }
+    }
+  }
+
+  public async emit(event: BaseEvent): Promise<EventDeliveryStatus> {
+    if (!this.isRunning) {
+      throw new Error('Cannot emit events while EventBus is stopped');
+    }
+
+    if (!this.channels.has(event.type)) {
+      throw new Error(`Channel ${event.type} is not registered`);
+    }
+
+    const subscribers = this.subscriptions.get(event.type) || [];
+    if (subscribers.length === 0) {
+      logger.debug(`No subscribers for event ${event.type}`);
+      return EventDeliveryStatus.SUCCESS;
+    }
+
+    let hasErrors = false;
+    const results = await Promise.allSettled(
+      subscribers.map(sub => this.deliverWithRetry(sub, event))
+    );
+
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        hasErrors = true;
+        logger.error(`Failed to deliver event to subscriber ${subscribers[index].id}`, {
+          error: result.reason,
+          eventType: event.type
+        });
+      }
+    });
+
+    return hasErrors ? EventDeliveryStatus.PARTIAL : EventDeliveryStatus.SUCCESS;
+  }
+
+  private async deliverWithRetry(
+    subscription: EventSubscription,
+    event: BaseEvent,
+    attempt: number = 1
+  ): Promise<void> {
+    try {
+      await subscription.handler(event);
+    } catch (error) {
+      if (attempt >= this.config.maxRetries!) {
+        logger.error(`Max retries reached for event ${event.type}`, {
+          subscriptionId: subscription.id,
+          error,
+        });
+        throw error;
+      }
+
+      logger.warn(`Retrying event delivery for ${event.type}`, {
+        attempt,
+        subscriptionId: subscription.id,
+      });
+
+      await new Promise(resolve => setTimeout(resolve, this.config.retryDelay!));
+      return this.deliverWithRetry(subscription, event, attempt + 1);
+    }
+  }
+
+  public getSubscriptionCount(eventType: string): number {
+    return this.subscriptions.get(eventType)?.length || 0;
+  }
+
+  public clearSubscriptions(): void {
+    this.subscriptions.clear();
+  }
+
+  public getChannels(): string[] {
+    return Array.from(this.channels);
   }
 }
 
-// Lazy-loaded singleton export
-let _eventBus: EventBus | null = null;
-
-export function getEventBus(config?: EventBusConfig): EventBus {
-  if (!_eventBus) {
-    _eventBus = EventBus.getInstance(config);
-  }
-  return _eventBus;
-}
-
-export function resetEventBus(): void {
-  if (_eventBus) {
-    _eventBus.stop();
-    _eventBus = null;
-  }
-}
+// Export a default instance
+export const eventBus = EventBus.getInstance();

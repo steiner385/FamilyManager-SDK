@@ -1,23 +1,14 @@
-/// <reference types="jest" />
+import '@testing-library/jest-dom';
 
 declare global {
-  namespace NodeJS {
-    interface Global {
-      describe: jest.Describe;
-      it: jest.It;
-      expect: jest.Expect;
-      beforeEach: jest.BeforeEach;
-      afterEach: jest.AfterEach;
-      jest: typeof jest;
+  namespace jest {
+    interface Matchers<R> {
+      toBeInTheDocument(): R;
+      toHaveAttribute(attr: string, value?: string): R;
+      toHaveClass(...classNames: string[]): R;
+      toHaveTextContent(text: string | RegExp): R;
     }
   }
-
-  var describe: jest.Describe;
-  var it: jest.It;
-  var expect: jest.Expect;
-  var beforeEach: jest.BeforeEach;
-  var afterEach: jest.AfterEach;
-  var jest: typeof jest;
 }
 
 export {};

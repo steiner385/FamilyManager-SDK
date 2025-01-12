@@ -2,41 +2,41 @@ export interface ErrorParams {
   code: string;
   message: string;
   statusCode?: number;
-  details?: Record<string, unknown>;
+  details?: any;
   source?: string;
-  cause?: unknown;
+  cause?: Error;
 }
 
-export abstract class BaseError extends Error {
-  readonly code: string;
-  readonly statusCode: number;
-  readonly details?: Record<string, unknown>;
-  readonly source?: string;
-  readonly cause?: unknown;
+export const DEFAULT_STATUS_CODES: Record<string, number> = {
+  'NOT_FOUND': 404,
+  'INVALID_RECURRENCE': 400,
+  'VALIDATION_ERROR': 400,
+  'AUTHENTICATION_ERROR': 401,
+  'AUTHORIZATION_ERROR': 403,
+  'PLUGIN_ERROR': 500
+};
+
+export class BaseError extends Error {
+  public readonly code: string;
+  public readonly statusCode: number;
+  public readonly details?: any;
+  public readonly source?: string;
+  public readonly cause?: Error;
 
   constructor(params: ErrorParams) {
     super(params.message);
+    this.name = this.constructor.name;
     this.code = params.code;
-    this.statusCode = params.statusCode || this.getDefaultStatusCode(params.code);
+    this.statusCode = params.statusCode ?? DEFAULT_STATUS_CODES[params.code] ?? 500;
     this.details = params.details;
     this.source = params.source;
     this.cause = params.cause;
-    this.name = this.constructor.name;
+
+    // Maintains proper stack trace for where our error was thrown
     Error.captureStackTrace(this, this.constructor);
   }
 
-  protected getDefaultStatusCode(code: string): number {
-    const codeMap: Record<string, number> = {
-      'UNAUTHORIZED': 401,
-      'FORBIDDEN': 403,
-      'NOT_FOUND': 404,
-      'VALIDATION_ERROR': 400,
-      'INTERNAL_ERROR': 500
-    };
-    return codeMap[code] || 500;
-  }
-
-  public toJSON() {
+  toJSON() {
     return {
       name: this.name,
       code: this.code,
