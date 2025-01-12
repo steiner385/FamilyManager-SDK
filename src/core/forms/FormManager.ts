@@ -103,7 +103,7 @@ export class FormManager<T extends Record<string, any>> {
   }
 
   handleChange(name: keyof T, value: any) {
-    // First update the state
+    // Update state
     this.state = {
       ...this.state,
       values: {
@@ -112,11 +112,8 @@ export class FormManager<T extends Record<string, any>> {
       },
       isDirty: true
     }
-
-    // Notify subscribers of the state change
-    this.notify()
     
-    // Then validate the field
+    // Validate the field - this will call notify() internally
     this.validateField(name)
   }
 
