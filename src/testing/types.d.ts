@@ -1,64 +1,23 @@
 /// <reference types="jest" />
-/// <reference types="@testing-library/jest-dom" />
-
-declare namespace jest {
-  interface Matchers<R, T> {
-    toBeInTheDocument(): R;
-    toBeVisible(): R;
-    toHaveClass(...classNames: string[]): R;
-    toHaveAttribute(attr: string, value?: string): R;
-    toContain(text: string): R;
-    toBe(value: any): R;
-    toBeDefined(): R;
-    toBeNull(): R;
-  }
-}
-
-declare module '@testing-library/jest-dom' {
-  export interface Matchers<R = void, T = any> {
-    toBeInTheDocument(): R;
-    toBeVisible(): R;
-    toHaveClass(...classNames: string[]): R;
-    toHaveAttribute(attr: string, value?: string): R;
-    toContain(text: string): R;
-    toBe(value: any): R;
-    toBeDefined(): R;
-    toBeNull(): R;
-  }
-}
-
-declare module '@jest/expect' {
-  interface Matchers<R = void, T = any> {
-    toBeInTheDocument(): R;
-    toBeVisible(): R;
-    toHaveClass(...classNames: string[]): R;
-    toHaveAttribute(attr: string, value?: string): R;
-    toContain(text: string): R;
-    toBe(value: any): R;
-    toBeDefined(): R;
-    toBeNull(): R;
-  }
-}
-
-declare module '@testing-library/jest-dom/matchers' {
-  export interface Matchers<R = void, T = any> {
-    toBeInTheDocument(): R;
-    toBeVisible(): R;
-    toHaveClass(...classNames: string[]): R;
-    toHaveAttribute(attr: string, value?: string): R;
-    toContain(text: string): R;
-    toBe(value: any): R;
-    toBeDefined(): R;
-    toBeNull(): R;
-  }
-}
 
 declare global {
-  namespace jest {
-    interface Expect {
-      <T = any>(actual: T): Matchers<void, T>;
+  namespace NodeJS {
+    interface Global {
+      describe: jest.Describe;
+      it: jest.It;
+      expect: jest.Expect;
+      beforeEach: jest.BeforeEach;
+      afterEach: jest.AfterEach;
+      jest: typeof jest;
     }
   }
+
+  var describe: jest.Describe;
+  var it: jest.It;
+  var expect: jest.Expect;
+  var beforeEach: jest.BeforeEach;
+  var afterEach: jest.AfterEach;
+  var jest: typeof jest;
 }
 
 export {};
