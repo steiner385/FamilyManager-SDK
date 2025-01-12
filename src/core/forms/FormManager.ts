@@ -46,6 +46,7 @@ export class FormManager<T extends Record<string, any>> {
 
   async validateField(name: keyof T) {
     if (!this.config.validationSchema) {
+      // If no validation schema, we need to notify here
       this.notify()
       return
     }
@@ -110,8 +111,8 @@ export class FormManager<T extends Record<string, any>> {
       },
       isDirty: true
     }
-    this.notify() // Notify subscribers of value change
-    this.validateField(name) // This will trigger separate notification after validation
+    // Only validate, which will handle the notification
+    this.validateField(name)
   }
 
   handleBlur(name: keyof T) {
