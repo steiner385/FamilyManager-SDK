@@ -194,6 +194,9 @@ describe('PluginProvider', () => {
   });
 
   it('should handle plugin installation errors', async () => {
+    // Setup error handling spy
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
     const error = new Error('Installation failed');
     mockInstallPlugin.mockRejectedValueOnce(error);
 
@@ -203,16 +206,25 @@ describe('PluginProvider', () => {
       </PluginProvider>
     );
 
+    // Wait for initialization
     await act(async () => {
       jest.runAllTimers();
     });
 
+    // Click and wait for error
     await act(async () => {
       getByTestId('install-button').click();
+      // Wait for promises to resolve
+      await Promise.resolve();
     });
 
+    // Verify the install was attempted
     expect(mockInstallPlugin).toHaveBeenCalledWith(mockPlugin);
-    // The error will be caught by ErrorBoundary
+    // Verify error was logged
+    expect(consoleSpy).toHaveBeenCalled();
+
+    // Cleanup
+    consoleSpy.mockRestore();
   });
 
   it('should maintain stable context value', async () => {
