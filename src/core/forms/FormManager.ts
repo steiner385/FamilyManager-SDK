@@ -23,7 +23,7 @@ export class FormManager<T extends Record<string, any>> {
   constructor(config: FormConfig<T>) {
     this.config = config
     this.state = {
-      values: config.initialValues,
+      values: { ...config.initialValues }, // Clone initial values
       errors: {},
       touched: {},
       isSubmitting: false,
@@ -32,7 +32,7 @@ export class FormManager<T extends Record<string, any>> {
     }
     this.subscribers = new Set()
     // Notify subscribers of initial state
-    this.notify()
+    setTimeout(() => this.notify(), 0) // Use setTimeout to ensure subscription is set up
   }
 
   private notify() {
@@ -48,11 +48,7 @@ export class FormManager<T extends Record<string, any>> {
     if (!this.config.validationSchema) return
 
     try {
-      await this.config.validationSchema.parseAsync({
-        ...this.state.values,
-        [name]: this.state.values[name]
-      })
-      // Create new errors object to ensure state update
+      await this.config.validationSchema.parseAsync(this.state.values)
       this.state.errors = {
         ...this.state.errors,
         [name]: undefined
@@ -60,15 +56,13 @@ export class FormManager<T extends Record<string, any>> {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldError = error.errors.find(e => e.path[0] === name)
-        // Create new errors object to ensure state update
         this.state.errors = {
           ...this.state.errors,
-          [name]: fieldError ? fieldError.message : undefined
+          [name]: fieldError?.message || undefined
         }
       }
     }
 
-    // Update isValid based on current errors
     this.state.isValid = Object.values(this.state.errors).every(error => !error)
     this.notify()
   }
@@ -83,10 +77,13 @@ export class FormManager<T extends Record<string, any>> {
       return true
     } catch (error) {
       if (error instanceof z.ZodError) {
-        this.state.errors = error.errors.reduce((acc, curr) => ({
-          ...acc,
-          [curr.path[0]]: curr.message
-        }), {})
+        const newErrors: Partial<Record<keyof T, string>> = {}
+        error.errors.forEach(err => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as keyof T] = err.message
+          }
+        })
+        this.state.errors = newErrors
         this.state.isValid = false
       }
       return false
@@ -96,10 +93,15 @@ export class FormManager<T extends Record<string, any>> {
   }
 
   handleChange(name: keyof T, value: any) {
-    this.state.values[name] = value
-    this.state.isDirty = true
+    this.state = {
+      ...this.state,
+      values: {
+        ...this.state.values,
+        [name]: value
+      },
+      isDirty: true
+    }
     this.validateField(name)
-    this.notify()
   }
 
   handleBlur(name: keyof T) {
