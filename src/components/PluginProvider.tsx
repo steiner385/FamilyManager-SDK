@@ -25,12 +25,31 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // Create the context value directly with memoized functions
-  const value = React.useMemo(() => ({
-    installPlugin: (plugin: Plugin) => manager.installPlugin(plugin),
-    getPlugin: (name: string) => manager.getPlugin(name),
-    isPluginReady: (name: string) => manager.isInitialized(name)
-  }), [manager]);
+  // Use separate useCallback hooks for each function
+  const installPlugin = React.useCallback(
+    (plugin: Plugin) => manager.installPlugin(plugin),
+    [manager]
+  );
+
+  const getPlugin = React.useCallback(
+    (name: string) => manager.getPlugin(name),
+    [manager]
+  );
+
+  const isPluginReady = React.useCallback(
+    (name: string) => manager.isInitialized(name),
+    [manager]
+  );
+
+  // Create the context value using the stable function references
+  const value = React.useMemo(
+    () => ({
+      installPlugin,
+      getPlugin,
+      isPluginReady
+    }),
+    [installPlugin, getPlugin, isPluginReady]
+  );
 
   if (!isInitialized) {
     return null;
