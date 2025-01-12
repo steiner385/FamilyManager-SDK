@@ -31,6 +31,8 @@ export class FormManager<T extends Record<string, any>> {
       isDirty: false
     }
     this.subscribers = new Set()
+    // Notify subscribers of initial state
+    this.notify()
   }
 
   private notify() {
@@ -50,16 +52,24 @@ export class FormManager<T extends Record<string, any>> {
         ...this.state.values,
         [name]: this.state.values[name]
       })
-      this.state.errors[name] = undefined
+      // Create new errors object to ensure state update
+      this.state.errors = {
+        ...this.state.errors,
+        [name]: undefined
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldError = error.errors.find(e => e.path[0] === name)
-        if (fieldError) {
-          this.state.errors[name] = fieldError.message
+        // Create new errors object to ensure state update
+        this.state.errors = {
+          ...this.state.errors,
+          [name]: fieldError ? fieldError.message : undefined
         }
       }
     }
 
+    // Update isValid based on current errors
+    this.state.isValid = Object.values(this.state.errors).every(error => !error)
     this.notify()
   }
 
@@ -101,18 +111,23 @@ export class FormManager<T extends Record<string, any>> {
   async handleSubmit(e?: React.FormEvent) {
     e?.preventDefault()
 
-    this.state.isSubmitting = true
-    this.notify()
-
-    const isValid = await this.validateForm()
-    if (!isValid) {
-      this.state.isSubmitting = false
-      this.notify()
-      return
-    }
-
     try {
+      this.state.isSubmitting = true
+      this.notify()
+
+      const isValid = await this.validateForm()
+      if (!isValid) {
+        return
+      }
+
       await this.config.onSubmit(this.state.values)
+    } catch (error) {
+      // Update error state if submission fails
+      this.state.errors = {
+        ...this.state.errors,
+        submit: error instanceof Error ? error.message : 'Submission failed'
+      }
+      this.state.isValid = false
     } finally {
       this.state.isSubmitting = false
       this.notify()
