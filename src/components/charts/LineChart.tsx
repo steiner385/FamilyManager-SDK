@@ -75,10 +75,10 @@ export const LineChart: React.FC<LineChartProps> = ({
   const formatTimestamp = formatters.timestamp || ((value: number) => {
     const date = new Date(value);
     return date.toLocaleDateString('en-US', { 
-      month: 'numeric',
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
-    }).replace(/\//g, '/');
+    });
   });
   const formatValue = formatters.value || ((value: number) => value.toString());
 

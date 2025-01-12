@@ -157,7 +157,11 @@ describe('LineChart', () => {
 
   it('handles custom formatters', () => {
     const formatters = {
-      timestamp: (ts: number) => new Date(ts).toLocaleDateString(),
+      timestamp: (ts: number) => new Date(ts).toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric'
+      }),
       value: (val: number) => `$${val}`
     };
 
@@ -172,7 +176,12 @@ describe('LineChart', () => {
     const xLabels = screen.getAllByTestId('line-chart-x-label');
     const yLabels = screen.getAllByTestId('line-chart-y-label');
 
-    expect(xLabels[0]).toHaveTextContent('1/1/2024');
+    const expectedDate = new Date(mockData[0].timestamp).toLocaleDateString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    expect(xLabels[0]).toHaveTextContent(expectedDate);
     expect(yLabels[0]).toHaveTextContent('$10');
   });
 
