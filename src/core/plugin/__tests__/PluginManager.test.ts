@@ -1,132 +1,166 @@
-import { PluginManager, Plugin } from '../PluginManager'
-import { createMockPlugin } from '../../testing/utils/testHelpers'
+import { PluginManager } from '../PluginManager';
+import { Plugin, PluginContext, PluginRegistry } from '../types';
+import { EventBus } from '../../events/EventBus';
+import { Hono } from 'hono';
+import { PrismaClient } from '@prisma/client';
 
 describe('PluginManager', () => {
-  let manager: PluginManager
-
+  let pluginManager: PluginManager;
+  let mockContext: PluginContext;
+  
   beforeEach(() => {
-    // Reset singleton instance
-    // @ts-ignore - accessing private property for testing
-    PluginManager.instance = null
-    manager = PluginManager.getInstance()
-  })
+    const app = new Hono();
+    const prisma = {} as PrismaClient; // Mock prisma
+    const eventBus = EventBus.getInstance();
+    
+    mockContext = {
+      app,
+      prisma,
+      plugins: {} as PluginRegistry,
+      config: {
+        env: 'test'
+      }
+    };
+    
+    // Reset the singleton instances
+    (PluginManager as any).instance = undefined;
+    pluginManager = PluginManager.getInstance();
+    pluginManager.clearPlugins(); // Clear any existing plugins
+    pluginManager.initialize(mockContext);
+  });
 
-  describe('singleton', () => {
-    it('maintains singleton instance', () => {
-      const instance1 = PluginManager.getInstance()
-      const instance2 = PluginManager.getInstance()
-      expect(instance1).toBe(instance2)
-    })
-  })
+  describe('registerPlugin', () => {
+    it('should register a valid plugin', async () => {
+      const mockPlugin: Plugin = {
+        metadata: {
+          name: 'test-plugin',
+          version: '1.0.0',
+          description: 'Test plugin'
+        },
+        initialize: jest.fn().mockResolvedValue(undefined)
+      };
 
-  describe('installPlugin', () => {
-    const mockPlugin = createMockPlugin({
-      name: 'test-plugin',
-      version: '1.0.0'
-    })
+      await expect(pluginManager.registerPlugin(mockPlugin))
+        .resolves.toBeUndefined();
+      
+      expect(mockPlugin.initialize).toHaveBeenCalledWith(mockContext);
+      expect(pluginManager.getPlugin('test-plugin')).toBe(mockPlugin);
+    });
 
-    it('installs plugin successfully', async () => {
-      await manager.installPlugin(mockPlugin)
-      expect(manager.isPluginInstalled('test-plugin')).toBe(true)
-    })
+    it('should throw error when registering duplicate plugin', async () => {
+      const mockPlugin: Plugin = {
+        metadata: {
+          name: 'test-plugin',
+          version: '1.0.0',
+          description: 'Test plugin'
+        },
+        initialize: jest.fn().mockResolvedValue(undefined)
+      };
 
-    it('prevents duplicate installation', async () => {
-      await manager.installPlugin(mockPlugin)
-      await expect(manager.installPlugin(mockPlugin)).rejects.toThrow(
-        'Plugin test-plugin is already installed'
-      )
-    })
+      await pluginManager.registerPlugin(mockPlugin);
 
-    it('validates dependencies before installation', async () => {
-      const pluginWithDeps = createMockPlugin({
-        name: 'dependent-plugin',
-        version: '1.0.0',
-        dependencies: ['missing-plugin']
-      })
+      await expect(pluginManager.registerPlugin(mockPlugin))
+        .rejects.toThrow('Plugin test-plugin is already registered');
+    });
 
-      await expect(manager.installPlugin(pluginWithDeps)).rejects.toThrow(
-        'Missing dependency: missing-plugin'
-      )
-    })
-  })
+    it('should throw error when dependencies are missing', async () => {
+      const mockPlugin: Plugin = {
+        metadata: {
+          name: 'dependent-plugin',
+          version: '1.0.0',
+          description: 'Plugin with dependencies',
+          dependencies: ['missing-plugin']
+        },
+        initialize: jest.fn()
+      };
 
-  describe('initializePlugin', () => {
-    const mockPlugin = createMockPlugin({
-      name: 'test-plugin',
-      version: '1.0.0'
-    })
+      await expect(pluginManager.registerPlugin(mockPlugin))
+        .rejects.toThrow('Missing required dependency: missing-plugin');
+    });
+  });
 
-    beforeEach(async () => {
-      await manager.installPlugin(mockPlugin)
-    })
+  describe('unregisterPlugin', () => {
+    it('should unregister an existing plugin', async () => {
+      const mockPlugin: Plugin = {
+        metadata: {
+          name: 'test-plugin-unregister',
+          version: '1.0.0',
+          description: 'Test plugin'
+        },
+        initialize: jest.fn().mockResolvedValue(undefined),
+        teardown: jest.fn().mockResolvedValue(undefined)
+      };
 
-    it('initializes plugin successfully', async () => {
-      await manager.initializePlugin('test-plugin')
-      expect(manager.isInitialized('test-plugin')).toBe(true)
-    })
+      await pluginManager.registerPlugin(mockPlugin);
+      await pluginManager.unregisterPlugin('test-plugin-unregister');
 
-    it('prevents duplicate initialization', async () => {
-      await manager.initializePlugin('test-plugin')
-      await manager.initializePlugin('test-plugin') // Should not throw
-      expect(manager.isInitialized('test-plugin')).toBe(true)
-    })
+      expect(mockPlugin.teardown).toHaveBeenCalled();
+      expect(pluginManager.getPlugin('test-plugin-unregister')).toBeUndefined();
+    });
 
-    it('throws error for non-existent plugin', async () => {
-      await expect(manager.initializePlugin('non-existent')).rejects.toThrow(
-        'Plugin non-existent not found'
-      )
-    })
-  })
+    it('should throw error when unregistering non-existent plugin', async () => {
+      await expect(pluginManager.unregisterPlugin('non-existent'))
+        .rejects.toThrow('Plugin non-existent is not registered');
+    });
 
-  describe('uninstallPlugin', () => {
-    const mockPlugin = createMockPlugin({
-      name: 'test-plugin',
-      version: '1.0.0'
-    })
+    it('should throw error when plugin has dependents', async () => {
+      const basePlugin: Plugin = {
+        metadata: {
+          name: 'base-plugin',
+          version: '1.0.0',
+          description: 'Base plugin'
+        },
+        initialize: jest.fn()
+      };
 
-    beforeEach(async () => {
-      await manager.installPlugin(mockPlugin)
-      await manager.initializePlugin('test-plugin')
-    })
+      const dependentPlugin: Plugin = {
+        metadata: {
+          name: 'dependent-plugin',
+          version: '1.0.0',
+          description: 'Dependent plugin',
+          dependencies: ['base-plugin']
+        },
+        initialize: jest.fn()
+      };
 
-    it('uninstalls plugin successfully', async () => {
-      await manager.uninstallPlugin('test-plugin')
-      expect(manager.isPluginInstalled('test-plugin')).toBe(false)
-      expect(manager.isInitialized('test-plugin')).toBe(false)
-    })
+      await pluginManager.registerPlugin(basePlugin);
+      await pluginManager.registerPlugin(dependentPlugin);
 
-    it('handles non-existent plugin gracefully', async () => {
-      await manager.uninstallPlugin('non-existent') // Should not throw
-    })
-  })
+      await expect(pluginManager.unregisterPlugin('base-plugin'))
+        .rejects.toThrow('Cannot unregister base-plugin: dependent-plugin depends on it');
+    });
+  });
 
-  describe('dependency management', () => {
-    it('detects circular dependencies', () => {
-      const pluginA = createMockPlugin({
-        name: 'plugin-a',
-        version: '1.0.0',
-        dependencies: ['plugin-b']
-      })
+  describe('getAllPlugins', () => {
+    it('should return all registered plugins', async () => {
+      // Clear any existing plugins first
+      (pluginManager as any).clearPlugins();
+      
+      const plugins = [
+        {
+          metadata: {
+            name: 'plugin-1',
+            version: '1.0.0',
+            description: 'Plugin 1'
+          },
+          initialize: jest.fn()
+        },
+        {
+          metadata: {
+            name: 'plugin-2',
+            version: '1.0.0',
+            description: 'Plugin 2'
+          },
+          initialize: jest.fn()
+        }
+      ];
 
-      const pluginB = createMockPlugin({
-        name: 'plugin-b',
-        version: '1.0.0',
-        dependencies: ['plugin-a']
-      })
-
-      // No plugins installed yet
-      expect(manager.hasCircularDependency('plugin-a')).toBe(false)
-
-      // Install plugins with circular dependency
-      manager['plugins'].set('plugin-a', pluginA)
-      manager['plugins'].set('plugin-b', pluginB)
-      expect(manager.hasCircularDependency('plugin-a')).toBe(true)
-    })
-
-    it('validates version compatibility', () => {
-      expect(manager.isVersionCompatible('1.2.3', '1.2.0')).toBe(true)
-      expect(manager.isVersionCompatible('1.2.3', '1.3.0')).toBe(false)
-      expect(manager.isVersionCompatible('2.0.0', '1.0.0')).toBe(false)
-    })
-  })
-})
+      await Promise.all(plugins.map(p => pluginManager.registerPlugin(p)));
+      
+      const allPlugins = pluginManager.getAllPlugins();
+      expect(allPlugins).toHaveLength(2);
+      expect(allPlugins).toContain(plugins[0]);
+      expect(allPlugins).toContain(plugins[1]);
+    });
+  });
+});

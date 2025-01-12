@@ -1,37 +1,36 @@
-import { useState, useCallback } from 'react';
+import { useAppSelector, RootState } from '../store';
+import { Permission } from '../types/auth';
 
-interface UsePermissionsReturn {
-  hasPermission: (permission: string) => boolean;
-  grantPermission: (permission: string) => void;
-  revokePermission: (permission: string) => void;
-}
+export function usePermissions() {
+  const user = useAppSelector((state: RootState) => state.auth.user);
 
-export function usePermissions(): UsePermissionsReturn {
-  const [permissions, setPermissions] = useState<Set<string>>(new Set());
+  const hasPermission = (requiredPermission: Permission): boolean => {
+    if (!user) return false;
 
-  const hasPermission = useCallback((permission: string): boolean => {
-    return permissions.has(permission);
-  }, [permissions]);
+    switch (requiredPermission) {
+      case 'admin':
+        return user.role === 'admin';
+      case 'user':
+        return user.role === 'admin' || user.role === 'user';
+      case 'guest':
+        return true;
+      default:
+        return false;
+    }
+  };
 
-  const grantPermission = useCallback((permission: string): void => {
-    setPermissions(prev => {
-      const next = new Set(prev);
-      next.add(permission);
-      return next;
-    });
-  }, []);
+  const hasAnyPermission = (permissions: Permission[]): boolean => {
+    return permissions.some(permission => hasPermission(permission));
+  };
 
-  const revokePermission = useCallback((permission: string): void => {
-    setPermissions(prev => {
-      const next = new Set(prev);
-      next.delete(permission);
-      return next;
-    });
-  }, []);
+  const hasAllPermissions = (permissions: Permission[]): boolean => {
+    return permissions.every(permission => hasPermission(permission));
+  };
 
   return {
     hasPermission,
-    grantPermission,
-    revokePermission
+    hasAnyPermission,
+    hasAllPermissions,
+    userRole: user?.role
   };
 }

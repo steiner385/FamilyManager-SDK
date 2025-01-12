@@ -1,47 +1,103 @@
-import type { ReactNode } from 'react';
-import type { BaseConfig, BaseState } from '../../types/base';
-import type { Plugin } from '../../types/plugin';
+import type { Hono } from 'hono';
+import type { Env } from 'hono/types';
+import type { PrismaClient } from '@prisma/client';
+import type { LogMetadata } from '../logging/types';
 
-export type { Plugin };
-
-export interface PluginConfiguration extends BaseConfig {
-  metadata: {
-    name: string;
-    description?: string;
-    version: string;
-    author?: string;
-    dependencies?: string[];
-  };
-  routes?: RouteConfig[];
-  permissions?: PermissionConfig[];
-}
-
-export interface PluginStatus extends BaseState {
-  isEnabled: boolean;
-  isInitialized: boolean;
-}
-
-export interface PluginHealthCheck {
-  status: 'healthy' | 'unhealthy';
-  message?: string;
-  timestamp: number;
-}
-
-export interface RouteConfig {
-  path: string;
-  component: React.ComponentType;
-  exact?: boolean;
-  layout?: string;
-}
-
-export interface PermissionConfig {
+/**
+ * Plugin metadata interface
+ */
+export interface PluginMetadata {
   name: string;
-  description?: string;
-  roles?: string[];
+  version: string;
+  description: string;
+  author?: string;
+  dependencies?: string[];
+  optionalDependencies?: string[];
 }
 
-export interface PluginContext {
-  config: PluginConfiguration;
-  state: PluginStatus;
-  children?: ReactNode;
+/**
+ * Plugin registry interface
+ */
+export interface PluginRegistry {
+  hasPlugin(name: string): boolean;
+  getPlugin(name: string): Plugin | undefined;
+  getPluginState(name: string): PluginState;
+}
+
+/**
+ * Plugin context interface
+ */
+export interface PluginContext<T extends Env = Env> {
+  app: Hono<T>;
+  prisma: PrismaClient;
+  plugins: PluginRegistry;
+  config: {
+    env: string;
+    [key: string]: any;
+  };
+  logMetadata?: Partial<LogMetadata>;
+}
+
+/**
+ * Plugin interface
+ */
+export interface PluginRouteMeta {
+  label: string;
+  showInNav?: boolean;
+  icon?: React.ComponentType;
+  requiredPermissions?: string[];
+}
+
+export interface PluginRoute {
+  path: string;
+  element: React.ComponentType;
+  meta?: PluginRouteMeta;
+}
+
+export interface PluginLifecycleHooks {
+  onInstall?: () => Promise<void>;
+  onUninstall?: () => Promise<void>;
+  onEnable?: () => Promise<void>;
+  onDisable?: () => Promise<void>;
+  onUpdate?: (fromVersion: string) => Promise<void>;
+}
+
+export interface Plugin<T extends Env = Env> {
+  readonly metadata: PluginMetadata;
+  readonly routes?: PluginRoute[];
+  readonly lifecycleHooks?: PluginLifecycleHooks;
+  initialize(context: PluginContext<T>): Promise<void>;
+  teardown?(): Promise<void>;
+  onError?(error: Error): Promise<void>;
+  onDependencyChange?(dependency: string): Promise<void>;
+}
+
+/**
+ * Plugin state type
+ */
+export type PluginState = 'registered' | 'initializing' | 'ready' | 'error';
+
+/**
+ * Plugin error interface
+ */
+export interface PluginError extends Error {
+  pluginName: string;
+  code: string;
+}
+
+/**
+ * Type guard for plugin errors
+ */
+export function isPluginError(error: any): error is PluginError {
+  return error instanceof Error && 'pluginName' in error && 'code' in error;
+}
+
+/**
+ * Helper function to create plugin errors
+ */
+export function createPluginError(pluginName: string, code: string, message: string): PluginError {
+  const error = new Error(message) as PluginError;
+  error.pluginName = pluginName;
+  error.code = code;
+  return error;
 }
