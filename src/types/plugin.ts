@@ -39,25 +39,6 @@ export interface PluginState extends BaseState {
   status: PluginStateType;
 }
 
-export interface PluginHealthCheck {
-  status: 'healthy' | 'unhealthy';
-  message: string;
-  timestamp: number;
-}
-
-export interface PluginLayout {
-  id: string;
-  name: string;
-  template: string[];
-}
-
-export interface PluginPreference {
-  key: string;
-  type: 'boolean' | 'string' | 'number';
-  label: string;
-  defaultValue: any;
-}
-
 export interface PluginMetrics {
   memory: {
     current: number;
@@ -76,6 +57,26 @@ export interface PluginMetrics {
   };
 }
 
+export interface PluginHealthCheck {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  message: string;
+  timestamp: number;
+  metrics?: PluginMetrics;
+}
+
+export interface PluginLayout {
+  id: string;
+  name: string;
+  template: string[];
+}
+
+export interface PluginPreference {
+  key: string;
+  type: 'boolean' | 'string' | 'number';
+  label: string;
+  defaultValue: any;
+}
+
 export interface Plugin {
   id: string;
   name: string;
@@ -88,5 +89,5 @@ export interface Plugin {
   onInit?: () => Promise<void>;
   onUnload?: () => Promise<void>;
   getHealth?: () => Promise<PluginHealthCheck>;
-  getPluginMetrics?: (pluginName: string, timeRange?: string) => Promise<any>;
+  getPluginMetrics?: (pluginName: string, timeRange?: string) => Promise<PluginMetrics>;
 }

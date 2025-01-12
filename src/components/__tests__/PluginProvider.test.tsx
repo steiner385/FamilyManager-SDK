@@ -1,7 +1,18 @@
+import React from 'react'
 import { render } from '@testing-library/react'
 import { PluginProvider, usePluginContext } from '../PluginProvider'
+import { PluginManager } from '../../core/plugin/PluginManager'
+import '@testing-library/jest-dom'
 
-jest.mock('../../core/plugin/PluginManager')
+jest.mock('../../core/plugin/PluginManager', () => ({
+  PluginManager: {
+    getInstance: jest.fn(() => ({
+      installPlugin: jest.fn(),
+      getPlugin: jest.fn(),
+      isInitialized: jest.fn()
+    }))
+  }
+}))
 
 describe('PluginProvider', () => {
   const TestComponent = () => {

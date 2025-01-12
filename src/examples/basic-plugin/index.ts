@@ -29,7 +29,8 @@ export class BasicPlugin extends BasePlugin {
         version: '1.0.0',
         description: 'A basic example plugin',
         author: 'FamilyManager'
-      }
+      },
+      config: configSchema // Add schema for validation
     };
 
     super(config);
@@ -116,18 +117,52 @@ export class BasicPlugin extends BasePlugin {
     try {
       // Example health check logic
       const config = this.context.config as BasicPluginConfig;
-      const isHealthy = Boolean(config.greeting);
+      const hasGreeting = Boolean(config.greeting);
 
       return {
-        status: isHealthy ? 'healthy' : 'unhealthy',
+        status: hasGreeting ? 'healthy' : 'degraded',
         timestamp: Date.now(),
-        message: isHealthy ? 'Plugin is healthy' : 'Missing greeting configuration'
+        message: hasGreeting ? 'Plugin is healthy' : 'Missing greeting configuration',
+        metrics: {
+          memory: {
+            current: 50,
+            trend: 0,
+            history: []
+          },
+          cpu: {
+            current: 30,
+            trend: 0,
+            history: []
+          },
+          responseTime: {
+            current: 100,
+            trend: 0,
+            history: []
+          }
+        }
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         timestamp: Date.now(),
-        message: 'Health check failed'
+        message: 'Health check failed',
+        metrics: {
+          memory: {
+            current: 0,
+            trend: 0,
+            history: []
+          },
+          cpu: {
+            current: 0,
+            trend: 0,
+            history: []
+          },
+          responseTime: {
+            current: 0,
+            trend: 0,
+            history: []
+          }
+        }
       };
     }
   }

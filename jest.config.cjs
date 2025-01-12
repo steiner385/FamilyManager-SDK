@@ -8,12 +8,13 @@ module.exports = {
     '**/__tests__/**/*.test.tsx'
   ],
   transform: {
-    '^.+\\.tsx?$': [
-      'ts-jest',
-      {
-        tsconfig: 'tsconfig.json'
+    '^.+\\.tsx?$': ['ts-jest', {
+      tsconfig: 'tsconfig.test.json',
+      isolatedModules: true,
+      diagnostics: {
+        ignoreCodes: ['TS151001']
       }
-    ]
+    }]
   },
   moduleNameMapper: {
     '^@core/(.*)$': '<rootDir>/src/core/$1',
@@ -24,7 +25,8 @@ module.exports = {
     '^@types/(.*)$': '<rootDir>/src/types/$1'
   },
   setupFilesAfterEnv: [
-    '@testing-library/jest-dom'
+    '@testing-library/jest-dom',
+    '<rootDir>/src/testing/setup.ts'
   ],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

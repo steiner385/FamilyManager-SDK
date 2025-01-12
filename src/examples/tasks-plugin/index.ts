@@ -370,16 +370,59 @@ export class TasksPlugin extends BasePlugin {
       // Test database connection
       await this.prisma.$queryRaw`SELECT 1`;
 
+      // Calculate trends
+      const completionTrend = this.taskMetrics.totalTasks > 0 
+        ? this.taskMetrics.completedTasks / this.taskMetrics.totalTasks 
+        : 0;
+
+      const overdueTrend = this.taskMetrics.totalTasks > 0
+        ? this.taskMetrics.overdueTasks / this.taskMetrics.totalTasks
+        : 0;
+
       return {
         status: 'healthy',
         timestamp: Date.now(),
-        message: 'Plugin is healthy'
+        message: 'Plugin is healthy',
+        metrics: {
+          memory: {
+            current: process.memoryUsage().heapUsed / 1024 / 1024, // MB
+            trend: 0,
+            history: []
+          },
+          cpu: {
+            current: 0, // Would need actual CPU metrics
+            trend: 0,
+            history: []
+          },
+          responseTime: {
+            current: 100, // Example value
+            trend: 0,
+            history: []
+          }
+        }
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         timestamp: Date.now(),
-        message: 'Database connection failed'
+        message: 'Database connection failed',
+        metrics: {
+          memory: {
+            current: 0,
+            trend: 0,
+            history: []
+          },
+          cpu: {
+            current: 0,
+            trend: 0,
+            history: []
+          },
+          responseTime: {
+            current: 0,
+            trend: 0,
+            history: []
+          }
+        }
       };
     }
   }

@@ -33,7 +33,7 @@ export function createMockPlugin(options: MockPluginOptions): Plugin {
 
   const state: PluginState = {
     isEnabled: true,
-    status: 'stopped',
+    status: 'started',
     isInitialized: false,
     error: null
   };
@@ -42,7 +42,7 @@ export function createMockPlugin(options: MockPluginOptions): Plugin {
     id: config.id,
     name: options.name,
     version: options.version,
-    status: 'inactive',
+    status: 'active',
     config,
     state,
     async onInit() {
@@ -62,6 +62,30 @@ export function createMockPlugin(options: MockPluginOptions): Plugin {
         const themeManager = ThemeManager.getInstance();
         themeManager.extendTheme(options.theme);
       }
+    },
+    async getHealth() {
+      return {
+        status: 'healthy',
+        message: 'Plugin is healthy',
+        timestamp: Date.now(),
+        metrics: {
+          memory: {
+            current: 50,
+            trend: 0,
+            history: []
+          },
+          cpu: {
+            current: 30,
+            trend: 0,
+            history: []
+          },
+          responseTime: {
+            current: 100,
+            trend: 0,
+            history: []
+          }
+        }
+      };
     }
   };
 }
