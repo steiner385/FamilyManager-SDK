@@ -1,218 +1,173 @@
 # FamilyManager SDK
 
-The FamilyManager SDK provides a comprehensive set of tools, utilities, and components for building modules and extensions for the FamilyManager platform. It serves as the foundation for all FamilyManager modules, ensuring consistency and interoperability.
-
-## Core Features
-
-- **Component Library**: Reusable React components with consistent styling and behavior
-  - Common UI components (LoadingSpinner, Modal, ErrorBoundary, etc.)
-  - Layout components
-  - Form elements
-  - Data display components
-
-- **State Management**: Tools for managing application and module state
-  - Global state integration
-  - Module-specific state management
-  - Persistence utilities
-  - State synchronization
-
-- **Authentication & Authorization**: Secure user management
-  - Authentication utilities
-  - Role-based access control
-  - Permission management
-  - Session handling
-
-- **Event System**: Robust inter-module communication
-  - Event emission and handling
-  - Message bus integration
-  - Event persistence
-  - Type-safe events
-
-- **Testing Utilities**: Comprehensive testing support
-  - Test helpers and mocks
-  - Testing utilities
-  - Common test patterns
-  - Integration test helpers
+The FamilyManager SDK provides shared components, utilities, and testing infrastructure for FamilyManager modules.
 
 ## Installation
 
 ```bash
-npm install @familymanager/sdk --save
+npm install @familymanager/sdk
 ```
 
-## Usage
+## Components
 
-### Using Components
+### Common Components
 
 ```typescript
 import { 
-  LoadingSpinner, 
-  ErrorBoundary, 
-  Modal 
-} from '@familymanager/sdk/components';
+  LoadingSpinner,
+  LoadingSkeleton,
+  Modal,
+  ErrorBoundary 
+} from '@familymanager/sdk';
 
-function MyComponent() {
-  return (
-    <ErrorBoundary>
-      <Modal isOpen={true} onClose={() => {}}>
-        <LoadingSpinner />
-      </Modal>
-    </ErrorBoundary>
-  );
-}
+// Loading states
+<LoadingSpinner />
+<LoadingSkeleton />
+
+// Modal dialogs
+<Modal
+  isOpen={true}
+  onClose={() => {}}
+  title="Example Modal"
+>
+  Modal content
+</Modal>
+
+// Error handling
+<ErrorBoundary>
+  <ComponentThatMightError />
+</ErrorBoundary>
 ```
 
-### State Management
+### Visualization Components
+
+#### LineChart
+
+For displaying time series data:
 
 ```typescript
-import { 
-  useModuleState, 
-  useGlobalState 
-} from '@familymanager/sdk/state';
+import { LineChart } from '@familymanager/sdk';
 
-function MyComponent() {
-  // Module-specific state
-  const [moduleState, setModuleState] = useModuleState('myModule');
-  
-  // Global application state
-  const globalState = useGlobalState();
+const data = [
+  { timestamp: new Date('2024-01-01').getTime(), value: 10 },
+  { timestamp: new Date('2024-01-02').getTime(), value: 20 },
+  { timestamp: new Date('2024-01-03').getTime(), value: 15 }
+];
 
-  // Use state as needed
-}
+<LineChart
+  data={data}
+  size={{ width: 600, height: 400 }}
+  styles={{
+    line: { stroke: '#2563eb', strokeWidth: 2 },
+    point: { fill: '#1d4ed8', radius: 4 },
+    axis: { stroke: '#94a3b8', strokeWidth: 1 }
+  }}
+  formatters={{
+    timestamp: (ts) => new Date(ts).toLocaleDateString(),
+    value: (val) => `$${val}`
+  }}
+/>
 ```
 
-### Event Handling
+#### MetricsCard
+
+For displaying KPI metrics:
 
 ```typescript
-import { 
-  useEventEmitter,
-  useEventListener 
-} from '@familymanager/sdk/events';
+import { MetricsCard } from '@familymanager/sdk';
 
-function MyComponent() {
-  const emitter = useEventEmitter();
-  
-  // Listen for events
-  useEventListener('user:updated', (data) => {
-    // Handle user update
-  });
-
-  // Emit events
-  const handleAction = () => {
-    emitter.emit('myModule:action', { /* data */ });
-  };
-}
+<MetricsCard
+  title="Total Revenue"
+  value={1234.56}
+  trend="up"
+  change={15.2}
+  timeframe="vs last month"
+  formatters={{
+    value: (val) => `$${val.toFixed(2)}`,
+    change: (val) => `${val > 0 ? '↑' : '↓'}${Math.abs(val)}%`
+  }}
+  styles={{
+    card: 'bg-white rounded-lg shadow-sm p-4',
+    title: 'text-gray-600 text-sm font-medium',
+    value: 'text-gray-900 text-2xl font-semibold',
+    change: 'text-green-500',
+    timeframe: 'text-gray-500 text-sm'
+  }}
+/>
 ```
 
-### Creating a Module
+## Testing Utilities
 
-```typescript
-import { BaseModule, ModuleContext } from '@familymanager/sdk';
-
-export class MyModule extends BaseModule {
-  metadata = {
-    name: 'my-module',
-    version: '1.0.0',
-    description: 'My custom module'
-  };
-
-  async initialize(context: ModuleContext): Promise<void> {
-    // Initialize module
-    await this.registerRoutes();
-    await this.setupServices();
-    this.setupEventHandlers();
-  }
-
-  async teardown(): Promise<void> {
-    // Cleanup resources
-  }
-}
-```
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build SDK
-npm run build
-
-# Run tests
-npm test
-
-# Run linting
-npm run lint
-
-# Generate documentation
-npm run docs
-```
-
-## Testing
-
-The SDK provides comprehensive testing utilities:
+The SDK provides testing utilities to help write consistent tests across modules:
 
 ```typescript
 import { 
   render, 
-  fireEvent,
-  createTestModule
+  screen,
+  userEvent,
+  createModuleTestBed,
+  mockEventEmitter,
+  createStateTestBed,
+  createMockData
 } from '@familymanager/sdk/testing';
 
-describe('MyComponent', () => {
+// Component testing
+describe('Component', () => {
   it('renders correctly', () => {
-    const { getByText } = render(<MyComponent />);
-    expect(getByText('Hello')).toBeInTheDocument();
-  });
-
-  it('handles module integration', () => {
-    const testModule = createTestModule({
-      name: 'test-module'
-    });
-    // Test module behavior
+    render(<MyComponent />);
+    expect(screen.getByText('Hello')).toBeInTheDocument();
   });
 });
+
+// Module testing
+describe('Module', () => {
+  const testBed = createModuleTestBed('my-module');
+  
+  it('initializes correctly', async () => {
+    await testBed.initialize();
+    expect(testBed.getState()).toBeDefined();
+  });
+});
+
+// State testing
+describe('State', () => {
+  const stateBed = createStateTestBed('my-module');
+  
+  it('updates state', () => {
+    const { dispatch, getState } = stateBed;
+    dispatch(action);
+    expect(getState()).toEqual(expected);
+  });
+});
+
+// Event testing
+describe('Events', () => {
+  const emitter = mockEventEmitter();
+  
+  it('handles events', () => {
+    const handler = jest.fn();
+    emitter.on('event', handler);
+    emitter.emit('event', data);
+    expect(handler).toHaveBeenCalled();
+  });
+});
+
+// Mock data
+const mockData = {
+  timestamp: createMockData.timestamp('2024-01-01'),
+  user: createMockData.user({ name: 'Test User' }),
+  event: createMockData.event({ title: 'Test Event' })
+};
 ```
-
-## Documentation
-
-Comprehensive documentation is available:
-
-- [Getting Started](./docs/getting-started.md)
-- [Component Library](./docs/components/README.md)
-- [State Management](./docs/state/README.md)
-- [Event System](./docs/events/README.md)
-- [Testing Guide](./docs/testing/README.md)
-- [API Reference](./docs/api/README.md)
-
-## Examples
-
-The SDK includes example implementations:
-
-- [Basic Module](./examples/basic-module/): Simple module example
-- [Tasks Module](./examples/tasks-module/): Full-featured task management
-- [Integration Examples](./examples/integration/): Common integration patterns
 
 ## Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-Please ensure your contributions:
-- Follow the existing code style
-- Include appropriate tests
-- Update relevant documentation
-- Consider backward compatibility
-
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-- [Issue Tracker](https://github.com/familymanager/sdk/issues)
-- [Documentation](./docs/README.md)
-- [Discussions](https://github.com/familymanager/sdk/discussions)
+This project is licensed under the MIT License - see the LICENSE file for details.
