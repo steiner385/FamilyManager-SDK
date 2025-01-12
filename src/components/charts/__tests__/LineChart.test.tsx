@@ -151,7 +151,14 @@ describe('LineChart', () => {
 
     const tooltip = screen.getByTestId('line-chart-tooltip');
     expect(tooltip).toBeInTheDocument();
-    expect(tooltip).toHaveTextContent('Jan 1, 2024');
+    
+    // Use the same date formatting approach as the component
+    const expectedDate = new Date(mockData[0].timestamp).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    expect(tooltip).toHaveTextContent(expectedDate);
     expect(tooltip).toHaveTextContent('10');
   });
 
