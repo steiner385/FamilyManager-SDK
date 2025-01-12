@@ -51,6 +51,7 @@ export class FormManager<T extends Record<string, any>> {
 
     try {
       await this.config.validationSchema.parseAsync(this.state.values)
+      // Only update validation-related state
       this.state = {
         ...this.state,
         errors: {
@@ -62,6 +63,7 @@ export class FormManager<T extends Record<string, any>> {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldError = error.errors.find(e => e.path[0] === name)
+        // Only update validation-related state
         this.state = {
           ...this.state,
           errors: {
@@ -73,7 +75,7 @@ export class FormManager<T extends Record<string, any>> {
       }
     }
 
-    // Notify after validation
+    // Single notification after validation
     this.notify()
   }
 
@@ -103,8 +105,8 @@ export class FormManager<T extends Record<string, any>> {
   }
 
   handleChange(name: keyof T, value: any) {
-    // Update state
-    this.state = {
+    // Update state in one operation
+    const newState = {
       ...this.state,
       values: {
         ...this.state.values,
@@ -113,11 +115,16 @@ export class FormManager<T extends Record<string, any>> {
       isDirty: true
     }
     
-    // Notify subscribers immediately after state update
+    // Set state once
+    this.state = newState
+    
+    // Single notification
     this.notify()
     
-    // Then validate
-    this.validateField(name)
+    // Validate if needed
+    if (this.config.validationSchema) {
+      this.validateField(name)
+    }
   }
 
   handleBlur(name: keyof T) {
@@ -159,6 +166,7 @@ export class FormManager<T extends Record<string, any>> {
   }
 
   reset() {
+    // Ensure complete reset of all state
     this.state = {
       values: { ...this.config.initialValues },
       errors: {},
@@ -167,6 +175,7 @@ export class FormManager<T extends Record<string, any>> {
       isValid: true,
       isDirty: false
     }
+    // Single notification
     this.notify()
   }
 }
