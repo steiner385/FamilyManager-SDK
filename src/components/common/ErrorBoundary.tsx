@@ -1,9 +1,9 @@
-import React from 'react';
-import type { BaseComponentProps } from './types';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 
-export interface ErrorBoundaryProps extends BaseComponentProps {
-  fallback?: React.ReactNode;
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+export interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+  testErrorTrigger?: boolean;
 }
 
 interface ErrorBoundaryState {
@@ -11,74 +11,64 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null
-    };
-  }
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = {
+    hasError: false,
+    error: null
+  };
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  public static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return {
       hasError: true,
       error
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo);
-    }
-    
-    // Log the error
-    console.error('Error caught by ErrorBoundary:', error);
-    console.error('Component stack:', errorInfo.componentStack);
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Uncaught error:', error, errorInfo);
   }
 
-  render(): React.ReactNode {
-    const { hasError, error } = this.state;
-    const { children, fallback, className = '' } = this.props;
-
-    if (hasError) {
-      if (fallback) {
-        return fallback;
-      }
-
-      return (
-        <div className={`p-4 rounded-md bg-red-50 ${className}`}>
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-red-400"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">
-                Something went wrong
-              </h3>
-              {error && (
-                <div className="mt-2 text-sm text-red-700">
-                  {error.message}
+  public render() {
+    if (this.props.testErrorTrigger) {
+      throw new Error('Test error triggered');
+    }
+    
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="min-h-screen bg-white px-4 py-16 sm:px-6 sm:py-24 md:grid md:place-items-center lg:px-8">
+          <div className="max-w-max mx-auto">
+            <main className="sm:flex">
+              <p className="text-4xl font-bold text-red-600 sm:text-5xl">500</p>
+              <div className="sm:ml-6">
+                <div className="sm:border-l sm:border-gray-200 sm:pl-6">
+                  <h1 className="text-4xl font-bold text-gray-900 tracking-tight sm:text-5xl">
+                    Something went wrong
+                  </h1>
+                  <p className="mt-1 text-base text-gray-500">
+                    {this.state.error?.message || 'An unexpected error occurred'}
+                  </p>
                 </div>
-              )}
-            </div>
+                <div className="mt-10 flex space-x-3 sm:border-l sm:border-transparent sm:pl-6">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Reload page
+                  </button>
+                  <a
+                    href="/"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Go back home
+                  </a>
+                </div>
+              </div>
+            </main>
           </div>
         </div>
       );
     }
 
-    return children;
+    return this.props.children;
   }
 }

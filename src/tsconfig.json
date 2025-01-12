@@ -11,11 +11,11 @@
     "esModuleInterop": true,
     "types": ["react", "jest", "node"],
     "paths": {
-      "@components/*": ["components/*"],
-      "@hooks/*": ["hooks/*"],
-      "@utils/*": ["utils/*"],
-      "@types/*": ["types/*"],
-      "@contexts/*": ["contexts/*"]
+      "@components/*": ["./components/*"],
+      "@hooks/*": ["./hooks/*"],
+      "@utils/*": ["./utils/*"],
+      "@types/*": ["./types/*"],
+      "@contexts/*": ["./contexts/*"]
     }
   },
   "include": [

@@ -14,6 +14,7 @@ export type {
 
 // Export core functionality
 export * from './core/BasePlugin';
+export type { RouteConfig, RouteProps, RouterState, RouterContext, NavigateOptions, RouteMatch } from './core/routing/types';
 export * from './core/plugin/PluginManager';
 export * from './core/plugin/PluginMessageBus';
 export * from './core/layout/LayoutManager';
