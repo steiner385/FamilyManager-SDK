@@ -198,11 +198,28 @@ REACT_APP_API_URL=your_api_url_here
 - Enable 2FA for all development accounts
 - Follow the principle of least privilege when requesting access
 
-### Security Issues
+### Security Issues & Incident Response
 For security concerns or vulnerability reports:
 1. Email: security@familymanager.com
-2. Emergency hotline: +1-XXX-XXX-XXXX
+2. Emergency hotline: +1-XXX-XXX-XXXX (24/7 Security Response Team)
 3. Bug bounty program: https://bugbounty.familymanager.com
+
+#### Emergency Response Procedures
+1. **Critical Security Incidents:**
+   - Call emergency hotline immediately
+   - Email security@familymanager.com with [CRITICAL] prefix
+   - Follow incident escalation matrix in internal wiki
+
+2. **Credential Compromise:**
+   - Immediately notify security team
+   - Begin credential rotation procedure
+   - Document affected systems
+   - Monitor for suspicious activity
+
+3. **Security Incident Updates:**
+   - Status updates every 2 hours during active incidents
+   - Post-incident report within 24 hours
+   - Root cause analysis within 72 hours
 
 ## License
 

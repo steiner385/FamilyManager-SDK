@@ -36,3 +36,82 @@ We consider security research conducted under this policy to constitute "authori
 - Email: security@familymanager.com
 - Emergency: +1-XXX-XXX-XXXX
 - PGP Key: [security-pgp.familymanager.com](https://security-pgp.familymanager.com)
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run git-secrets to check for potential secrets/credentials
+git secrets --scan
+
+# Run detect-secrets
+detect-secrets scan
+
+# Run Talisman
+talisman --scan
+
+# Run additional security checks
+npm run security-check
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: SAST Scan
+        uses: github/codeql-action/analyze@v2
+        with:
+          languages: javascript, typescript
+
+      - name: Dependency Scan
+        run: |
+          npm audit
+          npm run snyk-test
+
+      - name: Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: .gitleaks.toml
+
+      - name: Security Headers Check
+        run: npm run check-headers
+
+      - name: Report Security Issues
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = {
+              title: 'Security Scan Failed',
+              body: 'Security scan detected potential issues. Please review logs.',
+              labels: ['security', 'high-priority']
+            }
+            github.rest.issues.create({
+              ...context.repo,
+              ...issue
+            })
+module.exports = {
+  headers: {
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https:",
+      "connect-src 'self' https://api.familymanager.com",
+    ].join('; '),
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  }
+};
