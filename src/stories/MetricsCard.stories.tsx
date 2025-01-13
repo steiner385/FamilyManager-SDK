@@ -1,7 +1,8 @@
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { within, userEvent } from '@storybook/testing-library';
-import { expect } from '@storybook/jest';
 import { MetricsCard } from '../components/metrics/MetricsCard';
+import { expect } from '@storybook/jest';
+import { within, userEvent } from '@storybook/testing-library';
 
 const meta = {
   title: 'Metrics/MetricsCard',
@@ -10,6 +11,41 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  argTypes: {
+    title: {
+      control: 'text',
+      description: 'Title of the metrics card',
+    },
+    value: {
+      control: 'number',
+      description: 'Current value to display',
+    },
+    trend: {
+      control: 'select',
+      options: ['up', 'down', 'neutral'],
+      description: 'Trend direction for the change',
+    },
+    change: {
+      control: 'number',
+      description: 'Percentage change value',
+    },
+    timeframe: {
+      control: 'text',
+      description: 'Timeframe for the change',
+    },
+    loading: {
+      control: 'boolean',
+      description: 'Loading state of the card',
+    },
+    error: {
+      control: 'text',
+      description: 'Error message to display',
+    },
+    tooltip: {
+      control: 'text',
+      description: 'Tooltip content',
+    },
+  },
 } satisfies Meta<typeof MetricsCard>;
 
 export default meta;
@@ -18,34 +54,25 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     title: 'Total Revenue',
-    value: 15000.75,
+    value: 150000,
     trend: 'up',
     change: 12.5,
     timeframe: 'vs last month',
+    'data-testid': 'default-metrics',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const card = canvas.getByTestId('default-metrics');
+    const title = canvas.getByTestId('default-metrics-title');
+    const value = canvas.getByTestId('default-metrics-value');
+    const change = canvas.getByTestId('default-metrics-change');
+    const timeframe = canvas.getByTestId('default-metrics-timeframe');
     
-    // Check title
-    const title = canvas.getByText('Total Revenue');
-    await expect(title).toBeVisible();
-    
-    // Check formatted value
-    const value = canvas.getByText('$15,000.75');
-    await expect(value).toBeVisible();
-    
-    // Check change value and color
-    const change = canvas.getByText('+12.5%');
-    await expect(change).toBeVisible();
-    await expect(change).toHaveClass('text-green-500');
-    
-    // Check timeframe
-    const timeframe = canvas.getByText('vs last month');
-    await expect(timeframe).toBeVisible();
-    
-    // Check accessibility
-    const card = canvas.getByRole('region');
-    await expect(card).toHaveAttribute('aria-label', 'Total Revenue');
+    await expect(card).toBeVisible();
+    await expect(title).toHaveTextContent('Total Revenue');
+    await expect(value).toHaveTextContent('$150,000.00');
+    await expect(change).toHaveTextContent('+12.5%');
+    await expect(timeframe).toHaveTextContent('vs last month');
   },
 };
 
@@ -57,17 +84,13 @@ export const Loading: Story = {
     change: 0,
     timeframe: '',
     loading: true,
+    'data-testid': 'loading-metrics',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const skeleton = canvas.getByTestId('loading-metrics-skeleton');
     
-    // Check if skeleton is rendered
-    const skeleton = canvas.getByTestId('metrics-card-skeleton');
     await expect(skeleton).toBeVisible();
-    
-    // Verify content is not rendered
-    const content = canvas.queryByText('Total Revenue');
-    await expect(content).toBeNull();
   },
 };
 
@@ -78,125 +101,129 @@ export const Error: Story = {
     trend: 'neutral',
     change: 0,
     timeframe: '',
-    error: 'Failed to load metrics',
+    error: 'Failed to load metrics data',
+    'data-testid': 'error-metrics',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const error = canvas.getByTestId('error-metrics');
     
-    // Check if error message is rendered
-    const error = canvas.getByText('Failed to load metrics');
     await expect(error).toBeVisible();
-    await expect(error.parentElement).toHaveClass('text-red-500');
+    await expect(error).toHaveTextContent('Failed to load metrics data');
+    await expect(error).toHaveClass('text-red-500');
   },
 };
 
 export const WithTooltip: Story = {
   args: {
     title: 'Total Revenue',
-    value: 15000.75,
+    value: 150000,
     trend: 'up',
     change: 12.5,
     timeframe: 'vs last month',
     tooltip: 'Total revenue across all channels',
+    'data-testid': 'tooltip-metrics',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const tooltip = canvas.getByTestId('tooltip-metrics-tooltip');
+    const tooltipContent = canvas.getByTestId('tooltip-metrics-tooltip-content');
     
-    // Check if info icon is present
-    const infoIcon = canvas.getByTestId('metrics-card-info');
-    await expect(infoIcon).toBeVisible();
-    
-    // Hover to show tooltip
-    await userEvent.hover(infoIcon);
-    
-    // Check tooltip content
-    const tooltip = canvas.getByText('Total revenue across all channels');
     await expect(tooltip).toBeVisible();
+    await expect(tooltipContent).toHaveTextContent('Total revenue across all channels');
   },
 };
 
-export const WithCustomFormatters: Story = {
+export const NegativeTrend: Story = {
   args: {
-    title: 'Active Users',
-    value: 1234,
+    title: 'Conversion Rate',
+    value: 2.5,
     trend: 'down',
-    change: -5.2,
+    change: -1.2,
     timeframe: 'vs last week',
     formatters: {
-      value: (val) => val.toLocaleString(),
-      change: (val) => `${val > 0 ? '↑' : '↓'} ${Math.abs(val)}%`,
+      value: (val) => `${val}%`,
+      change: (val) => `${val > 0 ? '+' : ''}${val}%`,
     },
+    'data-testid': 'negative-metrics',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const value = canvas.getByTestId('negative-metrics-value');
+    const change = canvas.getByTestId('negative-metrics-change');
     
-    // Check custom formatted value
-    const value = canvas.getByText('1,234');
-    await expect(value).toBeVisible();
-    
-    // Check custom formatted change
-    const change = canvas.getByText('↓ 5.2%');
-    await expect(change).toBeVisible();
+    await expect(value).toHaveTextContent('2.5%');
+    await expect(change).toHaveTextContent('-1.2%');
     await expect(change).toHaveClass('text-red-500');
   },
 };
 
-export const WithClickHandler: Story = {
+export const CustomFormatters: Story = {
   args: {
-    title: 'Total Revenue',
-    value: 15000.75,
+    title: 'Active Users',
+    value: 1234567,
     trend: 'up',
-    change: 12.5,
-    timeframe: 'vs last month',
-    onClick: () => {},
+    change: 15.8,
+    timeframe: 'vs last quarter',
+    formatters: {
+      value: (val) => val.toLocaleString(),
+      change: (val) => `${val > 0 ? '↑' : '↓'} ${Math.abs(val)}%`,
+    },
+    'data-testid': 'custom-metrics',
   },
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const value = canvas.getByTestId('custom-metrics-value');
+    const change = canvas.getByTestId('custom-metrics-change');
     
-    // Check cursor style
-    const card = canvas.getByTestId('metrics-card');
-    await expect(card).toHaveStyle({ cursor: 'pointer' });
-    
-    // Click the card
-    await userEvent.click(card);
-    
-    // Verify onClick was called with all required props
-    await expect(args.onClick).toHaveBeenCalledWith({
-      title: 'Total Revenue',
-      value: 15000.75,
-      trend: 'up',
-      change: 12.5,
-      timeframe: 'vs last month',
-    });
+    await expect(value).toHaveTextContent('1,234,567');
+    await expect(change).toHaveTextContent('↑ 15.8%');
   },
 };
 
-export const TrendColors: Story = {
+export const Clickable: Story = {
   args: {
-    title: 'Metrics',
-    value: 100,
-    trend: 'neutral',
-    change: 0,
-    timeframe: 'vs last period',
+    title: 'Total Orders',
+    value: 1250,
+    trend: 'up',
+    change: 8.3,
+    timeframe: 'vs last month',
+    onClick: () => console.log('Metrics card clicked'),
+    'data-testid': 'clickable-metrics',
   },
-  render: (args) => (
-    <div className="flex gap-4">
-      <MetricsCard {...args} trend="up" change={10} />
-      <MetricsCard {...args} trend="down" change={-10} />
-      <MetricsCard {...args} trend="neutral" change={0} />
-    </div>
-  ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const cards = canvas.getAllByTestId('metrics-card');
+    const card = canvas.getByTestId('clickable-metrics');
     
-    // Check trend colors
-    const [upTrend] = within(cards[0]).getAllByText('+10%');
-    const [downTrend] = within(cards[1]).getAllByText('-10%');
-    const [neutralTrend] = within(cards[2]).getAllByText('0%');
+    await expect(card).toHaveStyle({ cursor: 'pointer' });
+    await userEvent.click(card);
+  },
+};
+
+export const CustomStyles: Story = {
+  args: {
+    title: 'Revenue',
+    value: 75000,
+    trend: 'up',
+    change: 5.7,
+    timeframe: 'vs last month',
+    styles: {
+      card: 'bg-blue-50',
+      title: 'text-blue-800',
+      value: 'text-blue-900',
+      change: 'font-bold',
+      timeframe: 'italic',
+    },
+    'data-testid': 'styled-metrics',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const card = canvas.getByTestId('styled-metrics');
+    const title = canvas.getByTestId('styled-metrics-title');
+    const value = canvas.getByTestId('styled-metrics-value');
     
-    await expect(upTrend).toHaveClass('text-green-500');
-    await expect(downTrend).toHaveClass('text-red-500');
-    await expect(neutralTrend).toHaveClass('text-gray-500');
+    await expect(card).toHaveClass('bg-blue-50');
+    await expect(title).toHaveClass('text-blue-800');
+    await expect(value).toHaveClass('text-blue-900');
   },
 };

@@ -23,6 +23,7 @@ export interface MetricsCardProps {
   tooltip?: string;
   ariaLabel?: string;
   onClick?: (data: Omit<MetricsCardProps, 'onClick'>) => void;
+  'data-testid'?: string;
 }
 
 export const MetricsCard: React.FC<MetricsCardProps> = ({
@@ -37,7 +38,8 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
   error,
   tooltip,
   ariaLabel,
-  onClick
+  onClick,
+  'data-testid': dataTestId,
 }) => {
   const defaultStyles = {
     card: `bg-white rounded-lg shadow-sm p-4 ${styles.card || ''}`,
@@ -58,7 +60,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
   if (loading) {
     return (
       <div 
-        data-testid="metrics-card-skeleton"
+        data-testid={dataTestId ? `${dataTestId}-skeleton` : 'metrics-card-skeleton'}
         className={defaultStyles.card}
       >
         <LoadingSkeleton className="h-20" />
@@ -69,7 +71,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
   if (error) {
     return (
       <div 
-        data-testid="metrics-card"
+        data-testid={dataTestId ? `${dataTestId}-error` : 'metrics-card-error'}
         className={`${defaultStyles.card} text-red-500`}
       >
         {error}
@@ -93,7 +95,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
 
   return (
     <div
-      data-testid="metrics-card"
+      data-testid={dataTestId || 'metrics-card'}
       className={defaultStyles.card}
       role="region"
       aria-label={ariaLabel || title}
@@ -101,10 +103,15 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       style={{ cursor: onClick ? 'pointer' : 'default' }}
     >
       <div className="flex items-center justify-between">
-        <h3 className={defaultStyles.title}>{title}</h3>
+        <h3 
+          className={defaultStyles.title}
+          data-testid={dataTestId ? `${dataTestId}-title` : 'metrics-card-title'}
+        >
+          {title}
+        </h3>
         {tooltip && (
           <div 
-            data-testid="metrics-card-info"
+            data-testid={dataTestId ? `${dataTestId}-tooltip` : 'metrics-card-tooltip'}
             className="relative group"
           >
             <svg 
@@ -120,23 +127,33 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
               />
             </svg>
-            <div className="absolute z-10 invisible group-hover:visible bg-gray-900 text-white text-sm rounded p-2 -right-2 transform translate-x-full -translate-y-1/2">
+            <div 
+              className="absolute z-10 invisible group-hover:visible bg-gray-900 text-white text-sm rounded p-2 -right-2 transform translate-x-full -translate-y-1/2"
+              data-testid={dataTestId ? `${dataTestId}-tooltip-content` : 'metrics-card-tooltip-content'}
+            >
               {tooltip}
             </div>
           </div>
         )}
       </div>
-      <div className={defaultStyles.value}>
+      <div 
+        className={defaultStyles.value}
+        data-testid={dataTestId ? `${dataTestId}-value` : 'metrics-card-value'}
+      >
         {formatValue(value)}
       </div>
       <div className="flex items-center mt-2">
         <span 
           className={defaultStyles.change}
           aria-label={changeLabel}
+          data-testid={dataTestId ? `${dataTestId}-change` : 'metrics-card-change'}
         >
           {formatChange(change)}
         </span>
-        <span className={defaultStyles.timeframe}>
+        <span 
+          className={defaultStyles.timeframe}
+          data-testid={dataTestId ? `${dataTestId}-timeframe` : 'metrics-card-timeframe'}
+        >
           &nbsp;{timeframe}
         </span>
       </div>
