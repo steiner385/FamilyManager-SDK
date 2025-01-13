@@ -44,3 +44,13 @@ Thumbs.db
 .aider*
 
 *storybook.log
+
+# Additional security-related ignores
+.env.production
+.env.staging
+.env.development
+*.pem
+*.key
+*.cert
+*secret*
+*credential*

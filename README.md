@@ -168,6 +168,16 @@ const mockData = {
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+## Environment Setup
+
+Create a `.env` file with the following required variables:
+
+```bash
+REACT_APP_API_URL=your_api_url_here
+```
+
+**Important:** Never commit .env files containing secrets or credentials. The repository includes only .env.example as a template.
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
