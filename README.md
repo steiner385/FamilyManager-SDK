@@ -178,6 +178,32 @@ REACT_APP_API_URL=your_api_url_here
 
 **Important:** Never commit .env files containing secrets or credentials. The repository includes only .env.example as a template.
 
+## Security
+
+### Required Environment Variables
+- `REACT_APP_API_URL`: Base URL for API endpoints
+- `REACT_APP_AUTH_DOMAIN`: Authentication provider domain
+- `REACT_APP_AUTH_CLIENT_ID`: OAuth client ID
+- `REACT_APP_AUTH_AUDIENCE`: API audience identifier
+
+### Obtaining Credentials
+1. Authentication credentials can be obtained from your organization's auth provider
+2. API credentials should be requested through the internal developer portal
+3. Contact security@familymanager.com for access to development environments
+
+### Security Best Practices
+- Never commit .env files or security credentials
+- Use environment-specific .env files (.env.development, .env.staging, etc.)
+- Rotate credentials regularly
+- Enable 2FA for all development accounts
+- Follow the principle of least privilege when requesting access
+
+### Security Issues
+For security concerns or vulnerability reports:
+1. Email: security@familymanager.com
+2. Emergency hotline: +1-XXX-XXX-XXXX
+3. Bug bounty program: https://bugbounty.familymanager.com
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

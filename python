@@ -1,0 +1,38 @@
+# Security Policy
+
+## Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 2.x.x   | :white_check_mark: |
+| 1.x.x   | :x:                |
+
+## Reporting a Vulnerability
+
+FamilyManager takes security seriously. We appreciate your efforts to responsibly disclose your findings.
+
+### Process
+1. **DO NOT** create public GitHub issues for security vulnerabilities
+2. Submit vulnerability reports to security@familymanager.com
+3. Include detailed steps to reproduce the issue
+4. We will acknowledge receipt within 24 hours
+5. We aim to validate and respond to reports within 72 hours
+
+### What to Include
+- Description of the vulnerability
+- Steps to reproduce
+- Potential impact
+- Suggested fix (if available)
+
+### Our Commitment
+- We will investigate all legitimate reports
+- We will keep you informed of our progress
+- We will credit researchers who report valid issues (if desired)
+
+### Safe Harbor
+We consider security research conducted under this policy to constitute "authorized" conduct and will not initiate legal action against researchers for security research conducted in accordance with this policy.
+
+### Contact
+- Email: security@familymanager.com
+- Emergency: +1-XXX-XXX-XXXX
+- PGP Key: [security-pgp.familymanager.com](https://security-pgp.familymanager.com)

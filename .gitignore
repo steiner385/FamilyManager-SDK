@@ -46,6 +46,19 @@ Thumbs.db
 *storybook.log
 
 # Additional security-related ignores
+*token*
+*auth*key*
+.env.*
+*firebase*config*
+*aws*config*
+*azure*config*
+*google*config*
+*.jks
+*keystore*
+*truststore*
+.ssh/
+config.json
+settings.json
 .env.production
 .env.staging
 .env.development
