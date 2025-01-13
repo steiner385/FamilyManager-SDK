@@ -91,6 +91,7 @@ async function runTests() {
       '--url', 'http://localhost:6011',
       '--timeout', '60000',
       '--verbose',
+      '--debug',
       '--testMatch', testPattern,
       '--config-dir', '.storybook'
     ], {

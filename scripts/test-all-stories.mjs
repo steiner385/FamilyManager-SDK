@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -21,13 +21,42 @@ let failedTests = [];
 
 for (const storyFile of storyFiles) {
   console.log(`\n=== Testing ${storyFile} ===\n`);
+  
+  // Use exec instead of execSync to capture output
+  const testProcess = exec(`node ./scripts/test-storybook.mjs ${storyFile}`);
+  
+  // Capture and display stdout
+  testProcess.stdout.on('data', (data) => {
+    process.stdout.write(data);
+  });
+  
+  // Capture and display stderr
+  testProcess.stderr.on('data', (data) => {
+    process.stderr.write(data);
+  });
+  
+  // Wait for process to complete
   try {
-    execSync(`node ./scripts/test-storybook.mjs ${storyFile}`, {
-      stdio: 'inherit'
+    await new Promise((resolve, reject) => {
+      testProcess.on('exit', (code) => {
+        if (code === 0) {
+          console.log(`\n✓ ${storyFile} tests passed\n`);
+          resolve();
+        } else {
+          console.error(`\n✗ ${storyFile} tests failed with code ${code}\n`);
+          failedTests.push(storyFile);
+          resolve();
+        }
+      });
+      
+      testProcess.on('error', (err) => {
+        console.error(`Error running tests for ${storyFile}:`, err);
+        failedTests.push(storyFile);
+        reject(err);
+      });
     });
-    console.log(`\n✓ ${storyFile} tests passed\n`);
   } catch (error) {
-    console.error(`\n✗ ${storyFile} tests failed\n`);
+    console.error(`Error in test execution for ${storyFile}:`, error);
     failedTests.push(storyFile);
   }
 }
