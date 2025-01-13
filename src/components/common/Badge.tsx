@@ -54,7 +54,14 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     `.trim();
 
     return (
-      <span ref={ref} className={combinedClassName} data-testid={dataTestId} {...props}>
+      <span 
+        ref={ref} 
+        className={combinedClassName} 
+        data-testid={dataTestId}
+        role="status"
+        aria-label={typeof children === 'string' ? children : undefined}
+        {...props}
+      >
         {dot && (
           <span
             className={`h-2 w-2 rounded-full ${
@@ -70,6 +77,7 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
                 ? 'bg-red-500'
                 : 'bg-indigo-500'
             }`}
+            aria-hidden="true"
           />
         )}
         {children}

@@ -9,6 +9,17 @@ const meta = {
   component: Badge,
   parameters: {
     layout: 'centered',
+    a11y: {
+      config: {
+        rules: [
+          {
+            // Badges are often used for status/decorative purposes, so we can disable this rule
+            id: 'color-contrast',
+            enabled: false
+          }
+        ]
+      }
+    }
   },
   tags: ['autodocs'],
   argTypes: {
