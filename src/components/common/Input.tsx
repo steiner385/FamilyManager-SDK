@@ -10,6 +10,7 @@ export interface InputProps extends InputHTMLProps {
   startIcon?: React.ReactNode;
   endIcon?: React.ReactNode;
   fullWidth?: boolean;
+  'data-testid'?: string;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -24,6 +25,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       fullWidth = false,
       disabled = false,
       className = '',
+      'data-testid': dataTestId,
       ...props
     },
     ref
@@ -92,22 +94,38 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ${startIcon ? 'pl-8' : ''}
           ${endIcon ? 'pr-8' : ''}
         `.trim()}
+        data-testid={dataTestId}
         {...props}
       />
     );
 
     return (
-      <div className="flex flex-col">
+      <div className="flex flex-col" data-testid={dataTestId ? `${dataTestId}-wrapper` : undefined}>
         <div className={wrapperClass}>
-          {startIcon && <span className={startIconClass}>{startIcon}</span>}
+          {startIcon && (
+            <span 
+              className={startIconClass}
+              data-testid={dataTestId ? `${dataTestId}-start-icon` : undefined}
+            >
+              {startIcon}
+            </span>
+          )}
           {inputElement}
-          {endIcon && <span className={endIconClass}>{endIcon}</span>}
+          {endIcon && (
+            <span 
+              className={endIconClass}
+              data-testid={dataTestId ? `${dataTestId}-end-icon` : undefined}
+            >
+              {endIcon}
+            </span>
+          )}
         </div>
         {helperText && (
           <span
             className={`mt-1 text-sm ${
               error ? 'text-red-500' : 'text-gray-500'
             }`}
+            data-testid={dataTestId ? `${dataTestId}-helper-text` : undefined}
           >
             {helperText}
           </span>
