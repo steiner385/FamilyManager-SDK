@@ -5,6 +5,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   size?: 'sm' | 'md' | 'lg';
   rounded?: boolean;
   dot?: boolean;
+  'data-testid'?: string;
 }
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
@@ -16,6 +17,7 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
       rounded = false,
       dot = false,
       className = '',
+      'data-testid': dataTestId,
       ...props
     },
     ref
@@ -52,7 +54,7 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     `.trim();
 
     return (
-      <span ref={ref} className={combinedClassName} {...props}>
+      <span ref={ref} className={combinedClassName} data-testid={dataTestId} {...props}>
         {dot && (
           <span
             className={`h-2 w-2 rounded-full ${
