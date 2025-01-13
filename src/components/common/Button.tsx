@@ -1,38 +1,36 @@
 import React from 'react';
-import { LoadingSpinner } from './LoadingSpinner';
+import { twMerge } from 'tailwind-merge';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   isFullWidth?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
+  'data-testid'?: string;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
-      children,
       variant = 'primary',
       size = 'md',
       isLoading = false,
       isFullWidth = false,
-      leftIcon,
-      rightIcon,
+      className,
       disabled,
-      className = '',
+      children,
+      'data-testid': dataTestId,
       ...props
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+    const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
     
     const variants = {
       primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-      secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
-      outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-blue-500',
-      ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500',
+      secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
+      outline: 'border-2 border-gray-300 bg-transparent hover:bg-gray-100 focus:ring-gray-500',
+      ghost: 'bg-transparent hover:bg-gray-100 focus:ring-gray-500',
       danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
     };
 
@@ -42,34 +40,28 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       lg: 'px-6 py-3 text-lg',
     };
 
-    const combinedClassName = `
-      ${baseStyles}
-      ${variants[variant]}
-      ${sizes[size]}
-      ${isFullWidth ? 'w-full' : ''}
-      ${disabled || isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-      ${className}
-    `.trim();
+    const classes = twMerge(
+      baseStyles,
+      variants[variant],
+      sizes[size],
+      isFullWidth && 'w-full',
+      disabled && 'opacity-50 cursor-not-allowed',
+      isLoading && 'opacity-50 cursor-wait',
+      className
+    );
 
     return (
       <button
         ref={ref}
+        className={classes}
         disabled={disabled || isLoading}
-        className={combinedClassName}
+        data-testid={dataTestId}
         {...props}
       >
         {isLoading ? (
-          <>
-            <LoadingSpinner className="w-4 h-4 mr-2" />
-            {children}
-          </>
-        ) : (
-          <>
-            {leftIcon && <span className="mr-2">{leftIcon}</span>}
-            {children}
-            {rightIcon && <span className="ml-2">{rightIcon}</span>}
-          </>
-        )}
+          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+        ) : null}
+        {children}
       </button>
     );
   }
