@@ -10,6 +10,7 @@ export interface ToastProps extends React.HTMLAttributes<HTMLDivElement> {
   autoClose?: boolean;
   duration?: number;
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  'data-testid'?: string;
 }
 
 export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
@@ -25,6 +26,7 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
       duration = 5000,
       position = 'bottom-right',
       className = '',
+      'data-testid': dataTestId,
       ...props
     },
     ref
@@ -100,26 +102,43 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
           ${variants[variant].border}
           ${className}
         `}
+        data-testid={dataTestId}
         {...props}
       >
-        <div className="flex w-full p-4">
+        <div className="flex w-full p-4" data-testid={dataTestId ? `${dataTestId}-content` : undefined}>
           {icon && (
-            <div className={`flex-shrink-0 ${variants[variant].icon}`}>
+            <div 
+              className={`flex-shrink-0 ${variants[variant].icon}`}
+              data-testid={dataTestId ? `${dataTestId}-icon` : undefined}
+            >
               {icon}
             </div>
           )}
           <div className={`${icon ? 'ml-3' : ''} w-full`}>
             {title && (
-              <div className={`font-medium ${variants[variant].title}`}>
+              <div 
+                className={`font-medium ${variants[variant].title}`}
+                data-testid={dataTestId ? `${dataTestId}-title` : undefined}
+              >
                 {title}
               </div>
             )}
             {description && (
-              <div className={`mt-1 text-sm ${variants[variant].description}`}>
+              <div 
+                className={`mt-1 text-sm ${variants[variant].description}`}
+                data-testid={dataTestId ? `${dataTestId}-description` : undefined}
+              >
                 {description}
               </div>
             )}
-            {action && <div className="mt-3">{action}</div>}
+            {action && (
+              <div 
+                className="mt-3"
+                data-testid={dataTestId ? `${dataTestId}-action` : undefined}
+              >
+                {action}
+              </div>
+            )}
           </div>
           {onClose && (
             <button
@@ -144,6 +163,7 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
                 setIsVisible(false);
                 onClose();
               }}
+              data-testid={dataTestId ? `${dataTestId}-close` : undefined}
             >
               <span className="sr-only">Close</span>
               <svg
