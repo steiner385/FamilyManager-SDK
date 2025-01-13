@@ -8,8 +8,9 @@ describe('Test Helpers', () => {
       expect(event.type).toBe('TEST_TYPE');
       expect(event.source).toBe('test-service');
       expect(event.timestamp).toBeDefined();
-      expect(event.payload).toEqual({ value: 1 });
-      expect(event.metadata).toBeDefined();
+      expect(event.data).toEqual({ value: 1 });
+      expect(event.id).toBeDefined();
+      expect(event.channel).toBeDefined();
     });
 
     it('should create events with unique timestamps', () => {
@@ -31,7 +32,7 @@ describe('Test Helpers', () => {
       expect(events).toHaveLength(2);
       events.forEach(event => {
         expect(event.type).toBe('TEST_TYPE');
-        expect(event.payload).toEqual({ value: 1 });
+        expect(event.data).toEqual({ value: 1 });
       });
     });
 
@@ -43,10 +44,10 @@ describe('Test Helpers', () => {
     });
 
     it('should use provided payload for all events', () => {
-      const payload = { test: true };
-      const events = createTestEvents(3, payload);
+      const data = { test: true };
+      const events = createTestEvents(3, data);
       events.forEach(event => {
-        expect(event.payload).toEqual(payload);
+        expect(event.data).toEqual(data);
       });
     });
   });

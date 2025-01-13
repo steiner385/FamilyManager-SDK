@@ -48,29 +48,23 @@ export class AsyncValidator {
 
     // Schema validation
     if (this.config.validateSchema) {
-      if (!event.type) {
+      if (!event.id) {
+        errors.push('Missing required field: id');
+      }
+      if (!event.type || event.type.trim() === '') {
         errors.push('Invalid event type');
       }
-      if (!event.source) {
-        errors.push('Missing required field: source');
+      if (!event.channel) {
+        errors.push('Missing required field: channel');
       }
-      if (!event.metadata) {
-        errors.push('Missing required metadata');
+      if (event.data === undefined || event.data === null) {
+        errors.push('Missing required field: data');
       }
     }
 
     // Timestamp validation
-    if (this.config.validateTimestamp) {
-      if (!event.timestamp || event.timestamp < 0) {
-        errors.push('Invalid timestamp');
-      }
-    }
-
-    // Payload validation
-    if (this.config.validatePayload) {
-      if (event.payload === undefined || event.payload === null) {
-        errors.push('Missing required payload');
-      }
+    if (this.config.validateTimestamp && (typeof event.timestamp !== 'number' || event.timestamp < 0)) {
+      errors.push('Invalid timestamp');
     }
 
     // Run custom validation rules

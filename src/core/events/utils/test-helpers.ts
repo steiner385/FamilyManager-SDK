@@ -5,18 +5,19 @@ interface MockEventHandler {
   receivedEvents: BaseEvent[];
 }
 
-export function createTestEvent(type: string, payload: unknown, source: string = 'test-service'): BaseEvent {
+export function createTestEvent(type: string, data: unknown, source: string = 'test-service'): BaseEvent {
   return {
+    id: `test-${Date.now()}`,
     type,
+    channel: 'test-channel',
     source,
     timestamp: Date.now() + performance.now(),
-    payload,
-    metadata: {}
+    data
   };
 }
 
-export function createTestEvents(count: number, payload: unknown): BaseEvent[] {
-  return Array.from({ length: count }, () => createTestEvent('TEST_TYPE', payload));
+export function createTestEvents(count: number, data: unknown): BaseEvent[] {
+  return Array.from({ length: count }, () => createTestEvent('TEST_TYPE', data));
 }
 
 export function createMockEventHandler(): MockEventHandler {

@@ -26,20 +26,20 @@ describe('AsyncValidator', () => {
   it('should reject events without required fields', async () => {
     const invalidEvent = {
       type: 'TEST_EVENT',
-      // Missing source and timestamp
-      payload: { value: 1 }
+      data: { value: 1 }
     } as BaseEvent;
 
     const result = await validator.validate(invalidEvent);
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain('Missing required field: source');
+    expect(result.errors).toContain('Missing required field: id');
+    expect(result.errors).toContain('Missing required field: channel');
   });
 
   it('should handle custom validation rules', async () => {
     validator.addRule({
       name: 'checkValue',
       validate: (event: BaseEvent<{ value: number }>) => {
-        return event.payload.value > 0;
+        return event.data.value > 0;
       },
       errorMessage: 'Value must be positive'
     });
@@ -57,7 +57,7 @@ describe('AsyncValidator', () => {
 
   it('should validate multiple events in parallel', async () => {
     const events = Array.from({ length: 10 }, (_, i) => 
-      createTestEvent('TEST_EVENT', { value: i + 1 })
+      createTestEvent('TEST_TYPE', { value: i + 1 })
     );
 
     const results = await validator.validateBatch(events);
@@ -81,15 +81,6 @@ describe('AsyncValidator', () => {
     const result = await validator.validate(invalidEvent);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain('Invalid event type');
-  });
-
-  it('should validate event metadata', async () => {
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    event.metadata = undefined;
-
-    const result = await validator.validate(event);
-    expect(result.isValid).toBe(false);
-    expect(result.errors).toContain('Missing required metadata');
   });
 
   it('should validate event timestamps', async () => {
