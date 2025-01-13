@@ -54,3 +54,11 @@ Thumbs.db
 *.cert
 *secret*
 *credential*
+*password*
+*private*
+*.pfx
+*.p12
+*id_rsa*
+*id_dsa*
+.npmrc
+.yarnrc
