@@ -23,24 +23,17 @@ function validateEvent<T>(event: BaseEvent<T>): ValidationResult {
     }
 
     // Optional fields
-    if (!event.source || typeof event.source !== 'string') {
+    if (event.source !== undefined && typeof event.source !== 'string') {
       return {
         isValid: false,
         errors: ['Event source must be a string if provided']
       };
     }
 
-    if (event.payload === undefined || event.payload === null) {
+    if (event.data === undefined || event.data === null) {
       return {
         isValid: false,
-        errors: ['Event data must be an object if provided']
-      };
-    }
-
-    if (event.metadata !== undefined && (event.metadata === null || typeof event.metadata !== 'object')) {
-      return {
-        isValid: false,
-        errors: ['Event metadata must be an object if provided']
+        errors: ['Event data is required']
       };
     }
 

@@ -12,8 +12,12 @@ export interface Plugin {
   description?: string;
   author?: string;
   dependencies?: string[];
+  optionalDependencies?: string[];
   routes?: PluginRoute[];
-  initialize?: (context?: any) => Promise<void>;
+  status: PluginState;
+  config: PluginConfig;
+  state: any;
+  initialize?: <T = any>(context?: PluginContext<T>) => Promise<void>;
   onInit?: () => Promise<void>;
   teardown?: () => Promise<void>;
 }
@@ -30,14 +34,17 @@ export interface PluginMetadata {
   version: string;
   description?: string;
   author?: string;
+  dependencies?: string[];
+  optionalDependencies?: string[];
 }
 
 export interface PluginConfig {
   [key: string]: any;
 }
 
-export interface PluginContext {
+export interface PluginContext<T = any> {
   config: PluginConfig;
   metadata: PluginMetadata;
-  state: PluginState;
+  state: T;
+  app?: any;
 }

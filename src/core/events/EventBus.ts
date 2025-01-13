@@ -1,25 +1,35 @@
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logging/Logger';
-import { BaseEvent, EventDeliveryStatus, EventHandler, EventSubscription, EventEmitterConfig } from './types';
+import { 
+  BaseEvent, 
+  EventDeliveryStatus, 
+  EventHandler, 
+  EventSubscription, 
+  EventEmitterConfig,
+  EventBusConfig 
+} from './types';
 
 export class EventBus {
   private static instance: EventBus;
   private subscriptions: Map<string, EventSubscription[]>;
   private channels: Set<string>;
-  private config: EventEmitterConfig;
+  private emitterConfig: EventEmitterConfig;
+  private busConfig: EventBusConfig;
   private isRunning: boolean;
 
-  private constructor(config: EventEmitterConfig = {}) {
+  private constructor(config: EventBusConfig = {}) {
     this.subscriptions = new Map();
     this.channels = new Set();
     this.isRunning = false;
-    this.config = {
-      maxRetries: config.maxRetries || 3,
-      retryDelay: config.retryDelay || 1000,
+    this.busConfig = config;
+    this.emitterConfig = {
+      maxRetries: 3,
+      retryDelay: 1000,
+      ...config
     };
   }
 
-  public static getInstance(config?: EventEmitterConfig): EventBus {
+  public static getInstance(config?: EventBusConfig): EventBus {
     if (!EventBus.instance) {
       EventBus.instance = new EventBus(config);
     }
@@ -53,7 +63,7 @@ export class EventBus {
     logger.debug(`Registered channel: ${channel}`);
   }
 
-  public subscribe(eventType: string, handler: EventHandler): string {
+  public subscribe<T>(eventType: string, handler: EventHandler<T>): string {
     if (!this.isRunning) {
       throw new Error('Cannot subscribe while EventBus is stopped');
     }
@@ -91,7 +101,7 @@ export class EventBus {
     }
   }
 
-  public async emit(event: BaseEvent): Promise<EventDeliveryStatus> {
+  public async emit<T>(event: BaseEvent<T>): Promise<EventDeliveryStatus> {
     if (!this.isRunning) {
       throw new Error('Cannot emit events while EventBus is stopped');
     }
@@ -106,33 +116,39 @@ export class EventBus {
       return EventDeliveryStatus.SUCCESS;
     }
 
-    let hasErrors = false;
+    let failedCount = 0;
+    let successCount = 0;
     const results = await Promise.allSettled(
       subscribers.map(sub => this.deliverWithRetry(sub, event))
     );
 
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
-        hasErrors = true;
+        failedCount++;
         logger.error(`Failed to deliver event to subscriber ${subscribers[index].id}`, {
           error: result.reason,
           eventType: event.type
         });
+      } else {
+        successCount++;
       }
     });
 
-    return hasErrors ? EventDeliveryStatus.PARTIAL : EventDeliveryStatus.SUCCESS;
+    if (failedCount > 0) {
+      return EventDeliveryStatus.PARTIAL;
+    }
+    return EventDeliveryStatus.SUCCESS;
   }
 
-  private async deliverWithRetry(
+  private async deliverWithRetry<T>(
     subscription: EventSubscription,
-    event: BaseEvent,
+    event: BaseEvent<T>,
     attempt: number = 1
   ): Promise<void> {
     try {
       await subscription.handler(event);
     } catch (error) {
-      if (attempt >= this.config.maxRetries!) {
+      if (attempt >= this.emitterConfig.maxRetries!) {
         logger.error(`Max retries reached for event ${event.type}`, {
           subscriptionId: subscription.id,
           error,
@@ -145,7 +161,7 @@ export class EventBus {
         subscriptionId: subscription.id,
       });
 
-      await new Promise(resolve => setTimeout(resolve, this.config.retryDelay!));
+      await new Promise(resolve => setTimeout(resolve, this.emitterConfig.retryDelay!));
       return this.deliverWithRetry(subscription, event, attempt + 1);
     }
   }

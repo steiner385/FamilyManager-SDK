@@ -1,11 +1,21 @@
-import { PoolConfig, PoolEvent, PooledEvent } from './types';
+import { 
+  PoolConfig, 
+  PoolEvent, 
+  PooledEvent, 
+  EventDeliveryStatus 
+} from './types';
 
 class ManagedEvent<T = unknown> implements PooledEvent<T> {
   id: string = '';
-  channel: string = '';
+  poolId: string = '';
   type: string = '';
+  channel: string = '';
   timestamp: number = 0;
   data: T = {} as T;
+  source?: string;
+  status: EventDeliveryStatus = EventDeliveryStatus.Pending;
+  attempts: number = 0;
+  lastAttempt?: number;
   _inUse: boolean = false;
 
   isInUse(): boolean {
@@ -18,10 +28,15 @@ class ManagedEvent<T = unknown> implements PooledEvent<T> {
 
   reset(): void {
     this.id = '';
-    this.channel = '';
+    this.poolId = '';
     this.type = '';
+    this.channel = '';
     this.timestamp = 0;
     this.data = {} as T;
+    this.source = undefined;
+    this.status = EventDeliveryStatus.Pending;
+    this.attempts = 0;
+    this.lastAttempt = undefined;
     this._inUse = false;
   }
 }
@@ -82,10 +97,12 @@ export class EventPool {
     if (!event) return null;
 
     event.id = data.id;
-    event.channel = data.channel;
+    event.poolId = data.poolId;
     event.type = data.type;
+    event.channel = data.channel;
     event.timestamp = data.timestamp;
     event.data = data.data;
+    event.source = data.source;
 
     return event;
   }
