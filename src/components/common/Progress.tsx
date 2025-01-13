@@ -10,6 +10,7 @@ export interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   label?: string;
   animated?: boolean;
   striped?: boolean;
+  'data-testid'?: string;
 }
 
 export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
@@ -25,6 +26,7 @@ export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
       animated = false,
       striped = false,
       className = '',
+      'data-testid': dataTestId,
       ...props
     },
     ref
@@ -60,18 +62,31 @@ export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
       : '';
 
     return (
-      <div className={`w-full ${className}`} ref={ref} {...props}>
+      <div className={`w-full ${className}`} ref={ref} data-testid={dataTestId} {...props}>
         {(label || (showValue && valuePosition === 'outside')) && (
-          <div className="flex justify-between mb-1">
+          <div className="flex justify-between mb-1" data-testid={dataTestId ? `${dataTestId}-header` : undefined}>
             {label && (
-              <span className={`font-medium ${labelSizes[size]}`}>{label}</span>
+              <span 
+                className={`font-medium ${labelSizes[size]}`}
+                data-testid={dataTestId ? `${dataTestId}-label` : undefined}
+              >
+                {label}
+              </span>
             )}
             {showValue && valuePosition === 'outside' && (
-              <span className={`${labelSizes[size]}`}>{Math.round(percentage)}%</span>
+              <span 
+                className={`${labelSizes[size]}`}
+                data-testid={dataTestId ? `${dataTestId}-value-outside` : undefined}
+              >
+                {Math.round(percentage)}%
+              </span>
             )}
           </div>
         )}
-        <div className={`w-full bg-gray-200 rounded-full overflow-hidden ${sizes[size]}`}>
+        <div 
+          className={`w-full bg-gray-200 rounded-full overflow-hidden ${sizes[size]}`}
+          data-testid={dataTestId ? `${dataTestId}-track` : undefined}
+        >
           <div
             className={`
               relative
@@ -84,9 +99,13 @@ export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
               ease-in-out
             `}
             style={{ width: `${percentage}%` }}
+            data-testid={dataTestId ? `${dataTestId}-bar` : undefined}
           >
             {showValue && valuePosition === 'inside' && size !== 'sm' && (
-              <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-semibold">
+              <span 
+                className="absolute inset-0 flex items-center justify-center text-white text-xs font-semibold"
+                data-testid={dataTestId ? `${dataTestId}-value-inside` : undefined}
+              >
                 {Math.round(percentage)}%
               </span>
             )}

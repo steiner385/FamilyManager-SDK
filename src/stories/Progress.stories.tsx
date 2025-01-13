@@ -1,6 +1,8 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Progress } from '../components/common/Progress';
+import { expect } from '@storybook/jest';
+import { within } from '@storybook/testing-library';
 
 const meta = {
   title: 'Components/Progress',
@@ -12,33 +14,42 @@ const meta = {
   argTypes: {
     value: {
       control: { type: 'range', min: 0, max: 100 },
+      description: 'Current value of the progress bar',
     },
     max: {
       control: 'number',
+      description: 'Maximum value (default: 100)',
     },
     variant: {
       control: 'select',
       options: ['primary', 'success', 'warning', 'danger', 'info'],
+      description: 'Visual style variant of the progress bar',
     },
     size: {
       control: 'select',
       options: ['sm', 'md', 'lg'],
+      description: 'Size of the progress bar',
     },
     showValue: {
       control: 'boolean',
+      description: 'Whether to show the percentage value',
     },
     valuePosition: {
       control: 'radio',
       options: ['inside', 'outside'],
+      description: 'Position of the percentage value',
     },
     label: {
       control: 'text',
+      description: 'Label text above the progress bar',
     },
     animated: {
       control: 'boolean',
+      description: 'Whether to show animation effect',
     },
     striped: {
       control: 'boolean',
+      description: 'Whether to show striped pattern',
     },
   },
 } satisfies Meta<typeof Progress>;
@@ -49,6 +60,95 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     value: 60,
+    'data-testid': 'default-progress',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const track = canvas.getByTestId('default-progress-track');
+    const bar = canvas.getByTestId('default-progress-bar');
+    
+    await expect(track).toBeVisible();
+    await expect(bar).toBeVisible();
+    await expect(bar).toHaveClass('bg-blue-600');
+    await expect(bar).toHaveStyle({ width: '60%' });
+  },
+};
+
+export const Success: Story = {
+  args: {
+    value: 80,
+    variant: 'success',
+    'data-testid': 'success-progress',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const bar = canvas.getByTestId('success-progress-bar');
+    
+    await expect(bar).toBeVisible();
+    await expect(bar).toHaveClass('bg-green-600');
+    await expect(bar).toHaveStyle({ width: '80%' });
+  },
+};
+
+export const Warning: Story = {
+  args: {
+    value: 70,
+    variant: 'warning',
+    'data-testid': 'warning-progress',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const bar = canvas.getByTestId('warning-progress-bar');
+    
+    await expect(bar).toBeVisible();
+    await expect(bar).toHaveClass('bg-yellow-500');
+    await expect(bar).toHaveStyle({ width: '70%' });
+  },
+};
+
+export const Danger: Story = {
+  args: {
+    value: 30,
+    variant: 'danger',
+    'data-testid': 'danger-progress',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const bar = canvas.getByTestId('danger-progress-bar');
+    
+    await expect(bar).toBeVisible();
+    await expect(bar).toHaveClass('bg-red-600');
+    await expect(bar).toHaveStyle({ width: '30%' });
+  },
+};
+
+export const Small: Story = {
+  args: {
+    value: 50,
+    size: 'sm',
+    'data-testid': 'small-progress',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const track = canvas.getByTestId('small-progress-track');
+    
+    await expect(track).toBeVisible();
+    await expect(track).toHaveClass('h-1');
+  },
+};
+
+export const Large: Story = {
+  args: {
+    value: 50,
+    size: 'lg',
+    'data-testid': 'large-progress',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const track = canvas.getByTestId('large-progress-track');
+    
+    await expect(track).toBeVisible();
+    await expect(track).toHaveClass('h-3');
   },
 };
 
@@ -56,181 +156,102 @@ export const WithLabel: Story = {
   args: {
     value: 75,
     label: 'Upload Progress',
+    'data-testid': 'label-progress',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const label = canvas.getByTestId('label-progress-label');
+    
+    await expect(label).toBeVisible();
+    await expect(label).toHaveTextContent('Upload Progress');
+    await expect(label).toHaveClass('font-medium');
   },
 };
 
-export const WithValue: Story = {
+export const WithValueOutside: Story = {
   args: {
-    value: 45,
+    value: 65,
     showValue: true,
+    valuePosition: 'outside',
+    'data-testid': 'value-outside-progress',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const value = canvas.getByTestId('value-outside-progress-value-outside');
+    
+    await expect(value).toBeVisible();
+    await expect(value).toHaveTextContent('65%');
   },
 };
 
 export const WithValueInside: Story = {
   args: {
-    value: 85,
+    value: 65,
     showValue: true,
     valuePosition: 'inside',
     size: 'lg',
+    'data-testid': 'value-inside-progress',
   },
-};
-
-export const Variants: Story = {
-  args: {
-    value: 80,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const value = canvas.getByTestId('value-inside-progress-value-inside');
+    
+    await expect(value).toBeVisible();
+    await expect(value).toHaveTextContent('65%');
+    await expect(value).toHaveClass('text-white');
   },
-  render: () => (
-    <div className="flex flex-col gap-4 min-w-[300px]">
-      <Progress value={80} variant="primary" label="Primary" />
-      <Progress value={80} variant="success" label="Success" />
-      <Progress value={80} variant="warning" label="Warning" />
-      <Progress value={80} variant="danger" label="Danger" />
-      <Progress value={80} variant="info" label="Info" />
-    </div>
-  ),
-};
-
-export const Sizes: Story = {
-  args: {
-    value: 70,
-  },
-  render: () => (
-    <div className="flex flex-col gap-4 min-w-[300px]">
-      <Progress
-        value={70}
-        size="sm"
-        label="Small"
-        showValue
-        valuePosition="outside"
-      />
-      <Progress
-        value={70}
-        size="md"
-        label="Medium"
-        showValue
-        valuePosition="outside"
-      />
-      <Progress
-        value={70}
-        size="lg"
-        label="Large"
-        showValue
-        valuePosition="inside"
-      />
-    </div>
-  ),
 };
 
 export const Striped: Story = {
   args: {
-    value: 60,
+    value: 70,
+    striped: true,
+    'data-testid': 'striped-progress',
   },
-  render: () => (
-    <div className="flex flex-col gap-4 min-w-[300px]">
-      <Progress value={60} striped label="Striped Progress" />
-      <Progress value={60} striped animated label="Striped Animated Progress" />
-    </div>
-  ),
-};
-
-// Example of an animated progress that updates over time
-export const AnimatedProgress: Story = {
-  args: {
-    value: 0,
-  },
-  render: () => {
-    const [progress, setProgress] = React.useState(0);
-
-    React.useEffect(() => {
-      const timer = setInterval(() => {
-        setProgress((prev) => (prev >= 100 ? 0 : prev + 1));
-      }, 100);
-
-      return () => clearInterval(timer);
-    }, []);
-
-    return (
-      <div className="min-w-[300px]">
-        <Progress
-          value={progress}
-          animated
-          striped
-          label="Loading..."
-          showValue
-          valuePosition="outside"
-        />
-      </div>
-    );
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const bar = canvas.getByTestId('striped-progress-bar');
+    
+    await expect(bar).toBeVisible();
+    await expect(bar).toHaveClass('bg-gradient-to-r');
+    await expect(bar).toHaveClass('bg-[length:30px_30px]');
   },
 };
 
-// Example of multiple progress bars in a real-world context
-export const UploadExample: Story = {
+export const Animated: Story = {
   args: {
-    value: 0,
+    value: 70,
+    animated: true,
+    'data-testid': 'animated-progress',
   },
-  render: () => (
-    <div className="p-6 bg-white rounded-lg shadow-sm min-w-[400px]">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">File Uploads</h3>
-      <div className="space-y-4">
-        <Progress
-          value={100}
-          variant="success"
-          label="document.pdf"
-          showValue
-          size="sm"
-        />
-        <Progress
-          value={85}
-          variant="primary"
-          label="presentation.pptx"
-          showValue
-          animated
-          striped
-          size="sm"
-        />
-        <Progress
-          value={45}
-          variant="warning"
-          label="video.mp4"
-          showValue
-          animated
-          striped
-          size="sm"
-        />
-        <Progress
-          value={0}
-          variant="info"
-          label="archive.zip"
-          showValue
-          size="sm"
-        />
-      </div>
-    </div>
-  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const bar = canvas.getByTestId('animated-progress-bar');
+    
+    await expect(bar).toBeVisible();
+    await expect(bar).toHaveClass('after:animate-progress-shine');
+  },
 };
 
-// Example of a custom max value
-export const CustomMaxValue: Story = {
+export const CompleteProgress: Story = {
   args: {
-    value: 150,
+    value: 100,
+    variant: 'success',
+    label: 'Download Complete',
+    showValue: true,
+    valuePosition: 'outside',
+    'data-testid': 'complete-progress',
   },
-  render: () => (
-    <div className="space-y-4 min-w-[300px]">
-      <Progress
-        value={150}
-        max={200}
-        label="Custom max (200)"
-        showValue
-        valuePosition="outside"
-      />
-      <Progress
-        value={750}
-        max={1000}
-        label="Download progress (MB)"
-        showValue
-        valuePosition="outside"
-      />
-    </div>
-  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const bar = canvas.getByTestId('complete-progress-bar');
+    const label = canvas.getByTestId('complete-progress-label');
+    const value = canvas.getByTestId('complete-progress-value-outside');
+    
+    await expect(bar).toBeVisible();
+    await expect(bar).toHaveClass('bg-green-600');
+    await expect(bar).toHaveStyle({ width: '100%' });
+    await expect(label).toHaveTextContent('Download Complete');
+    await expect(value).toHaveTextContent('100%');
+  },
 };
