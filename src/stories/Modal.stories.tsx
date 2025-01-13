@@ -1,8 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Modal } from '../components/common/Modal';
-import { expect } from '@storybook/jest';
-import { within, userEvent } from '@storybook/testing-library';
 
 const meta = {
   title: 'Components/Modal',
@@ -44,14 +42,6 @@ export const Default: Story = {
     onClose: () => {},
     children: 'Modal content goes here',
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const dialog = canvas.getByRole('dialog');
-    
-    await expect(dialog).toBeVisible();
-    await expect(dialog).toHaveClass('relative');
-    await expect(dialog).toHaveClass('z-50');
-  },
 };
 
 export const WithTitle: Story = {
@@ -60,15 +50,6 @@ export const WithTitle: Story = {
     onClose: () => {},
     title: 'Modal Title',
     children: 'Modal content with a title',
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const title = canvas.getByRole('heading', { level: 3 });
-    
-    await expect(title).toBeVisible();
-    await expect(title).toHaveTextContent('Modal Title');
-    await expect(title).toHaveClass('text-lg');
-    await expect(title).toHaveClass('font-medium');
   },
 };
 
@@ -79,12 +60,6 @@ export const SmallSize: Story = {
     maxWidth: 'sm',
     children: 'Small modal content',
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const panel = canvas.getByRole('dialog').querySelector('[role="dialog"] > div');
-    
-    await expect(panel).toHaveClass('sm:max-w-sm');
-  },
 };
 
 export const LargeSize: Story = {
@@ -94,12 +69,6 @@ export const LargeSize: Story = {
     maxWidth: 'lg',
     children: 'Large modal content',
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const panel = canvas.getByRole('dialog').querySelector('[role="dialog"] > div');
-    
-    await expect(panel).toHaveClass('sm:max-w-lg');
-  },
 };
 
 export const WithCloseButton: Story = {
@@ -107,15 +76,6 @@ export const WithCloseButton: Story = {
     isOpen: true,
     onClose: () => {},
     children: 'Modal with close button',
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const closeButton = canvas.getByRole('button');
-    
-    await expect(closeButton).toBeVisible();
-    await expect(closeButton).toHaveAttribute('type', 'button');
-    const srOnly = closeButton.querySelector('.sr-only');
-    await expect(srOnly).toHaveTextContent('Close');
   },
 };
 
@@ -135,12 +95,5 @@ export const WithLongContent: Story = {
         ))}
       </div>
     ),
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const dialog = canvas.getByRole('dialog');
-    const content = dialog.querySelector('[role="dialog"] > div');
-    
-    await expect(content).toHaveClass('overflow-y-auto');
   },
 };

@@ -57,9 +57,18 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const waitForTransition = async () => new Promise(resolve => setTimeout(resolve, 350));
+
+const checkProgressWidth = async (element: HTMLElement, expectedPercentage: number) => {
+  await waitForTransition();
+  const style = element.getAttribute('style');
+  expect(style).toBe(`width: ${expectedPercentage}%;`);
+};
+
 export const Default: Story = {
   args: {
     value: 60,
+    label: 'Default Progress',
     'data-testid': 'default-progress',
   },
   play: async ({ canvasElement }) => {
@@ -70,7 +79,7 @@ export const Default: Story = {
     await expect(track).toBeVisible();
     await expect(bar).toBeVisible();
     await expect(bar).toHaveClass('bg-blue-600');
-    await expect(bar).toHaveStyle({ width: '60%' });
+    await checkProgressWidth(bar, 60);
   },
 };
 
@@ -78,6 +87,7 @@ export const Success: Story = {
   args: {
     value: 80,
     variant: 'success',
+    label: 'Success Progress',
     'data-testid': 'success-progress',
   },
   play: async ({ canvasElement }) => {
@@ -86,7 +96,7 @@ export const Success: Story = {
     
     await expect(bar).toBeVisible();
     await expect(bar).toHaveClass('bg-green-600');
-    await expect(bar).toHaveStyle({ width: '80%' });
+    await checkProgressWidth(bar, 80);
   },
 };
 
@@ -94,6 +104,7 @@ export const Warning: Story = {
   args: {
     value: 70,
     variant: 'warning',
+    label: 'Warning Progress',
     'data-testid': 'warning-progress',
   },
   play: async ({ canvasElement }) => {
@@ -102,7 +113,7 @@ export const Warning: Story = {
     
     await expect(bar).toBeVisible();
     await expect(bar).toHaveClass('bg-yellow-500');
-    await expect(bar).toHaveStyle({ width: '70%' });
+    await checkProgressWidth(bar, 70);
   },
 };
 
@@ -110,6 +121,7 @@ export const Danger: Story = {
   args: {
     value: 30,
     variant: 'danger',
+    label: 'Danger Progress',
     'data-testid': 'danger-progress',
   },
   play: async ({ canvasElement }) => {
@@ -118,7 +130,7 @@ export const Danger: Story = {
     
     await expect(bar).toBeVisible();
     await expect(bar).toHaveClass('bg-red-600');
-    await expect(bar).toHaveStyle({ width: '30%' });
+    await checkProgressWidth(bar, 30);
   },
 };
 
@@ -126,6 +138,7 @@ export const Small: Story = {
   args: {
     value: 50,
     size: 'sm',
+    label: 'Small Progress',
     'data-testid': 'small-progress',
   },
   play: async ({ canvasElement }) => {
@@ -141,6 +154,7 @@ export const Large: Story = {
   args: {
     value: 50,
     size: 'lg',
+    label: 'Large Progress',
     'data-testid': 'large-progress',
   },
   play: async ({ canvasElement }) => {
@@ -250,7 +264,7 @@ export const CompleteProgress: Story = {
     
     await expect(bar).toBeVisible();
     await expect(bar).toHaveClass('bg-green-600');
-    await expect(bar).toHaveStyle({ width: '100%' });
+    await checkProgressWidth(bar, 100);
     await expect(label).toHaveTextContent('Download Complete');
     await expect(value).toHaveTextContent('100%');
   },

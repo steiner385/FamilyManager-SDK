@@ -1,0 +1,32 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "outDir": "",
+    "module": "ESNext",
+    "target": "ES2020",
+    "lib": ["ESNext", "DOM"],
+    "types": ["node", "@storybook/react"],
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "incremental": true,
+    "paths": {
+      "@/*": ["../src/*"]
+    }
+  },
+  "include": [
+    "../src/**/*.stories.tsx",
+    "../src/**/*.stories.ts",
+    "../src/**/*.stories.mdx",
+    "./preview.tsx",
+    "./main.ts"
+  ],
+  "exclude": ["../node_modules"]
+}

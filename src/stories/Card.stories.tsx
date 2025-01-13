@@ -173,7 +173,7 @@ export const ComplexContent: Story = {
     variant: 'elevated',
     header: (
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Complex Card</h3>
+        <h2 className="text-lg font-semibold">Complex Card</h2>
         <button className="text-blue-600">Action</button>
       </div>
     ),

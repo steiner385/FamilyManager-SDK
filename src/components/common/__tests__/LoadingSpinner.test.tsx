@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '../../../testing/test-utils';
+import { render, screen } from '../../../testing/simple-test-utils';
 import { LoadingSpinner } from '../LoadingSpinner';
 
 describe('LoadingSpinner', () => {
@@ -9,6 +9,7 @@ describe('LoadingSpinner', () => {
     expect(spinner).toBeInTheDocument();
     expect(spinner).toHaveClass('h-8 w-8'); // medium size by default
     expect(spinner).toHaveAttribute('aria-label', 'Loading');
+    expect(spinner).toHaveAttribute('aria-busy', 'true');
   });
 
   it('applies different sizes correctly', () => {
@@ -38,5 +39,35 @@ describe('LoadingSpinner', () => {
     const spinner = screen.getByRole('status');
     expect(spinner).toHaveAttribute('role', 'status');
     expect(spinner).toHaveAttribute('aria-label', 'Loading');
+    expect(spinner).toHaveAttribute('aria-busy', 'true');
   });
+
+  it('uses custom label when provided', () => {
+    render(<LoadingSpinner label="Processing" />);
+    const spinner = screen.getByRole('status');
+    expect(spinner).toHaveAttribute('aria-label', 'Processing');
+  });
+
+  it('renders SVG with proper structure and classes', () => {
+    render(<LoadingSpinner />);
+    const spinner = screen.getByRole('status');
+    const svg = spinner.querySelector('svg');
+    const circle = spinner.querySelector('circle');
+    const path = spinner.querySelector('path');
+
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveClass('text-current');
+    expect(circle).toBeInTheDocument();
+    expect(circle).toHaveClass('opacity-25');
+    expect(path).toBeInTheDocument();
+    expect(path).toHaveClass('opacity-75');
+
+    expect(svg).toHaveAttribute('viewBox', '0 0 24 24');
+    expect(circle).toHaveAttribute('cx', '12');
+    expect(circle).toHaveAttribute('cy', '12');
+    expect(circle).toHaveAttribute('r', '10');
+    expect(circle).toHaveAttribute('stroke', 'currentColor');
+    expect(circle).toHaveAttribute('stroke-width', '4');
+  });
+
 });

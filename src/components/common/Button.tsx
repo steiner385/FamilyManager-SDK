@@ -58,14 +58,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         data-testid={dataTestId}
         {...props}
       >
-        {isLoading ? (
-          <div 
-            role="presentation" 
-            aria-hidden="true"
-            className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" 
-          />
-        ) : null}
-        {children}
+        <span className="inline-flex items-center">
+          {isLoading && (
+            <span
+              role="status"
+              aria-label="Loading"
+              className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+            />
+          )}
+          {children}
+        </span>
       </button>
     );
   }

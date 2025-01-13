@@ -54,7 +54,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     };
 
     const states = {
-      error: 'border-red-500 focus:border-red-500 focus:ring-red-500',
+      error: 'border-red-600 focus:border-red-600 focus:ring-red-600',
       disabled: 'opacity-50 cursor-not-allowed bg-gray-50',
     };
 
@@ -123,7 +123,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {helperText && (
           <span
             className={`mt-1 text-sm ${
-              error ? 'text-red-500' : 'text-gray-500'
+              error ? 'text-red-600' : 'text-gray-500'
             }`}
             data-testid={dataTestId ? `${dataTestId}-helper-text` : undefined}
           >

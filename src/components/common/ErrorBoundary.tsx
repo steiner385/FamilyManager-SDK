@@ -37,7 +37,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return this.props.fallback || (
         <div className="min-h-screen bg-white px-4 py-16 sm:px-6 sm:py-24 md:grid md:place-items-center lg:px-8">
           <div className="max-w-max mx-auto">
-            <main className="sm:flex">
+            <div className="sm:flex">
               <p className="text-4xl font-bold text-red-600 sm:text-5xl">500</p>
               <div className="sm:ml-6">
                 <div className="sm:border-l sm:border-gray-200 sm:pl-6">
@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   </a>
                 </div>
               </div>
-            </main>
+            </div>
           </div>
         </div>
       );

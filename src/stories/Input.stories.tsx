@@ -139,9 +139,9 @@ export const WithError: Story = {
     const helperText = canvas.getByTestId('error-input-helper-text');
     
     await expect(input).toBeVisible();
-    await expect(input).toHaveClass('border-red-500');
+    await expect(input).toHaveClass('border-red-600');
     await expect(helperText).toBeVisible();
-    await expect(helperText).toHaveClass('text-red-500');
+    await expect(helperText).toHaveClass('text-red-600');
     await expect(helperText).toHaveTextContent('This field is required');
   },
 };

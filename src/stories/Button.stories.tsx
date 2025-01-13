@@ -193,9 +193,10 @@ export const Loading: Story = {
     await expect(button).toHaveClass('cursor-wait');
     
     // Check for loading spinner
-    const spinner = canvas.getByRole('presentation');
+    const spinner = canvas.getByRole('status');
     await expect(spinner).toBeVisible();
     await expect(spinner).toHaveClass('animate-spin');
+    await expect(spinner).toHaveAttribute('aria-label', 'Loading');
   },
 };
 

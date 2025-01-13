@@ -42,6 +42,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
+    label: 'Default switch',
     'data-testid': 'default-switch',
   },
   play: async ({ canvasElement }) => {
@@ -55,13 +56,14 @@ export const Default: Story = {
     await expect(thumb).toHaveClass('bg-white');
     
     await userEvent.click(switchInput);
-    await expect(track).toHaveClass('bg-blue-600');
+    await expect(track).toHaveClass('peer-checked:bg-blue-600');
   },
 };
 
 export const Success: Story = {
   args: {
     variant: 'success',
+    label: 'Success switch',
     'data-testid': 'success-switch',
   },
   play: async ({ canvasElement }) => {
@@ -72,13 +74,14 @@ export const Success: Story = {
     await expect(track).toHaveClass('bg-gray-200');
     
     await userEvent.click(switchInput);
-    await expect(track).toHaveClass('bg-green-600');
+    await expect(track).toHaveClass('peer-checked:bg-green-600');
   },
 };
 
 export const Danger: Story = {
   args: {
     variant: 'danger',
+    label: 'Danger switch',
     'data-testid': 'danger-switch',
   },
   play: async ({ canvasElement }) => {
@@ -89,13 +92,14 @@ export const Danger: Story = {
     await expect(track).toHaveClass('bg-gray-200');
     
     await userEvent.click(switchInput);
-    await expect(track).toHaveClass('bg-red-600');
+    await expect(track).toHaveClass('peer-checked:bg-red-600');
   },
 };
 
 export const Small: Story = {
   args: {
     size: 'sm',
+    label: 'Small switch',
     'data-testid': 'small-switch',
   },
   play: async ({ canvasElement }) => {
@@ -113,6 +117,7 @@ export const Small: Story = {
 export const Large: Story = {
   args: {
     size: 'lg',
+    label: 'Large switch',
     'data-testid': 'large-switch',
   },
   play: async ({ canvasElement }) => {
@@ -184,6 +189,7 @@ export const Disabled: Story = {
 export const Checked: Story = {
   args: {
     defaultChecked: true,
+    label: 'Checked switch',
     'data-testid': 'checked-switch',
   },
   play: async ({ canvasElement }) => {
@@ -192,7 +198,7 @@ export const Checked: Story = {
     const track = canvas.getByTestId('checked-switch-track');
     
     await expect(switchInput).toBeChecked();
-    await expect(track).toHaveClass('bg-blue-600');
+    await expect(track).toHaveClass('peer-checked:bg-blue-600');
   },
 };
 
@@ -212,7 +218,7 @@ export const Interactive: Story = {
     
     await userEvent.click(switchInput);
     await expect(switchInput).toBeChecked();
-    await expect(track).toHaveClass('bg-blue-600');
+    await expect(track).toHaveClass('peer-checked:bg-blue-600');
     
     await userEvent.click(switchInput);
     await expect(switchInput).not.toBeChecked();

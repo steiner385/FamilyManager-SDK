@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '../../../testing/test-utils';
+import { render, screen } from '../../../testing/simple-test-utils';
 import { LoadingSkeleton } from '../LoadingSkeleton';
 
 describe('LoadingSkeleton', () => {
@@ -7,29 +7,35 @@ describe('LoadingSkeleton', () => {
     render(<LoadingSkeleton />);
     const skeleton = screen.getByRole('status');
     expect(skeleton).toBeInTheDocument();
-    expect(skeleton).toHaveClass('h-4', 'w-full');
+    expect(skeleton).toHaveClass('w-full', 'h-4', 'rounded');
     expect(skeleton).toHaveAttribute('aria-label', 'Loading...');
   });
 
-  it('renders multiple skeleton items based on count prop', () => {
-    render(<LoadingSkeleton count={3} />);
-    const skeletons = screen.getAllByRole('status');
-    expect(skeletons).toHaveLength(3);
-    
-    // Check spacing between items
-    skeletons.forEach((skeleton, index) => {
-      if (index < 2) { // All except last should have margin bottom
-        expect(skeleton).toHaveClass('mb-4');
-      } else {
-        expect(skeleton).not.toHaveClass('mb-4');
-      }
-    });
+  it('applies different variants correctly', () => {
+    const { rerender } = render(<LoadingSkeleton variant="text" />);
+    expect(screen.getByRole('status')).not.toHaveClass('rounded-full');
+
+    rerender(<LoadingSkeleton variant="circle" />);
+    expect(screen.getByRole('status')).toHaveClass('rounded-full');
+
+    rerender(<LoadingSkeleton variant="rectangle" />);
+    expect(screen.getByRole('status')).toHaveClass('rounded');
   });
 
-  it('applies custom dimensions', () => {
-    render(<LoadingSkeleton height="h-8" width="w-1/2" />);
+  it('applies custom width and height', () => {
+    render(<LoadingSkeleton width="w-32" height="h-8" />);
     const skeleton = screen.getByRole('status');
-    expect(skeleton).toHaveClass('h-8', 'w-1/2');
+    expect(skeleton).toHaveClass('w-32', 'h-8');
+  });
+
+  it('renders multiple skeletons with correct spacing', () => {
+    render(<LoadingSkeleton count={3} />);
+    const skeletons = screen.getAllByRole('status');
+    
+    expect(skeletons).toHaveLength(3);
+    expect(skeletons[0]).toHaveClass('mb-4');
+    expect(skeletons[1]).toHaveClass('mb-4');
+    expect(skeletons[2]).not.toHaveClass('mb-4');
   });
 
   it('applies custom className', () => {
@@ -38,14 +44,19 @@ describe('LoadingSkeleton', () => {
     expect(skeleton).toHaveClass('bg-blue-200');
   });
 
-  it('maintains animation and base classes with custom className', () => {
-    render(<LoadingSkeleton className="custom-class" />);
+  it('maintains base classes with custom className', () => {
+    render(<LoadingSkeleton className="bg-blue-200" />);
     const skeleton = screen.getByRole('status');
-    expect(skeleton).toHaveClass('animate-pulse', 'bg-gray-200', 'rounded', 'custom-class');
+    expect(skeleton).toHaveClass('animate-pulse', 'bg-gray-200', 'bg-blue-200');
   });
 
-  it('includes screen reader text', () => {
+  it('has proper accessibility attributes', () => {
     render(<LoadingSkeleton />);
-    expect(screen.getByText('Loading...')).toHaveClass('sr-only');
+    const skeleton = screen.getByRole('status');
+    expect(skeleton).toHaveAttribute('role', 'status');
+    expect(skeleton).toHaveAttribute('aria-label', 'Loading...');
+    
+    const screenReaderText = screen.getByText('Loading...');
+    expect(screenReaderText).toHaveClass('sr-only');
   });
 });

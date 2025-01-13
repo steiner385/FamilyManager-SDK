@@ -27,7 +27,16 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog 
+        as="div" 
+        className="relative z-50" 
+        onClose={onClose}
+        aria-modal="true"
+        aria-labelledby={title ? "modal-title" : undefined}
+        aria-label={title ? undefined : "Modal dialog"}
+        role="dialog"
+        data-testid="modal"
+      >
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -53,26 +62,36 @@ export const Modal: React.FC<ModalProps> = ({
             >
               <Dialog.Panel 
                 className={`relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full ${maxWidthClasses[maxWidth]} sm:p-6`}
+                data-testid="modal-panel"
               >
                 <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                   <button
                     type="button"
                     className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                     onClick={onClose}
+                    aria-label="Close modal"
+                    data-testid="modal-close-button"
                   >
-                    <span className="sr-only">Close</span>
+                    <span className="sr-only">Close modal</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>
                 </div>
                 {title && (
                   <Dialog.Title
-                    as="h3"
+                    as="h1"
+                    id="modal-title"
                     className="text-lg font-medium leading-6 text-gray-900 mb-4"
+                    data-testid="modal-title"
                   >
                     {title}
                   </Dialog.Title>
                 )}
-                {children}
+                <div 
+                  className="modal-content"
+                  data-testid="modal-content"
+                >
+                  {children}
+                </div>
               </Dialog.Panel>
             </Transition.Child>
           </div>
