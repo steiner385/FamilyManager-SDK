@@ -6,6 +6,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   header?: React.ReactNode;
   footer?: React.ReactNode;
   hoverable?: boolean;
+  'data-testid'?: string;
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
@@ -18,6 +19,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       footer,
       hoverable = false,
       className = '',
+      'data-testid': dataTestId,
       ...props
     },
     ref
@@ -49,16 +51,25 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     `.trim();
 
     return (
-      <div ref={ref} className={combinedClassName} {...props}>
+      <div ref={ref} className={combinedClassName} data-testid={dataTestId} {...props}>
         {header && (
-          <div className={`border-b border-gray-200 ${paddings[padding]}`}>
+          <div 
+            className={`border-b border-gray-200 ${paddings[padding]}`}
+            data-testid={dataTestId ? `${dataTestId}-header` : undefined}
+          >
             {header}
           </div>
         )}
-        <div className={paddings[padding]}>{children}</div>
+        <div 
+          className={paddings[padding]}
+          data-testid={dataTestId ? `${dataTestId}-content` : undefined}
+        >
+          {children}
+        </div>
         {footer && (
           <div
             className={`border-t border-gray-200 bg-gray-50 ${paddings[padding]}`}
+            data-testid={dataTestId ? `${dataTestId}-footer` : undefined}
           >
             {footer}
           </div>
