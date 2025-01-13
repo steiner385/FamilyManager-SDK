@@ -102,3 +102,172 @@ export const logAuthAttempt = (
     timestamp: new Date().toISOString()
   });
 };
+import { Request, Response, NextFunction } from 'express';
+
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const MAX_CONCURRENT_SESSIONS = 5;
+
+interface Session {
+  id: string;
+  userId: string;
+  createdAt: number;
+  lastActivity: number;
+}
+
+const sessions = new Map<string, Session[]>();
+
+export const sessionMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const sessionId = req.headers['x-session-id'] as string;
+  const userId = req.headers['x-user-id'] as string;
+
+  if (!sessionId || !userId) {
+    return res.status(401).json({ error: 'No session provided' });
+  }
+
+  const userSessions = sessions.get(userId) || [];
+  const session = userSessions.find(s => s.id === sessionId);
+
+  if (!session) {
+    return res.status(401).json({ error: 'Invalid session' });
+  }
+
+  // Check session timeout
+  if (Date.now() - session.lastActivity > SESSION_TIMEOUT) {
+    invalidateSession(userId, sessionId);
+    return res.status(401).json({ error: 'Session expired' });
+  }
+
+  // Update last activity
+  session.lastActivity = Date.now();
+  next();
+};
+
+export const createSession = (userId: string): string => {
+  const userSessions = sessions.get(userId) || [];
+
+  // Enforce max concurrent sessions
+  if (userSessions.length >= MAX_CONCURRENT_SESSIONS) {
+    // Remove oldest session
+    const oldestSession = userSessions.reduce((prev, curr) => 
+      prev.lastActivity < curr.lastActivity ? prev : curr
+    );
+    invalidateSession(userId, oldestSession.id);
+  }
+
+  const session: Session = {
+    id: Math.random().toString(36).substring(2),
+    userId,
+    createdAt: Date.now(),
+    lastActivity: Date.now()
+  };
+
+  sessions.set(userId, [...(sessions.get(userId) || []), session]);
+  return session.id;
+};
+
+export const invalidateSession = (userId: string, sessionId: string): void => {
+  const userSessions = sessions.get(userId) || [];
+  sessions.set(userId, userSessions.filter(s => s.id !== sessionId));
+};
+
+export const invalidateAllUserSessions = (userId: string): void => {
+  sessions.delete(userId);
+};
+import crypto from 'crypto';
+
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32);
+const ALGORITHM = 'aes-256-gcm';
+const IV_LENGTH = 12;
+const AUTH_TAG_LENGTH = 16;
+const SALT_LENGTH = 16;
+const KEY_LENGTH = 32;
+const ITERATIONS = 100000;
+
+interface EncryptedData {
+  encrypted: string;
+  iv: string;
+  authTag: string;
+  salt: string;
+}
+
+export const encryptData = (data: string): EncryptedData => {
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const salt = crypto.randomBytes(SALT_LENGTH);
+
+  const key = crypto.pbkdf2Sync(
+    ENCRYPTION_KEY,
+    salt,
+    ITERATIONS,
+    KEY_LENGTH,
+    'sha256'
+  );
+
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+  let encrypted = cipher.update(data, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+
+  return {
+    encrypted,
+    iv: iv.toString('hex'),
+    authTag: cipher.getAuthTag().toString('hex'),
+    salt: salt.toString('hex')
+  };
+};
+
+export const decryptData = (encryptedData: EncryptedData): string => {
+  const { encrypted, iv, authTag, salt } = encryptedData;
+
+  const key = crypto.pbkdf2Sync(
+    ENCRYPTION_KEY,
+    Buffer.from(salt, 'hex'),
+    ITERATIONS,
+    KEY_LENGTH,
+    'sha256'
+  );
+
+  const decipher = crypto.createDecipheriv(
+    ALGORITHM,
+    key,
+    Buffer.from(iv, 'hex')
+  );
+
+  decipher.setAuthTag(Buffer.from(authTag, 'hex'));
+
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+
+  return decrypted;
+};
+
+// Utility function for encrypting sensitive fields in objects
+export const encryptSensitiveData = <T extends Record<string, any>>(
+  data: T,
+  sensitiveFields: string[]
+): T => {
+  const encryptedData = { ...data };
+
+  for (const field of sensitiveFields) {
+    if (data[field]) {
+      const encrypted = encryptData(data[field]);
+      encryptedData[field] = encrypted;
+    }
+  }
+
+  return encryptedData;
+};
+
+// Utility function for decrypting sensitive fields in objects
+export const decryptSensitiveData = <T extends Record<string, any>>(
+  data: T,
+  sensitiveFields: string[]
+): T => {
+  const decryptedData = { ...data };
+
+  for (const field of sensitiveFields) {
+    if (data[field] && typeof data[field] === 'object') {
+      decryptedData[field] = decryptData(data[field]);
+    }
+  }
+
+  return decryptedData;
+};
