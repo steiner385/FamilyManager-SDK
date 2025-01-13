@@ -12,7 +12,10 @@
     "test:e2e": "playwright test",
     "security:audit": "npm audit",
     "security:scan": "npm audit --audit-level=high",
-    "precommit": "lint-staged",
+    "security:full": "npm run security:audit && npm run security:scan && npm run security:dependencies",
+    "security:dependencies": "npx snyk test",
+    "security:secrets": "npx detect-secrets scan",
+    "precommit": "npm run security:secrets && lint-staged",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -27,6 +30,10 @@
     "csurf": "^1.11.0"
   },
   "devDependencies": {
+    "snyk": "^1.0.0",
+    "detect-secrets": "^1.0.0",
+    "@types/helmet": "^4.0.0",
+    "@types/hpp": "^0.2.2",
     "@commitlint/cli": "^17.0.0",
     "@commitlint/config-conventional": "^17.0.0",
     "@headlessui/react": "^2.2.0",
