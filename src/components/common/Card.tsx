@@ -1,76 +1,71 @@
 import React from 'react';
-import type { BaseComponentProps } from './types';
 
-export interface CardProps extends BaseComponentProps {
-  title?: string;
-  subtitle?: string;
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'outlined' | 'elevated';
+  padding?: 'none' | 'sm' | 'md' | 'lg';
+  header?: React.ReactNode;
   footer?: React.ReactNode;
-  padding?: 'none' | 'small' | 'medium' | 'large';
-  shadow?: 'none' | 'small' | 'medium' | 'large';
-  border?: boolean;
-  rounded?: boolean;
+  hoverable?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({
-  children,
-  className = '',
-  title,
-  subtitle,
-  footer,
-  padding = 'medium',
-  shadow = 'medium',
-  border = true,
-  rounded = true,
-  ...props
-}) => {
-  const paddingClasses = {
-    none: '',
-    small: 'p-2',
-    medium: 'p-4',
-    large: 'p-6'
-  };
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  (
+    {
+      children,
+      variant = 'default',
+      padding = 'md',
+      header,
+      footer,
+      hoverable = false,
+      className = '',
+      ...props
+    },
+    ref
+  ) => {
+    const baseStyles = 'rounded-lg overflow-hidden';
+    
+    const variants = {
+      default: 'bg-white',
+      outlined: 'bg-white border border-gray-200',
+      elevated: 'bg-white shadow-md',
+    };
 
-  const shadowClasses = {
-    none: '',
-    small: 'shadow-sm',
-    medium: 'shadow',
-    large: 'shadow-lg'
-  };
+    const paddings = {
+      none: '',
+      sm: 'p-3',
+      md: 'p-4',
+      lg: 'p-6',
+    };
 
-  const classes = [
-    'bg-white',
-    rounded ? 'rounded-lg' : '',
-    border ? 'border border-gray-200' : '',
-    shadowClasses[shadow],
-    className
-  ].filter(Boolean).join(' ');
+    const hoverStyles = hoverable
+      ? 'transition-shadow duration-200 hover:shadow-lg'
+      : '';
 
-  const bodyClasses = paddingClasses[padding];
+    const combinedClassName = `
+      ${baseStyles}
+      ${variants[variant]}
+      ${hoverStyles}
+      ${className}
+    `.trim();
 
-  return (
-    <div className={classes} {...props}>
-      {(title || subtitle) && (
-        <div className={`border-b border-gray-200 ${paddingClasses[padding]}`}>
-          {title && (
-            <h3 className="text-lg font-medium leading-6 text-gray-900">
-              {title}
-            </h3>
-          )}
-          {subtitle && (
-            <p className="mt-1 text-sm text-gray-500">
-              {subtitle}
-            </p>
-          )}
-        </div>
-      )}
-      <div className={bodyClasses}>
-        {children}
+    return (
+      <div ref={ref} className={combinedClassName} {...props}>
+        {header && (
+          <div className={`border-b border-gray-200 ${paddings[padding]}`}>
+            {header}
+          </div>
+        )}
+        <div className={paddings[padding]}>{children}</div>
+        {footer && (
+          <div
+            className={`border-t border-gray-200 bg-gray-50 ${paddings[padding]}`}
+          >
+            {footer}
+          </div>
+        )}
       </div>
-      {footer && (
-        <div className={`border-t border-gray-200 ${paddingClasses[padding]}`}>
-          {footer}
-        </div>
-      )}
-    </div>
-  );
-};
+    );
+  }
+);
+
+Card.displayName = 'Card';

@@ -1,89 +1,137 @@
 import React from 'react';
-import type { BaseComponentProps } from './types';
 
-export interface SwitchProps extends BaseComponentProps {
-  checked?: boolean;
-  disabled?: boolean;
-  onChange?: (checked: boolean) => void;
-  size?: 'small' | 'medium' | 'large';
+export interface SwitchProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'role' | 'size'> {
+  size?: 'sm' | 'md' | 'lg';
   label?: string;
-  name?: string;
-  'aria-label'?: string;
+  description?: string;
+  variant?: 'primary' | 'success' | 'danger';
 }
 
-export const Switch: React.FC<SwitchProps> = ({
-  checked = false,
-  disabled = false,
-  onChange,
-  size = 'medium',
-  className = '',
-  label,
-  name,
-  'aria-label': ariaLabel,
-  ...props
-}) => {
-  const baseClasses = 'relative inline-flex flex-shrink-0 cursor-pointer rounded-full transition-colors ease-in-out duration-200';
-  const sizeClasses = {
-    small: 'h-4 w-7',
-    medium: 'h-6 w-11',
-    large: 'h-8 w-14'
-  };
+export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
+  (
+    {
+      size = 'md',
+      label,
+      description,
+      variant = 'primary',
+      disabled = false,
+      className = '',
+      id,
+      ...props
+    },
+    ref
+  ) => {
+    const uniqueId = id || `switch-${Math.random().toString(36).substr(2, 9)}`;
 
-  const handleClasses = {
-    small: 'h-3 w-3',
-    medium: 'h-5 w-5',
-    large: 'h-7 w-7'
-  };
+    const sizes = {
+      sm: {
+        switch: 'w-8 h-4',
+        thumb: 'w-3 h-3',
+        translate: 'translate-x-4',
+        text: 'text-sm',
+      },
+      md: {
+        switch: 'w-11 h-6',
+        thumb: 'w-5 h-5',
+        translate: 'translate-x-5',
+        text: 'text-base',
+      },
+      lg: {
+        switch: 'w-14 h-7',
+        thumb: 'w-6 h-6',
+        translate: 'translate-x-7',
+        text: 'text-lg',
+      },
+    };
 
-  const translateClasses = {
-    small: 'translate-x-3',
-    medium: 'translate-x-5',
-    large: 'translate-x-6'
-  };
+    const variants = {
+      primary: {
+        active: 'bg-blue-600',
+        inactive: 'bg-gray-200',
+      },
+      success: {
+        active: 'bg-green-600',
+        inactive: 'bg-gray-200',
+      },
+      danger: {
+        active: 'bg-red-600',
+        inactive: 'bg-gray-200',
+      },
+    };
 
-  const classes = [
-    baseClasses,
-    sizeClasses[size],
-    checked ? 'bg-primary-600' : 'bg-gray-200',
-    disabled ? 'opacity-50 cursor-not-allowed' : '',
-    className
-  ].filter(Boolean).join(' ');
-
-  const handleClass = [
-    'pointer-events-none inline-block transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-    handleClasses[size],
-    checked ? translateClasses[size] : 'translate-x-0'
-  ].join(' ');
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!disabled && onChange) {
-      onChange(event.target.checked);
-    }
-  };
-
-  return (
-    <label className="inline-flex items-center">
-      <input
-        type="checkbox"
-        className="sr-only"
-        checked={checked}
-        disabled={disabled}
-        onChange={handleChange}
-        name={name}
-        aria-label={ariaLabel || label}
-        {...props}
-      />
-      <div className={classes}>
-        <span
-          className={handleClass}
-          aria-hidden="true"
-        />
+    return (
+      <div className={`flex items-start ${className}`}>
+        <div className="flex items-center h-full">
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              id={uniqueId}
+              className="sr-only peer"
+              disabled={disabled}
+              ref={ref}
+              {...props}
+            />
+            <div
+              className={`
+                ${sizes[size].switch}
+                ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                ${variants[variant].inactive}
+                peer-checked:${variants[variant].active}
+                rounded-full
+                peer-focus:outline-none
+                peer-focus:ring-4
+                peer-focus:ring-blue-300
+                dark:peer-focus:ring-blue-800
+                transition-colors
+              `}
+            >
+              <div
+                className={`
+                  ${sizes[size].thumb}
+                  ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
+                  bg-white
+                  rounded-full
+                  transition-transform
+                  peer-checked:${sizes[size].translate}
+                  absolute
+                  left-0.5
+                  top-1/2
+                  -translate-y-1/2
+                `}
+              />
+            </div>
+          </label>
+        </div>
+        {(label || description) && (
+          <div className="ml-3">
+            {label && (
+              <label
+                htmlFor={uniqueId}
+                className={`
+                  font-medium
+                  ${sizes[size].text}
+                  ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                `}
+              >
+                {label}
+              </label>
+            )}
+            {description && (
+              <p
+                className={`
+                  text-gray-500
+                  ${size === 'sm' ? 'text-xs' : 'text-sm'}
+                  ${disabled ? 'opacity-50' : ''}
+                `}
+              >
+                {description}
+              </p>
+            )}
+          </div>
+        )}
       </div>
-      {label && (
-        <span className="ml-2 text-sm text-gray-900">
-          {label}
-        </span>
-      )}
-    </label>
-  );
-};
+    );
+  }
+);
+
+Switch.displayName = 'Switch';

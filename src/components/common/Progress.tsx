@@ -1,24 +1,100 @@
 import React from 'react';
-import type { BaseComponentProps } from './types';
 
-export interface ProgressProps extends BaseComponentProps {
+export interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   value: number;
   max?: number;
+  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
+  size?: 'sm' | 'md' | 'lg';
+  showValue?: boolean;
+  valuePosition?: 'inside' | 'outside';
+  label?: string;
+  animated?: boolean;
+  striped?: boolean;
 }
 
-export const Progress: React.FC<ProgressProps> = ({ 
-  value, 
-  max = 100, 
-  className = '' 
-}) => {
-  const percentage = Math.min(100, Math.max(0, (value / max) * 100));
+export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
+  (
+    {
+      value,
+      max = 100,
+      variant = 'primary',
+      size = 'md',
+      showValue = false,
+      valuePosition = 'outside',
+      label,
+      animated = false,
+      striped = false,
+      className = '',
+      ...props
+    },
+    ref
+  ) => {
+    const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
 
-  return (
-    <div className={`h-2 bg-gray-200 rounded-full overflow-hidden ${className}`}>
-      <div
-        className="h-full bg-primary-500 transition-all duration-300 ease-in-out"
-        style={{ width: `${percentage}%` }}
-      />
-    </div>
-  );
-};
+    const variants = {
+      primary: 'bg-blue-600',
+      success: 'bg-green-600',
+      warning: 'bg-yellow-500',
+      danger: 'bg-red-600',
+      info: 'bg-indigo-600',
+    };
+
+    const sizes = {
+      sm: 'h-1',
+      md: 'h-2',
+      lg: 'h-3',
+    };
+
+    const labelSizes = {
+      sm: 'text-xs',
+      md: 'text-sm',
+      lg: 'text-base',
+    };
+
+    const stripedClass = striped
+      ? 'bg-gradient-to-r from-transparent via-white/20 to-transparent bg-[length:30px_30px]'
+      : '';
+
+    const animatedClass = animated
+      ? 'after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:animate-progress-shine'
+      : '';
+
+    return (
+      <div className={`w-full ${className}`} ref={ref} {...props}>
+        {(label || (showValue && valuePosition === 'outside')) && (
+          <div className="flex justify-between mb-1">
+            {label && (
+              <span className={`font-medium ${labelSizes[size]}`}>{label}</span>
+            )}
+            {showValue && valuePosition === 'outside' && (
+              <span className={`${labelSizes[size]}`}>{Math.round(percentage)}%</span>
+            )}
+          </div>
+        )}
+        <div className={`w-full bg-gray-200 rounded-full overflow-hidden ${sizes[size]}`}>
+          <div
+            className={`
+              relative
+              ${variants[variant]}
+              ${sizes[size]}
+              ${stripedClass}
+              ${animatedClass}
+              transition-all
+              duration-300
+              ease-in-out
+            `}
+            style={{ width: `${percentage}%` }}
+          >
+            {showValue && valuePosition === 'inside' && size !== 'sm' && (
+              <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-semibold">
+                {Math.round(percentage)}%
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+Progress.displayName = 'Progress';
