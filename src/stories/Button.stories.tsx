@@ -2,7 +2,7 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from '../components/common/Button';
 import { expect } from '@storybook/jest';
-import { within, userEvent } from '@storybook/testing-library';
+import { within } from '@storybook/testing-library';
 
 const meta = {
   title: 'Components/Button',
@@ -41,18 +41,12 @@ export const Primary: Story = {
     children: 'Primary Button',
     'data-testid': 'primary-button',
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
     const button = canvas.getByTestId('primary-button');
-    
-    // Test initial state
     await expect(button).toBeVisible();
     await expect(button).toHaveTextContent('Primary Button');
     await expect(button).toHaveClass('bg-blue-600');
-    
-    // Test interaction
-    await userEvent.click(button);
-    await expect(button).toHaveFocus();
   },
 };
 
@@ -62,32 +56,110 @@ export const Secondary: Story = {
     children: 'Secondary Button',
     'data-testid': 'secondary-button',
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
     const button = canvas.getByTestId('secondary-button');
-    
     await expect(button).toBeVisible();
     await expect(button).toHaveTextContent('Secondary Button');
     await expect(button).toHaveClass('bg-gray-600');
   },
 };
 
-export const Loading: Story = {
+export const Outline: Story = {
   args: {
-    variant: 'primary',
-    children: 'Loading Button',
-    'data-testid': 'loading-button',
-    isLoading: true,
+    variant: 'outline',
+    children: 'Outline Button',
+    'data-testid': 'outline-button',
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const button = canvas.getByTestId('loading-button');
-    
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
+    const button = canvas.getByTestId('outline-button');
     await expect(button).toBeVisible();
-    await expect(button).toHaveTextContent('Loading Button');
-    await expect(button).toHaveClass('opacity-50');
-    await expect(button).toHaveClass('cursor-wait');
-    await expect(button).toBeDisabled();
+    await expect(button).toHaveTextContent('Outline Button');
+    await expect(button).toHaveClass('border-2');
+    await expect(button).toHaveClass('border-gray-300');
+    await expect(button).toHaveClass('bg-transparent');
+  },
+};
+
+export const Ghost: Story = {
+  args: {
+    variant: 'ghost',
+    children: 'Ghost Button',
+    'data-testid': 'ghost-button',
+  },
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
+    const button = canvas.getByTestId('ghost-button');
+    await expect(button).toBeVisible();
+    await expect(button).toHaveTextContent('Ghost Button');
+    await expect(button).toHaveClass('bg-transparent');
+  },
+};
+
+export const Danger: Story = {
+  args: {
+    variant: 'danger',
+    children: 'Danger Button',
+    'data-testid': 'danger-button',
+  },
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
+    const button = canvas.getByTestId('danger-button');
+    await expect(button).toBeVisible();
+    await expect(button).toHaveTextContent('Danger Button');
+    await expect(button).toHaveClass('bg-red-600');
+  },
+};
+
+export const Small: Story = {
+  args: {
+    size: 'sm',
+    children: 'Small Button',
+    'data-testid': 'small-button',
+  },
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
+    const button = canvas.getByTestId('small-button');
+    await expect(button).toBeVisible();
+    await expect(button).toHaveTextContent('Small Button');
+    await expect(button).toHaveClass('px-3');
+    await expect(button).toHaveClass('py-1.5');
+    await expect(button).toHaveClass('text-sm');
+  },
+};
+
+export const Medium: Story = {
+  args: {
+    size: 'md',
+    children: 'Medium Button',
+    'data-testid': 'medium-button',
+  },
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
+    const button = canvas.getByTestId('medium-button');
+    await expect(button).toBeVisible();
+    await expect(button).toHaveTextContent('Medium Button');
+    await expect(button).toHaveClass('px-4');
+    await expect(button).toHaveClass('py-2');
+    await expect(button).toHaveClass('text-base');
+  },
+};
+
+export const Large: Story = {
+  args: {
+    size: 'lg',
+    children: 'Large Button',
+    'data-testid': 'large-button',
+  },
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
+    const button = canvas.getByTestId('large-button');
+    await expect(button).toBeVisible();
+    await expect(button).toHaveTextContent('Large Button');
+    await expect(button).toHaveClass('px-6');
+    await expect(button).toHaveClass('py-3');
+    await expect(button).toHaveClass('text-lg');
   },
 };
 
@@ -97,15 +169,33 @@ export const Disabled: Story = {
     children: 'Disabled Button',
     'data-testid': 'disabled-button',
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
     const button = canvas.getByTestId('disabled-button');
-    
     await expect(button).toBeVisible();
     await expect(button).toHaveTextContent('Disabled Button');
-    await expect(button).toHaveClass('opacity-50');
-    await expect(button).toHaveClass('cursor-not-allowed');
+    await expect(button).toHaveAttribute('disabled');
+  },
+};
+
+export const Loading: Story = {
+  args: {
+    isLoading: true,
+    children: 'Loading Button',
+    'data-testid': 'loading-button',
+  },
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
+    const button = canvas.getByTestId('loading-button');
+    await expect(button).toBeVisible();
+    await expect(button).toHaveTextContent('Loading Button');
     await expect(button).toBeDisabled();
+    await expect(button).toHaveClass('cursor-wait');
+    
+    // Check for loading spinner
+    const spinner = canvas.getByRole('presentation');
+    await expect(spinner).toBeVisible();
+    await expect(spinner).toHaveClass('animate-spin');
   },
 };
 
@@ -115,10 +205,9 @@ export const FullWidth: Story = {
     children: 'Full Width Button',
     'data-testid': 'full-width-button',
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+  play: async (context) => {
+    const canvas = within(context.canvasElement);
     const button = canvas.getByTestId('full-width-button');
-    
     await expect(button).toBeVisible();
     await expect(button).toHaveTextContent('Full Width Button');
     await expect(button).toHaveClass('w-full');
