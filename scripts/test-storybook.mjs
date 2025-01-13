@@ -29,21 +29,21 @@ try {
   // Ignore errors from pkill
 }
 
+// Build storybook first
+try {
+  console.log('Building Storybook...');
+  execSync('npm run build-storybook', { stdio: 'inherit' });
+} catch (error) {
+  console.error('Failed to build Storybook:', error);
+  process.exit(1);
+}
+
 console.log('Starting Storybook tests in CI mode...');
 
 // Start storybook in CI mode
 const storybook = spawn('npx', ['storybook', 'dev', '--ci', '--port', '6011'], {
-  stdio: 'pipe',
+  stdio: 'inherit', // Change to inherit to see all output
   shell: true
-});
-
-// Handle storybook process output
-storybook.stdout.on('data', (data) => {
-  console.log('Storybook:', data.toString());
-});
-
-storybook.stderr.on('data', (data) => {
-  console.error('Storybook Error:', data.toString());
 });
 
 // Handle storybook process errors
@@ -52,9 +52,13 @@ storybook.on('error', (error) => {
   process.exit(1);
 });
 
-storybook.on('close', (code) => {
+// Handle storybook process exit
+storybook.on('exit', (code, signal) => {
   if (code !== null) {
     console.log(`Storybook process exited with code ${code}`);
+  }
+  if (signal !== null) {
+    console.log(`Storybook process was killed with signal ${signal}`);
   }
 });
 
@@ -63,38 +67,26 @@ async function runTests() {
   try {
     console.log('Waiting for Storybook server to be ready...');
     
-    let retries = 0;
-    const maxRetries = 3;
-    
-    while (retries < maxRetries) {
-      try {
-        await waitOn({
-          resources: ['http://localhost:6011/iframe.html'],
-          timeout: 60000,
-          interval: 1000,
-          validateStatus: function(status) {
-            return status === 200;
-          },
-          verbose: true
-        });
-        console.log('Storybook server is ready!');
-        break;
-      } catch (error) {
-        retries++;
-        if (retries === maxRetries) {
-          throw new Error(`Failed to start Storybook after ${maxRetries} attempts: ${error.message}`);
-        }
-        console.log(`Retry ${retries}/${maxRetries}: Waiting for Storybook server...`);
-      }
-    }
+    await waitOn({
+      resources: ['http://localhost:6011/iframe.html'],
+      timeout: 60000,
+      interval: 1000,
+      validateStatus: function(status) {
+        return status === 200;
+      },
+      verbose: true
+    });
+
+    console.log('Storybook server is ready!');
 
     // Add a small delay to ensure the server is fully initialized
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     console.log(`Running tests for ${storyFile}...`);
     
     // Run the tests with specific testMatch pattern
-    const testProcess = spawn('npx', ['test-storybook', 
+    const testProcess = spawn('npx', [
+      'test-storybook',
       '--ci',
       '--url', 'http://localhost:6011',
       '--timeout', '60000',
@@ -102,28 +94,22 @@ async function runTests() {
       '--testMatch', testPattern,
       '--config-dir', '.storybook'
     ], {
-      stdio: 'pipe',
+      stdio: 'inherit', // Change to inherit to see all output
       shell: true
     });
 
-    // Capture and log output
-    testProcess.stdout.on('data', (data) => {
-      console.log(data.toString());
-    });
-
-    testProcess.stderr.on('data', (data) => {
-      console.error('Error:', data.toString());
-    });
-
-    testProcess.on('close', (code) => {
+    testProcess.on('exit', (code, signal) => {
       console.log(`Test process exited with code ${code}`);
+      if (signal) {
+        console.log(`Test process was killed with signal ${signal}`);
+      }
       
       // Kill storybook process
       console.log('Cleaning up...');
       storybook.kill();
       execSync('pkill -f storybook || true');
       
-      process.exit(code);
+      process.exit(code || 0);
     });
 
   } catch (error) {
