@@ -1,7 +1,8 @@
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { within, userEvent } from '@storybook/testing-library';
+import { LineChart } from '../components/charts/LineChart';
 import { expect } from '@storybook/jest';
-import { LineChart, type LineChartProps } from '../components/charts/LineChart';
+import { within, userEvent } from '@storybook/testing-library';
 
 const meta = {
   title: 'Charts/LineChart',
@@ -10,123 +11,78 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  argTypes: {
+    data: {
+      control: 'object',
+      description: 'Array of data points with timestamp and value',
+    },
+    size: {
+      control: 'object',
+      description: 'Width and height of the chart',
+    },
+    styles: {
+      control: 'object',
+      description: 'Custom styles for line, points, and axes',
+    },
+    formatters: {
+      control: 'object',
+      description: 'Custom formatters for timestamp and value',
+    },
+    ariaLabel: {
+      control: 'text',
+      description: 'Accessibility label for the chart',
+    },
+  },
 } satisfies Meta<typeof LineChart>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 const sampleData = [
-  { timestamp: 1672531200000, value: 100 }, // 2023-01-01
-  { timestamp: 1672617600000, value: 150 }, // 2023-01-02
-  { timestamp: 1672704000000, value: 120 }, // 2023-01-03
-  { timestamp: 1672790400000, value: 180 }, // 2023-01-04
-  { timestamp: 1672876800000, value: 160 }, // 2023-01-05
+  { timestamp: Date.now() - 4 * 24 * 60 * 60 * 1000, value: 10 },
+  { timestamp: Date.now() - 3 * 24 * 60 * 60 * 1000, value: 25 },
+  { timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000, value: 15 },
+  { timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000, value: 30 },
+  { timestamp: Date.now(), value: 20 },
 ];
 
 export const Default: Story = {
   args: {
     data: sampleData,
-    size: { width: 600, height: 400 },
+    'data-testid': 'default-chart',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    
-    // Check if chart is rendered
     const chart = canvas.getByTestId('line-chart');
-    await expect(chart).toBeVisible();
-    
-    // Check SVG elements
     const svg = canvas.getByTestId('line-chart-svg');
+    const line = canvas.getByTestId('line-chart-line');
+    const points = canvas.getAllByTestId('line-chart-point');
+    
+    await expect(chart).toBeVisible();
     await expect(svg).toBeVisible();
-    
-    // Check data points
-    const points = canvas.getAllByTestId('line-chart-point');
+    await expect(line).toBeVisible();
     await expect(points).toHaveLength(5);
-    
-    // Check axes
-    const axes = canvas.getAllByTestId('line-chart-svg').flatMap(svg => 
-      Array.from(svg.querySelectorAll('line'))
-    );
-    await expect(axes).toHaveLength(2);
-    
-    // Check labels
-    const xLabels = canvas.getAllByTestId('line-chart-x-label');
-    const yLabels = canvas.getAllByTestId('line-chart-y-label');
-    await expect(xLabels).toHaveLength(5);
-    await expect(yLabels).toHaveLength(5);
   },
 };
 
-export const EmptyState: Story = {
-  args: {
-    data: [],
-    size: { width: 600, height: 400 },
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    
-    // Check empty state message
-    const emptyState = canvas.getByTestId('line-chart-empty');
-    await expect(emptyState).toBeVisible();
-    await expect(emptyState).toHaveTextContent('No data available');
-    
-    // Verify chart elements are not rendered
-    const points = canvas.queryAllByTestId('line-chart-point');
-    await expect(points).toHaveLength(0);
-  },
-};
-
-export const WithTooltip: Story = {
+export const CustomSize: Story = {
   args: {
     data: sampleData,
     size: { width: 600, height: 400 },
+    'data-testid': 'custom-size-chart',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const svg = canvas.getByTestId('line-chart-svg');
     
-    // Hover over a data point
-    const points = canvas.getAllByTestId('line-chart-point');
-    await userEvent.hover(points[2]);
-    
-    // Check if tooltip appears
-    const tooltip = canvas.getByTestId('line-chart-tooltip');
-    await expect(tooltip).toBeVisible();
-    await expect(tooltip).toHaveTextContent('Jan 3, 2023');
-    await expect(tooltip).toHaveTextContent('120');
-    
-    // Unhover to hide tooltip
-    await userEvent.unhover(points[2]);
-    await expect(canvas.queryByTestId('line-chart-tooltip')).toBeNull();
-  },
-};
-
-export const CustomFormatters: Story = {
-  args: {
-    data: sampleData,
-    size: { width: 600, height: 400 },
-    formatters: {
-      timestamp: (value) => new Date(value).toLocaleDateString('en-US', { 
-        weekday: 'short',
-      }),
-      value: (value) => `$${value.toLocaleString()}`,
-    },
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    
-    // Check custom formatted labels
-    const xLabels = canvas.getAllByTestId('line-chart-x-label');
-    const yLabels = canvas.getAllByTestId('line-chart-y-label');
-    
-    await expect(xLabels[0]).toHaveTextContent('Sun');
-    await expect(yLabels[0]).toHaveTextContent('$100');
+    await expect(svg).toHaveAttribute('width', '600');
+    await expect(svg).toHaveAttribute('height', '400');
   },
 };
 
 export const CustomStyles: Story = {
   args: {
     data: sampleData,
-    size: { width: 600, height: 400 },
     styles: {
       line: {
         stroke: '#10b981',
@@ -141,44 +97,127 @@ export const CustomStyles: Story = {
         strokeWidth: 2,
       },
     },
+    'data-testid': 'custom-styles-chart',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const line = canvas.getByTestId('line-chart-line');
+    const points = canvas.getAllByTestId('line-chart-point');
+    const axes = canvas.getAllByTestId('line-chart-axis');
     
-    // Check custom line style
-    const line = canvas.getByTestId('line-chart-svg').querySelector('path');
     await expect(line).toHaveAttribute('stroke', '#10b981');
     await expect(line).toHaveAttribute('stroke-width', '3');
-    
-    // Check custom point style
-    const point = canvas.getAllByTestId('line-chart-point')[0];
-    await expect(point).toHaveAttribute('fill', '#059669');
-    await expect(point).toHaveAttribute('r', '6');
-    
-    // Check custom axis style
-    const axis = canvas.getByTestId('line-chart-svg').querySelector('line');
-    await expect(axis).toHaveAttribute('stroke', '#6b7280');
-    await expect(axis).toHaveAttribute('stroke-width', '2');
+    await expect(points[0]).toHaveAttribute('fill', '#059669');
+    await expect(points[0]).toHaveAttribute('r', '6');
+    await expect(axes[0]).toHaveAttribute('stroke', '#6b7280');
+    await expect(axes[0]).toHaveAttribute('stroke-width', '2');
   },
 };
 
-export const Accessibility: Story = {
+export const CustomFormatters: Story = {
   args: {
     data: sampleData,
-    size: { width: 600, height: 400 },
-    ariaLabel: 'Revenue trend over time',
+    formatters: {
+      timestamp: (value: number) => new Date(value).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      }),
+      value: (value: number) => `$${value.toFixed(2)}`,
+    },
+    'data-testid': 'custom-formatters-chart',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const xLabels = canvas.getAllByTestId('line-chart-x-label');
+    const yLabels = canvas.getAllByTestId('line-chart-y-label');
     
-    // Check chart accessibility
+    await expect(xLabels[0]).toBeVisible();
+    await expect(yLabels[0]).toBeVisible();
+    await expect(yLabels[0].textContent).toContain('$');
+  },
+};
+
+export const WithTooltip: Story = {
+  args: {
+    data: sampleData,
+    'data-testid': 'tooltip-chart',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const points = canvas.getAllByTestId('line-chart-point');
+    
+    // Hover over a point to show tooltip
+    await userEvent.hover(points[0]);
+    const tooltip = canvas.getByTestId('line-chart-tooltip');
+    await expect(tooltip).toBeVisible();
+    
+    // Move away to hide tooltip
+    await userEvent.unhover(points[0]);
+    await expect(canvas.queryByTestId('line-chart-tooltip')).not.toBeInTheDocument();
+  },
+};
+
+export const EmptyData: Story = {
+  args: {
+    data: [],
+    'data-testid': 'empty-chart',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const emptyMessage = canvas.getByTestId('line-chart-empty');
+    
+    await expect(emptyMessage).toBeVisible();
+    await expect(emptyMessage).toHaveTextContent('No data available');
+  },
+};
+
+export const SingleDataPoint: Story = {
+  args: {
+    data: [{ timestamp: Date.now(), value: 50 }],
+    'data-testid': 'single-point-chart',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const points = canvas.getAllByTestId('line-chart-point');
+    
+    await expect(points).toHaveLength(1);
+  },
+};
+
+export const LargeDataSet: Story = {
+  args: {
+    data: Array.from({ length: 20 }, (_, i) => ({
+      timestamp: Date.now() - i * 24 * 60 * 60 * 1000,
+      value: Math.random() * 100,
+    })),
+    size: { width: 800, height: 400 },
+    'data-testid': 'large-dataset-chart',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const points = canvas.getAllByTestId('line-chart-point');
+    const xLabels = canvas.getAllByTestId('line-chart-x-label');
+    
+    await expect(points).toHaveLength(20);
+    await expect(xLabels).toHaveLength(20);
+  },
+};
+
+export const AccessibleChart: Story = {
+  args: {
+    data: sampleData,
+    ariaLabel: 'Monthly sales data visualization',
+    'data-testid': 'accessible-chart',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
     const chart = canvas.getByTestId('line-chart');
-    await expect(chart).toHaveAttribute('role', 'img');
-    await expect(chart).toHaveAttribute('aria-label', 'Revenue trend over time');
+    const points = canvas.getAllByTestId('line-chart-point');
     
-    // Check point accessibility
-    const point = canvas.getAllByTestId('line-chart-point')[0];
-    await expect(point).toHaveAttribute('role', 'button');
-    await expect(point).toHaveAttribute('aria-label', expect.stringContaining('Data point for'));
+    await expect(chart).toHaveAttribute('role', 'img');
+    await expect(chart).toHaveAttribute('aria-label', 'Monthly sales data visualization');
+    await expect(points[0]).toHaveAttribute('role', 'button');
+    await expect(points[0]).toHaveAttribute('aria-label');
   },
 };

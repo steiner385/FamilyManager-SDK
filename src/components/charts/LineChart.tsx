@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 
-interface DataPoint {
+export interface DataPoint {
   timestamp: number;
   value: number;
 }
 
-interface LineChartProps {
+export interface LineChartProps {
   data: DataPoint[];
   size?: {
     width: number;
@@ -30,6 +30,7 @@ interface LineChartProps {
     value?: (value: number) => string;
   };
   ariaLabel?: string;
+  'data-testid'?: string;
 }
 
 export const LineChart: React.FC<LineChartProps> = ({
@@ -37,7 +38,8 @@ export const LineChart: React.FC<LineChartProps> = ({
   size = { width: 400, height: 300 },
   styles = {},
   formatters = {},
-  ariaLabel = "Line chart"
+  ariaLabel = "Line chart",
+  'data-testid': dataTestId,
 }) => {
   const [tooltipData, setTooltipData] = useState<DataPoint | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
@@ -51,7 +53,7 @@ export const LineChart: React.FC<LineChartProps> = ({
       <div 
         className="flex items-center justify-center" 
         style={{ width: size.width, height: size.height }}
-        data-testid="line-chart-empty"
+        data-testid={dataTestId ? `${dataTestId}-empty` : 'line-chart-empty'}
       >
         <p>No data available</p>
       </div>
@@ -117,12 +119,17 @@ export const LineChart: React.FC<LineChartProps> = ({
   };
 
   return (
-    <div className="relative" role="img" aria-label={ariaLabel} data-testid="line-chart">
+    <div 
+      className="relative" 
+      role="img" 
+      aria-label={ariaLabel} 
+      data-testid={dataTestId || 'line-chart'}
+    >
       <svg
         width={size.width}
         height={size.height}
         className="overflow-visible"
-        data-testid="line-chart-svg"
+        data-testid={dataTestId ? `${dataTestId}-svg` : 'line-chart-svg'}
       >
         {/* Axes */}
         <line
@@ -132,7 +139,7 @@ export const LineChart: React.FC<LineChartProps> = ({
           y2={size.height - margin.bottom}
           stroke={axisStyles.stroke}
           strokeWidth={axisStyles.strokeWidth}
-          className="line-chart-axis"
+          data-testid={dataTestId ? `${dataTestId}-axis` : 'line-chart-axis'}
         />
         <line
           x1={margin.left}
@@ -141,7 +148,7 @@ export const LineChart: React.FC<LineChartProps> = ({
           y2={size.height - margin.bottom}
           stroke={axisStyles.stroke}
           strokeWidth={axisStyles.strokeWidth}
-          className="line-chart-axis"
+          data-testid={dataTestId ? `${dataTestId}-axis` : 'line-chart-axis'}
         />
 
         {/* Line */}
@@ -150,7 +157,7 @@ export const LineChart: React.FC<LineChartProps> = ({
           fill="none"
           stroke={lineStyles.stroke}
           strokeWidth={lineStyles.strokeWidth}
-          className="line-chart-line"
+          data-testid={dataTestId ? `${dataTestId}-line` : 'line-chart-line'}
         />
 
         {/* Data points */}
@@ -161,10 +168,9 @@ export const LineChart: React.FC<LineChartProps> = ({
             cy={yScale(point.value)}
             r={pointStyles.radius}
             fill={pointStyles.fill}
-            className="line-chart-point"
             role="button"
             aria-label={`Data point for ${formatTimestamp(point.timestamp)}: ${point.value}`}
-            data-testid="line-chart-point"
+            data-testid={dataTestId ? `${dataTestId}-point` : 'line-chart-point'}
             onMouseEnter={(e) => handlePointHover(point, e)}
             onMouseLeave={handlePointLeave}
           />
@@ -178,7 +184,7 @@ export const LineChart: React.FC<LineChartProps> = ({
               y={size.height - margin.bottom + 20}
               textAnchor="middle"
               className="text-sm fill-gray-600"
-              data-testid="line-chart-x-label"
+              data-testid={dataTestId ? `${dataTestId}-x-label` : 'line-chart-x-label'}
             >
               {formatTimestamp(point.timestamp)}
             </text>
@@ -188,7 +194,7 @@ export const LineChart: React.FC<LineChartProps> = ({
               textAnchor="end"
               alignmentBaseline="middle"
               className="text-sm fill-gray-600"
-              data-testid="line-chart-y-label"
+              data-testid={dataTestId ? `${dataTestId}-y-label` : 'line-chart-y-label'}
             >
               {formatValue(point.value)}
             </text>
@@ -205,7 +211,7 @@ export const LineChart: React.FC<LineChartProps> = ({
             top: tooltipPosition.y - 10,
             transform: 'translate(-50%, -100%)'
           }}
-          data-testid="line-chart-tooltip"
+          data-testid={dataTestId ? `${dataTestId}-tooltip` : 'line-chart-tooltip'}
         >
           <div>{formatTimestamp(tooltipData.timestamp)}</div>
           <div>{formatValue(tooltipData.value)}</div>
