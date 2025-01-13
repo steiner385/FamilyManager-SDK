@@ -5,6 +5,7 @@ export interface SwitchProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
   label?: string;
   description?: string;
   variant?: 'primary' | 'success' | 'danger';
+  'data-testid'?: string;
 }
 
 export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
@@ -17,6 +18,7 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
       disabled = false,
       className = '',
       id,
+      'data-testid': dataTestId,
       ...props
     },
     ref
@@ -60,7 +62,7 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
     };
 
     return (
-      <div className={`flex items-start ${className}`}>
+      <div className={`flex items-start ${className}`} data-testid={dataTestId ? `${dataTestId}-wrapper` : undefined}>
         <div className="flex items-center h-full">
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -69,6 +71,7 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
               className="sr-only peer"
               disabled={disabled}
               ref={ref}
+              data-testid={dataTestId}
               {...props}
             />
             <div
@@ -84,6 +87,7 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
                 dark:peer-focus:ring-blue-800
                 transition-colors
               `}
+              data-testid={dataTestId ? `${dataTestId}-track` : undefined}
             >
               <div
                 className={`
@@ -98,6 +102,7 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
                   top-1/2
                   -translate-y-1/2
                 `}
+                data-testid={dataTestId ? `${dataTestId}-thumb` : undefined}
               />
             </div>
           </label>
@@ -112,6 +117,7 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
                   ${sizes[size].text}
                   ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 `}
+                data-testid={dataTestId ? `${dataTestId}-label` : undefined}
               >
                 {label}
               </label>
@@ -123,6 +129,7 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
                   ${size === 'sm' ? 'text-xs' : 'text-sm'}
                   ${disabled ? 'opacity-50' : ''}
                 `}
+                data-testid={dataTestId ? `${dataTestId}-description` : undefined}
               >
                 {description}
               </p>
