@@ -21,7 +21,8 @@ class ApiService {
       baseURL: process.env.REACT_APP_API_URL || '/api',
       timeout: parseInt(process.env.REACT_APP_API_TIMEOUT || '10000'),
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
       }
     });
 

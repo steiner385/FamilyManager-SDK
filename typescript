@@ -1,0 +1,104 @@
+import { z } from 'zod';
+import { Request, Response, NextFunction } from 'express';
+import { sanitizeHtml } from '../utils/security';
+
+export const validateAndSanitize = (schema: z.ZodSchema) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Sanitize input
+      const sanitizedBody = Object.entries(req.body).reduce((acc, [key, value]) => ({
+        ...acc,
+        [key]: typeof value === 'string' ? sanitizeHtml(value) : value
+      }), {});
+
+      // Validate against schema
+      const validatedData = await schema.parseAsync(sanitizedBody);
+      req.body = validatedData;
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.errors
+        });
+      }
+      next(error);
+    }
+  };
+};
+import DOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
+import csrf from 'csurf';
+import { Request, Response, NextFunction } from 'express';
+
+const window = new JSDOM('').window;
+const purify = DOMPurify(window);
+
+export const sanitizeHtml = (dirty: string): string => {
+  return purify.sanitize(dirty, {
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a'],
+    ALLOWED_ATTR: ['href']
+  });
+};
+
+// CSRF Protection
+export const csrfProtection = csrf({ 
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  }
+});
+
+export const csrfErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({
+      error: 'Invalid CSRF token',
+      code: 'CSRF_ERROR'
+    });
+  }
+  next(err);
+};
+import winston from 'winston';
+
+const auditLogger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'security-audit' },
+  transports: [
+    new winston.transports.File({ filename: 'logs/security-audit.log' }),
+    process.env.NODE_ENV === 'production'
+      ? new winston.transports.Console()
+      : null
+  ].filter(Boolean) as winston.transport[]
+});
+
+export const logSecurityEvent = (
+  eventType: string,
+  userId: string,
+  details: Record<string, any>
+) => {
+  auditLogger.info({
+    eventType,
+    userId,
+    details,
+    timestamp: new Date().toISOString()
+  });
+};
+
+export const logAuthAttempt = (
+  success: boolean,
+  userId: string,
+  ipAddress: string
+) => {
+  auditLogger.info({
+    eventType: 'AUTH_ATTEMPT',
+    success,
+    userId,
+    ipAddress,
+    timestamp: new Date().toISOString()
+  });
+};
