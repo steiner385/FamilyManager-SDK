@@ -46,10 +46,18 @@ const storybook = spawn('npx', ['storybook', 'dev', '--ci', '--port', '6011'], {
   shell: true
 });
 
-// Handle storybook process errors
+// Handle storybook process errors and output
 storybook.on('error', (error) => {
   console.error('Failed to start Storybook:', error);
   process.exit(1);
+});
+
+storybook.stdout?.on('data', (data) => {
+  console.log(`Storybook stdout: ${data}`);
+});
+
+storybook.stderr?.on('data', (data) => {
+  console.error(`Storybook stderr: ${data}`);
 });
 
 // Handle storybook process exit
@@ -97,6 +105,19 @@ async function runTests() {
     ], {
       stdio: 'inherit', // Change to inherit to see all output
       shell: true
+    });
+
+    // Add handlers for test process output
+    testProcess.stdout?.on('data', (data) => {
+      console.log(`Test stdout: ${data}`);
+    });
+
+    testProcess.stderr?.on('data', (data) => {
+      console.error(`Test stderr: ${data}`);
+    });
+
+    testProcess.on('error', (error) => {
+      console.error('Test process error:', error);
     });
 
     testProcess.on('exit', (code, signal) => {
