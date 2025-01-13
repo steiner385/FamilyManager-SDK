@@ -54,6 +54,9 @@ playwright.config.ts
 # Package files
 package-lock.json
 
+# Keep base TypeScript config
+!tsconfig.json
+
 # Misc
 .DS_Store
 Thumbs.db
