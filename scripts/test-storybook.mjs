@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { createServer } from 'http';
 import handler from 'serve-handler';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -35,14 +36,30 @@ async function buildStorybook() {
   console.log('Building Storybook...');
   return new Promise((resolve, reject) => {
     console.log('Spawning build process...');
+    
+    // First ensure the storybook-static directory exists and is empty
+    try {
+      if (fs.existsSync('storybook-static')) {
+        fs.rmSync('storybook-static', { recursive: true });
+      }
+      fs.mkdirSync('storybook-static');
+    } catch (error) {
+      console.error('Error preparing storybook-static directory:', error);
+    }
+
     const build = spawn('npm', ['run', 'build-storybook'], {
       stdio: 'inherit',
       shell: true,
-      env: { ...process.env, FORCE_COLOR: '1' }
+      env: { ...process.env, FORCE_COLOR: '1', NODE_ENV: 'test' }
     });
 
     build.on('exit', (code) => {
       console.log(`Build process exited with code ${code}`);
+      // Verify the build output exists
+      if (!fs.existsSync('storybook-static/index.html')) {
+        reject(new Error('Storybook build failed - no output files found'));
+        return;
+      }
       if (code === 0) {
         resolve();
       } else {
@@ -54,6 +71,12 @@ async function buildStorybook() {
       console.error('Build process error:', error);
       reject(error);
     });
+
+    // Add timeout
+    setTimeout(() => {
+      build.kill();
+      reject(new Error('Storybook build timed out after 5 minutes'));
+    }, 300000);
   });
 }
 
