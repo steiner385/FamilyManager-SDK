@@ -106,7 +106,7 @@ export const Error: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const error = canvas.getByTestId('error-metrics');
+    const error = canvas.getByTestId('error-metrics-error');
     
     await expect(error).toBeVisible();
     await expect(error).toHaveTextContent('Failed to load metrics data');
