@@ -136,7 +136,7 @@ async function runTests() {
 
     // Start static file server
     console.log('Starting static server...');
-    server = await startStaticServer();
+    serverInstance = await startStaticServer();
     console.log('Static server started successfully');
 
     // Wait for server to be ready and verify key files
@@ -252,7 +252,9 @@ process.on('unhandledRejection', (error) => {
 
 // Run tests and handle errors
 console.log('Starting test runner...');
-let server;
+// Keep track of server instance
+let serverInstance;
+
 runTests()
   .then(() => {
     console.log(`✓ ${storyFile} tests passed`);
@@ -264,9 +266,9 @@ runTests()
     process.exit(1);
   })
   .finally(async () => {
-    if (server) {
+    if (serverInstance) {
       console.log('Ensuring server is closed...');
-      await new Promise((resolve) => server.close(resolve));
+      await new Promise((resolve) => serverInstance.close(resolve));
       console.log('Server closed');
     }
   });
