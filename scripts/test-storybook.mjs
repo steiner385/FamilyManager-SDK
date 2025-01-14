@@ -142,7 +142,11 @@ async function runTests() {
     // Wait for server to be ready
     console.log('Waiting for server to be ready...');
     await waitOn({
-      resources: ['http://localhost:6011/iframe.html'],
+      resources: [
+        'http://localhost:6011/iframe.html',
+        'http://localhost:6011/index.html',
+        'http://localhost:6011/assets/iframe-0454fe63.js'
+      ],
       timeout: 30000,
       interval: 1000,
       validateStatus: function(status) {
@@ -150,18 +154,25 @@ async function runTests() {
       }
     });
 
+    // Additional delay to ensure everything is loaded
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
     console.log('Server is ready, running tests...');
 
     // Run the tests
     console.log('Running test-storybook...');
     process.stdout.write('Spawning test process...\n');
+    // Build storybook if it doesn't exist or is empty
+    if (!fs.existsSync('storybook-static') || fs.readdirSync('storybook-static').length === 0) {
+      await buildStorybook();
+    }
+
     const testProcess = spawn('npx', [
       'test-storybook',
       '--ci',
       '--url', 'http://localhost:6011',
       '--verbose',
-      '--maxWorkers', '1',
-      '--includeTags', 'autodocs'
+      '--maxWorkers', '1'
     ], {
       stdio: 'inherit',
       shell: true,
