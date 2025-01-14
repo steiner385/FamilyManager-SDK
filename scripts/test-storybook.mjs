@@ -250,7 +250,6 @@ async function runTests() {
     throw error;
   }
 }
-}
 
 // Set up error handling for uncaught exceptions
 process.on('uncaughtException', (error) => {
