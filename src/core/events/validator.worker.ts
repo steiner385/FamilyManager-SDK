@@ -1,76 +1,98 @@
 import { parentPort } from 'worker_threads';
-import { BaseEvent, ValidationResult } from './types';
+import { BaseEvent, ValidationResult, ValidationError, PoolEvent } from './types';
 
 if (!parentPort) {
   throw new Error('This module must be run as a worker thread');
 }
 
-function validateEvent<T>(event: BaseEvent<T>): ValidationResult {
+// Type that includes all possible event properties
+type ValidatableEvent<T> = BaseEvent<T> & Partial<Pick<PoolEvent<T>, 'source'>>;
+
+function validateEvent<T>(event: ValidatableEvent<T>): ValidationResult {
   try {
+    const errors: ValidationError[] = [];
+
     // Required fields
     if (!event.type || typeof event.type !== 'string') {
-      return {
-        isValid: false,
-        errors: ['Event must have a string type']
-      };
+      errors.push({
+        path: ['type'],
+        code: 'INVALID_TYPE',
+        message: 'Event must have a string type'
+      });
     }
 
     if (typeof event.timestamp !== 'number') {
-      return {
-        isValid: false,
-        errors: ['Event must have a numeric timestamp']
-      };
+      errors.push({
+        path: ['timestamp'],
+        code: 'INVALID_TIMESTAMP',
+        message: 'Event must have a numeric timestamp'
+      });
     }
 
     // Optional fields
     if (event.source !== undefined && typeof event.source !== 'string') {
-      return {
-        isValid: false,
-        errors: ['Event source must be a string if provided']
-      };
+      errors.push({
+        path: ['source'],
+        code: 'INVALID_SOURCE',
+        message: 'Event source must be a string if provided'
+      });
     }
 
     if (event.data === undefined || event.data === null) {
-      return {
-        isValid: false,
-        errors: ['Event data is required']
-      };
+      errors.push({
+        path: ['data'],
+        code: 'MISSING_DATA',
+        message: 'Event data is required'
+      });
     }
 
     // Validate timestamp is not in the future
     if (event.timestamp > Date.now() + 1000) { // Allow 1 second buffer for clock skew
-      return {
-        isValid: false,
-        errors: ['Event timestamp cannot be in the future']
-      };
+      errors.push({
+        path: ['timestamp'],
+        code: 'FUTURE_TIMESTAMP',
+        message: 'Event timestamp cannot be in the future'
+      });
     }
 
     // Validate type format (e.g. USER.CREATED, AUTH.LOGIN)
     if (!/^[A-Z][A-Z0-9_]*(?:\.[A-Z][A-Z0-9_]*)*$/.test(event.type)) {
-      return {
-        isValid: false,
-        errors: ['Event type must be uppercase with dots as separators']
-      };
+      errors.push({
+        path: ['type'],
+        code: 'INVALID_TYPE_FORMAT',
+        message: 'Event type must be uppercase with dots as separators'
+      });
     }
 
-    return { isValid: true };
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
   } catch (error) {
     return {
       isValid: false,
-      errors: [error instanceof Error ? error.message : 'Unknown validation error']
+      errors: [{
+        path: ['validator'],
+        code: 'VALIDATION_ERROR',
+        message: error instanceof Error ? error.message : 'Unknown validation error'
+      }]
     };
   }
 }
 
 // Handle messages from the main thread
-parentPort.on('message', (event: BaseEvent<unknown>) => {
+parentPort.on('message', (event: ValidatableEvent<unknown>) => {
   try {
     const result = validateEvent(event);
     parentPort!.postMessage(result);
   } catch (error) {
     parentPort!.postMessage({
       isValid: false,
-      errors: [error instanceof Error ? error.message : 'Unknown worker error']
+      errors: [{
+        path: ['worker'],
+        code: 'WORKER_ERROR',
+        message: error instanceof Error ? error.message : 'Unknown worker error'
+      }]
     });
   }
 });

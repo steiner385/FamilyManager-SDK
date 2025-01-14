@@ -38,17 +38,30 @@ export interface PluginEventPayload {
 }
 
 /**
+ * Extended event type for plugin events
+ */
+interface PluginEvent<T = any> extends BaseEvent<T> {
+  source: string;
+  metadata: {
+    payload: any;
+  };
+}
+
+/**
  * Creates a plugin event with the specified type and payload
  */
 export function createPluginEvent<T extends PluginEventType>(
   type: T,
   payload: PluginEventPayload[T],
   source: string
-): BaseEvent {
+): PluginEvent {
   return {
+    id: `plugin-${Date.now()}`,
     type,
+    channel: 'plugin',
     timestamp: Date.now(),
     source,
+    data: payload,
     metadata: { payload }
   };
 }

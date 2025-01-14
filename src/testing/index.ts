@@ -2,7 +2,9 @@ import {
   render as rtlRender, 
   screen, 
   fireEvent, 
-  waitFor 
+  waitFor,
+  RenderOptions,
+  RenderResult
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
@@ -27,7 +29,10 @@ export {
 } from '@jest/globals';
 
 // Custom render function with default providers
-export const render = (ui: React.ReactElement, options = {}) => {
+export const render = (
+  ui: React.ReactElement, 
+  options: Omit<RenderOptions, 'wrapper'> = {}
+): RenderResult => {
   const Wrapper = ({ children }: { children: React.ReactNode }) => {
     return children;
   };

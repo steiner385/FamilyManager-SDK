@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "../../dist/contexts",
+    "rootDir": "..",
+    "tsBuildInfoFile": "../../dist/contexts/.tsbuildinfo",
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "types": ["node", "react", "react-dom", "@testing-library/jest-dom"]
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx"
+  ],
+  "references": [
+    { "path": "../components" },
+    { "path": "../types" }
+  ]
+}

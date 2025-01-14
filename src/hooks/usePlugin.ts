@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plugin } from '../types/plugin'
+import { Plugin } from '../core/plugin/types'
 import { PluginManager } from '../core/plugin/PluginManager'
 
 interface PluginHookState {

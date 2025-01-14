@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc --noEmitOnError false",
+    "build": "tsc -p tsconfig.json --noEmitOnError false",
+    "build:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
@@ -29,6 +30,8 @@
     "@babel/preset-env": "^7.23.8",
     "@babel/preset-react": "^7.23.3",
     "@babel/preset-typescript": "^7.23.3",
+    "@faker-js/faker": "^9.3.0",
+    "@hono/node-server": "^1.13.7",
     "@playwright/experimental-ct-react": "^1.49.1",
     "@playwright/test": "^1.49.1",
     "@prisma/client": "^6.2.1",

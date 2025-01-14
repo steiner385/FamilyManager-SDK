@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 
 expect.extend(toHaveNoViolations);
@@ -15,7 +15,7 @@ export class ComponentTestHelper {
     expect(results).toHaveNoViolations();
   }
 
-  static createWrapper(providers: React.ComponentType<TestWrapperProps>[]) {
+  static createWrapper(providers: React.ComponentType<TestWrapperProps>[]): React.ComponentType<TestWrapperProps> {
     return ({ children }: TestWrapperProps) => {
       return providers.reduce((wrapped, Provider) => 
         React.createElement(Provider, null, wrapped),
@@ -27,7 +27,7 @@ export class ComponentTestHelper {
   static renderWithProviders(
     ui: React.ReactElement,
     options?: Omit<RenderOptions, 'wrapper'>
-  ) {
+  ): RenderResult {
     const AllTheProviders = this.createWrapper([
       // Add your providers here
     ]);

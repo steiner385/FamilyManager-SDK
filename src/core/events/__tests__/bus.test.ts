@@ -18,6 +18,15 @@ const createMockHandler = () => {
   return jest.fn().mockImplementation(() => Promise.resolve()) as unknown as EventHandler;
 };
 
+// Helper function to create test events
+const createTestEvent = (type: string, data: any = {}): BaseEvent => ({
+  id: 'test-id',
+  type,
+  channel: type, // Use same value for both type and channel
+  timestamp: Date.now(),
+  data
+});
+
 describe('EventBus', () => {
   let eventBus: EventBus;
 
@@ -157,36 +166,21 @@ describe('EventBus', () => {
       const handler = createMockHandler();
       eventBus.subscribe('test-channel', handler);
 
-      const event: BaseEvent = {
-        type: 'test-channel',
-        timestamp: Date.now(),
-        data: { test: true },
-      };
-
+      const event = createTestEvent('test-channel', { test: true });
       await eventBus.emit(event);
       expect(handler).toHaveBeenCalledWith(event);
     });
 
     it('should prevent emission when stopped', async () => {
       await eventBus.stop();
-      const event: BaseEvent = {
-        type: 'test-channel',
-        timestamp: Date.now(),
-        data: {},
-      };
-
+      const event = createTestEvent('test-channel');
       await expect(eventBus.emit(event)).rejects.toThrow(
         'Cannot emit events while EventBus is stopped'
       );
     });
 
     it('should handle events with no subscribers', async () => {
-      const event: BaseEvent = {
-        type: 'test-channel',
-        timestamp: Date.now(),
-        data: {},
-      };
-
+      const event = createTestEvent('test-channel');
       const status = await eventBus.emit(event);
       expect(status).toBe(EventDeliveryStatus.SUCCESS);
       expect(logger.debug).toHaveBeenCalledWith('No subscribers for event test-channel');
@@ -198,12 +192,7 @@ describe('EventBus', () => {
       eventBus.subscribe('test-channel', handler1);
       eventBus.subscribe('test-channel', handler2);
 
-      const event: BaseEvent = {
-        type: 'test-channel',
-        timestamp: Date.now(),
-        data: { test: true },
-      };
-
+      const event = createTestEvent('test-channel', { test: true });
       await eventBus.emit(event);
       expect(handler1).toHaveBeenCalledWith(event);
       expect(handler2).toHaveBeenCalledWith(event);
@@ -218,11 +207,7 @@ describe('EventBus', () => {
       await eventBus.start();
       eventBus.registerChannel('test-channel');
       handler = createMockHandler();
-      event = {
-        type: 'test-channel',
-        timestamp: Date.now(),
-        data: { test: true },
-      };
+      event = createTestEvent('test-channel', { test: true });
     });
 
     it('should retry failed deliveries', async () => {
@@ -258,7 +243,7 @@ describe('EventBus', () => {
       const status = await eventBus.emit(event);
 
       expect(handler).toHaveBeenCalledTimes(3);
-      expect(status).toBe(EventDeliveryStatus.PARTIAL);
+      expect(status).toBe(EventDeliveryStatus.FAILED);
     });
 
     it('should respect retryDelay configuration', async () => {
@@ -298,24 +283,14 @@ describe('EventBus', () => {
       eventBus.subscribe('test-channel', successHandler);
       eventBus.subscribe('test-channel', failureHandler);
 
-      const event: BaseEvent = {
-        type: 'test-channel',
-        timestamp: Date.now(),
-        data: {},
-      };
-
+      const event = createTestEvent('test-channel');
       const status = await eventBus.emit(event);
       expect(status).toBe(EventDeliveryStatus.PARTIAL);
       expect(logger.error).toHaveBeenCalled();
     });
 
     it('should handle invalid channel emissions', async () => {
-      const event: BaseEvent = {
-        type: 'invalid-channel',
-        timestamp: Date.now(),
-        data: {},
-      };
-
+      const event = createTestEvent('invalid-channel');
       await expect(eventBus.emit(event)).rejects.toThrow(
         'Channel invalid-channel is not registered'
       );
@@ -343,11 +318,9 @@ describe('EventBus', () => {
       const handler = createMockHandler();
       eventBus.subscribe('test-channel', handler);
 
-      const events = Array.from({ length: 100 }, (_, i) => ({
-        type: 'test-channel',
-        timestamp: Date.now(),
-        data: { index: i },
-      }));
+      const events = Array.from({ length: 100 }, (_, i) => 
+        createTestEvent('test-channel', { index: i })
+      );
 
       await Promise.all(events.map(event => eventBus.emit(event)));
       expect(handler).toHaveBeenCalledTimes(100);
@@ -360,11 +333,9 @@ describe('EventBus', () => {
       handlers.forEach(handler => eventBus.subscribe('test-channel', handler));
 
       // Create and emit events
-      const events = Array.from({ length: 10 }, (_, i) => ({
-        type: 'test-channel',
-        timestamp: Date.now(),
-        data: { index: i },
-      }));
+      const events = Array.from({ length: 10 }, (_, i) => 
+        createTestEvent('test-channel', { index: i })
+      );
 
       // Emit events concurrently
       await Promise.all(events.map(event => eventBus.emit(event)));

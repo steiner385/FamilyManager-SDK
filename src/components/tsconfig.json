@@ -2,10 +2,11 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "outDir": "../../dist",
+    "outDir": "../../dist/components",
     "rootDir": "..",
     "tsBuildInfoFile": "../../dist/components/.tsbuildinfo",
-    "baseUrl": "..",
+    "jsx": "react-jsx",
+    "types": ["node", "react", "react-dom", "@testing-library/jest-dom"],
     "paths": {
       "@/*": ["*"],
       "@core/*": ["core/*"],
@@ -19,7 +20,9 @@
   },
   "include": [
     "./**/*.ts",
-    "./**/*.tsx"
+    "./**/*.tsx",
+    "../hooks/**/*.ts",
+    "../hooks/**/*.tsx"
   ],
   "references": [
     { "path": "../types" },

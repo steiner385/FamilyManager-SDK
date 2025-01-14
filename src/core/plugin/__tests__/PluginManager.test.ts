@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { PluginManager } from '../PluginManager';
-import { Plugin, PluginRoute } from '../types';
+import { Plugin, PluginRoute, PluginDependencyConfig, PluginState, PluginConfig, PluginMetadata } from '../types';
 import { logger } from '../../utils/logger';
 import { routeRegistry } from '../../routing/RouteRegistry';
 
@@ -23,7 +23,37 @@ jest.mock('../../routing/RouteRegistry', () => ({
 
 describe('PluginManager', () => {
   let manager: PluginManager;
-  const TestComponent = React.createElement('div');
+  const TestComponent = () => React.createElement('div');
+
+  const createTestPlugin = (overrides: Partial<Plugin> = {}): Plugin => ({
+    id: 'test-plugin',
+    name: 'Test Plugin',
+    version: '1.0.0',
+    status: 'active',
+    state: {
+      isEnabled: true,
+      status: 'active',
+      isInitialized: false,
+      error: null
+    },
+    config: {
+      metadata: {
+        id: 'test-plugin',
+        name: 'Test Plugin',
+        version: '1.0.0',
+        description: 'Test plugin',
+        author: 'Test Author'
+      }
+    },
+    metadata: {
+      id: 'test-plugin',
+      name: 'Test Plugin',
+      version: '1.0.0',
+      description: 'Test plugin',
+      author: 'Test Author'
+    },
+    ...overrides
+  });
 
   beforeEach(() => {
     // Reset singleton instance
@@ -52,11 +82,7 @@ describe('PluginManager', () => {
     });
 
     it('should prevent plugin operations before initialization', async () => {
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-      };
+      const plugin = createTestPlugin();
 
       await expect(manager.registerPlugin(plugin)).rejects.toThrow(
         'PluginManager must be initialized before registering plugins'
@@ -70,11 +96,7 @@ describe('PluginManager', () => {
     });
 
     it('should register a plugin', async () => {
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-      };
+      const plugin = createTestPlugin();
 
       await manager.registerPlugin(plugin);
       expect(manager.isPluginInstalled('test-plugin')).toBe(true);
@@ -83,11 +105,7 @@ describe('PluginManager', () => {
     });
 
     it('should prevent duplicate plugin registration', async () => {
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-      };
+      const plugin = createTestPlugin();
 
       await manager.registerPlugin(plugin);
       await expect(manager.registerPlugin(plugin)).rejects.toThrow(
@@ -96,18 +114,16 @@ describe('PluginManager', () => {
     });
 
     it('should handle plugin dependencies', async () => {
-      const dependency: Plugin = {
+      const dependency = createTestPlugin({
         id: 'dependency',
-        name: 'Dependency',
-        version: '1.0.0',
-      };
+        name: 'Dependency'
+      });
 
-      const plugin: Plugin = {
+      const plugin = createTestPlugin({
         id: 'test-plugin',
         name: 'Test Plugin',
-        version: '1.0.0',
-        dependencies: ['dependency'],
-      };
+        dependencies: new PluginDependencyConfig({ dependency: '1.0.0' })
+      });
 
       await expect(manager.registerPlugin(plugin)).rejects.toThrow(
         'Missing required dependency: dependency'
@@ -125,12 +141,9 @@ describe('PluginManager', () => {
         component: TestComponent,
       };
 
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-        routes: [route],
-      };
+      const plugin = createTestPlugin({
+        routes: [route]
+      });
 
       await manager.registerPlugin(plugin);
       expect(routeRegistry.registerRoute).toHaveBeenCalledWith('test-plugin', route);
@@ -138,12 +151,9 @@ describe('PluginManager', () => {
 
     it('should handle plugin initialization', async () => {
       const initialize = jest.fn().mockImplementation(() => Promise.resolve()) as () => Promise<void>;
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-        initialize,
-      };
+      const plugin = createTestPlugin({
+        initialize
+      });
 
       await manager.registerPlugin(plugin);
       expect(initialize).not.toHaveBeenCalled();
@@ -158,11 +168,7 @@ describe('PluginManager', () => {
     });
 
     it('should uninstall a plugin', async () => {
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-      };
+      const plugin = createTestPlugin();
 
       await manager.registerPlugin(plugin);
       await manager.uninstallPlugin('test-plugin');
@@ -179,18 +185,16 @@ describe('PluginManager', () => {
     });
 
     it('should prevent uninstalling plugin with dependents', async () => {
-      const dependency: Plugin = {
+      const dependency = createTestPlugin({
         id: 'dependency',
-        name: 'Dependency',
-        version: '1.0.0',
-      };
+        name: 'Dependency'
+      });
 
-      const dependent: Plugin = {
+      const dependent = createTestPlugin({
         id: 'dependent',
         name: 'Dependent',
-        version: '1.0.0',
-        dependencies: ['dependency'],
-      };
+        dependencies: new PluginDependencyConfig({ dependency: '1.0.0' })
+      });
 
       await manager.registerPlugin(dependency);
       await manager.registerPlugin(dependent);
@@ -202,12 +206,9 @@ describe('PluginManager', () => {
 
     it('should handle plugin teardown', async () => {
       const teardown = jest.fn().mockImplementation(() => Promise.resolve()) as () => Promise<void>;
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-        teardown,
-      };
+      const plugin = createTestPlugin({
+        teardown
+      });
 
       await manager.registerPlugin(plugin);
       await manager.uninstallPlugin('test-plugin');
@@ -221,12 +222,9 @@ describe('PluginManager', () => {
         component: TestComponent,
       };
 
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-        routes: [route],
-      };
+      const plugin = createTestPlugin({
+        routes: [route]
+      });
 
       await manager.registerPlugin(plugin);
       await manager.uninstallPlugin('test-plugin');
@@ -241,11 +239,7 @@ describe('PluginManager', () => {
     });
 
     it('should track plugin installation state', async () => {
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-      };
+      const plugin = createTestPlugin();
 
       expect(manager.isPluginInstalled('test-plugin')).toBe(false);
       await manager.registerPlugin(plugin);
@@ -253,11 +247,7 @@ describe('PluginManager', () => {
     });
 
     it('should track plugin active state', async () => {
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-      };
+      const plugin = createTestPlugin();
 
       await manager.registerPlugin(plugin);
       expect(manager.isPluginActive('test-plugin')).toBe(false);
@@ -266,11 +256,7 @@ describe('PluginManager', () => {
     });
 
     it('should handle plugin initialization state', async () => {
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-      };
+      const plugin = createTestPlugin();
 
       await manager.registerPlugin(plugin);
       await manager.initializePlugin('test-plugin');
@@ -286,11 +272,7 @@ describe('PluginManager', () => {
     });
 
     it('should get plugin by id', async () => {
-      const plugin: Plugin = {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-      };
+      const plugin = createTestPlugin();
 
       await manager.registerPlugin(plugin);
       const retrieved = manager.getPlugin('test-plugin');
@@ -299,9 +281,9 @@ describe('PluginManager', () => {
 
     it('should get all plugins', async () => {
       const plugins: Plugin[] = [
-        { id: 'plugin1', name: 'Plugin 1', version: '1.0.0' },
-        { id: 'plugin2', name: 'Plugin 2', version: '1.0.0' },
-        { id: 'plugin3', name: 'Plugin 3', version: '1.0.0' },
+        createTestPlugin({ id: 'plugin1', name: 'Plugin 1' }),
+        createTestPlugin({ id: 'plugin2', name: 'Plugin 2' }),
+        createTestPlugin({ id: 'plugin3', name: 'Plugin 3' }),
       ];
 
       for (const plugin of plugins) {
@@ -321,8 +303,8 @@ describe('PluginManager', () => {
 
     it('should clear all plugins', async () => {
       const plugins: Plugin[] = [
-        { id: 'plugin1', name: 'Plugin 1', version: '1.0.0' },
-        { id: 'plugin2', name: 'Plugin 2', version: '1.0.0' },
+        createTestPlugin({ id: 'plugin1', name: 'Plugin 1' }),
+        createTestPlugin({ id: 'plugin2', name: 'Plugin 2' }),
       ];
 
       for (const plugin of plugins) {

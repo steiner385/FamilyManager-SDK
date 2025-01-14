@@ -2,20 +2,28 @@ import { BasePlugin } from '../base';
 import { EventBus } from '../../events/EventBus';
 import { EventDeliveryStatus } from '../../events/types';
 import { logger } from '../../utils/logger';
-import { PluginContext, PluginMetadata } from '../types';
+import { PluginContext, PluginMetadata, PluginDependencyConfig } from '../types';
 import type { Env } from 'hono/types';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
+import { describe, it, expect, jest, beforeAll, beforeEach, afterEach } from '@jest/globals';
+
+type HasPluginFn = (id: string) => boolean;
 
 jest.mock('../../utils/logger');
-jest.mock('../../events/EventBus');
+jest.mock('../../events/EventBus', () => ({
+  EventBus: {
+    getInstance: jest.fn(),
+  }
+}));
 
 class TestPlugin extends BasePlugin {
   readonly metadata: PluginMetadata = {
+    id: 'test-plugin',
     name: 'test-plugin',
     version: '1.0.0',
     description: 'Test plugin for unit tests',
-    dependencies: [],
-    optionalDependencies: []
+    dependencies: new PluginDependencyConfig({}),
+    optionalDependencies: {}
   };
 
   protected async onInitialize(_context: PluginContext<Env>): Promise<void> {
@@ -31,44 +39,45 @@ describe('BasePlugin', () => {
   let plugin: TestPlugin;
   let mockContext: PluginContext<Env>;
   let mockEventBus: DeepMockProxy<EventBus>;
+  let hasPluginMock: jest.MockedFunction<HasPluginFn>;
 
   beforeAll(() => {
     mockEventBus = mockDeep<EventBus>();
     mockEventBus.getRunningState.mockReturnValue(true);
     mockEventBus.start.mockResolvedValue(undefined);
     mockEventBus.stop.mockResolvedValue(undefined);
-    mockEventBus.restart.mockResolvedValue(undefined);
-    mockEventBus.publish.mockResolvedValue({ status: EventDeliveryStatus.Success, errors: [] });
-    mockEventBus.subscribe.mockImplementation(() => () => {});
+    mockEventBus.emit.mockResolvedValue(EventDeliveryStatus.SUCCESS);
+    mockEventBus.subscribe.mockReturnValue('subscription-id');
     mockEventBus.unsubscribe.mockImplementation(() => {});
     mockEventBus.getChannels.mockReturnValue(['plugin']);
     mockEventBus.registerChannel.mockImplementation(() => {});
 
     // Set up the mock for EventBus.getInstance
-    const EventBusMock = jest.requireMock('../../events/EventBus').EventBus;
-    EventBusMock.getInstance = jest.fn().mockReturnValue(mockEventBus);
+    (EventBus.getInstance as jest.Mock).mockReturnValue(mockEventBus);
   });
 
   beforeEach(async () => {
     // Create new plugin instance
     plugin = new TestPlugin();
     
+    // Create hasPlugin mock
+    hasPluginMock = jest.fn().mockReturnValue(true) as jest.MockedFunction<HasPluginFn>;
+    
     // Create mock context
     mockContext = {
       logMetadata: {},
       plugins: {
-        hasPlugin: jest.fn().mockReturnValue(true)
+        hasPlugin: hasPluginMock
       }
     } as unknown as PluginContext<Env>;
 
     // Reset mock states
     jest.clearAllMocks();
     mockEventBus.getRunningState.mockReturnValue(true);
-    mockEventBus.publish.mockResolvedValue({ status: EventDeliveryStatus.Success, errors: [] });
+    mockEventBus.emit.mockResolvedValue(EventDeliveryStatus.SUCCESS);
 
     // Reset EventBus mock
-    const EventBusMock = jest.requireMock('../../events/EventBus').EventBus;
-    EventBusMock.getInstance.mockReturnValue(mockEventBus);
+    (EventBus.getInstance as jest.Mock).mockReturnValue(mockEventBus);
   });
 
   afterEach(async () => {
@@ -82,21 +91,21 @@ describe('BasePlugin', () => {
     it('should initialize plugin successfully', async () => {
       await expect(plugin.initialize(mockContext)).resolves.not.toThrow();
       expect((plugin as any).initialized).toBe(true);
-      expect(mockEventBus.publish).toHaveBeenCalledWith('plugin', expect.objectContaining({
+      expect(mockEventBus.emit).toHaveBeenCalledWith(expect.objectContaining({
         type: 'PLUGIN_INITIALIZED',
         source: 'test-plugin'
       }));
     });
 
     it('should fail initialization if required dependency is missing', async () => {
-      plugin.metadata.dependencies = ['missing-plugin'];
-      (mockContext.plugins.hasPlugin as jest.Mock).mockReturnValue(false);
+      plugin.metadata.dependencies = new PluginDependencyConfig({ 'missing-plugin': '1.0.0' });
+      hasPluginMock.mockReturnValue(false);
       await expect(plugin.initialize(mockContext)).rejects.toThrow('Required dependency not found: missing-plugin');
     });
 
     it('should handle optional dependencies', async () => {
-      plugin.metadata.optionalDependencies = ['optional-plugin'];
-      (mockContext.plugins.hasPlugin as jest.Mock).mockReturnValue(false);
+      plugin.metadata.optionalDependencies = { 'optional-plugin': '1.0.0' };
+      hasPluginMock.mockReturnValue(false);
       await expect(plugin.initialize(mockContext)).resolves.not.toThrow();
       expect(logger.warn).toHaveBeenCalledWith(
         expect.stringContaining('Optional dependency not found: optional-plugin'),
@@ -110,7 +119,7 @@ describe('BasePlugin', () => {
       await plugin.initialize(mockContext);
       await expect(plugin.teardown()).resolves.not.toThrow();
       expect((plugin as any).initialized).toBe(false);
-      expect(mockEventBus.publish).toHaveBeenCalledWith('plugin', expect.objectContaining({
+      expect(mockEventBus.emit).toHaveBeenCalledWith(expect.objectContaining({
         type: 'PLUGIN_TEARDOWN',
         source: 'test-plugin'
       }));
@@ -118,7 +127,7 @@ describe('BasePlugin', () => {
 
     it('should handle teardown when not initialized', async () => {
       await expect(plugin.teardown()).resolves.not.toThrow();
-      expect(mockEventBus.publish).not.toHaveBeenCalled();
+      expect(mockEventBus.emit).not.toHaveBeenCalled();
     });
   });
 
@@ -150,10 +159,10 @@ describe('BasePlugin', () => {
 
   describe('dependency management', () => {
     it('should validate dependencies on initialization', async () => {
-      plugin.metadata.dependencies = ['dep1', 'dep2'];
+      plugin.metadata.dependencies = new PluginDependencyConfig({ 'dep1': '1.0.0', 'dep2': '1.0.0' });
       await expect(plugin.initialize(mockContext)).resolves.not.toThrow();
-      expect(mockContext.plugins.hasPlugin).toHaveBeenCalledWith('dep1');
-      expect(mockContext.plugins.hasPlugin).toHaveBeenCalledWith('dep2');
+      expect(hasPluginMock).toHaveBeenCalledWith('dep1');
+      expect(hasPluginMock).toHaveBeenCalledWith('dep2');
     });
 
     it('should handle dependency changes', async () => {
@@ -168,8 +177,8 @@ describe('BasePlugin', () => {
 
   describe('validation', () => {
     it('should warn about missing optional dependencies', async () => {
-      plugin.metadata.optionalDependencies = ['opt1', 'opt2'];
-      (mockContext.plugins.hasPlugin as jest.Mock).mockReturnValue(false);
+      plugin.metadata.optionalDependencies = { 'opt1': '1.0.0', 'opt2': '1.0.0' };
+      hasPluginMock.mockReturnValue(false);
       await plugin.initialize(mockContext);
       expect(logger.warn).toHaveBeenCalledTimes(2);
     });

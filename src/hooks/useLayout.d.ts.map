@@ -1,0 +1,1 @@
+{"version":3,"file":"useLayout.d.ts","sourceRoot":"","sources":["useLayout.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,sBAAsB,CAAC;AAEzD,UAAU,eAAe;IACvB,MAAM,EAAE,YAAY,GAAG,SAAS,CAAC;IACjC,YAAY,EAAE,OAAO,CAAC;CACvB;AAED,wBAAgB,SAAS,CAAC,QAAQ,EAAE,MAAM,GAAG,eAAe,CAS3D"}

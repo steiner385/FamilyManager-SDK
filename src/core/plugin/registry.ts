@@ -47,7 +47,12 @@ class PluginRegistry {
   }
 
   getPluginState(name: string): PluginState {
-    return this.pluginStates.get(name) || 'registered';
+    return this.pluginStates.get(name) || {
+      isEnabled: false,
+      status: 'registered',
+      isInitialized: false,
+      error: null
+    };
   }
 
   clear(): void {

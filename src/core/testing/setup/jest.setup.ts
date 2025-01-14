@@ -1,35 +1,83 @@
-import { EventBus } from '../../events/EventBus';
-import { EventDeliveryStatus } from '../../events/types';
-import { mockDeep } from 'jest-mock-extended';
+import '@testing-library/jest-dom';
+import { TextDecoder, TextEncoder } from 'util';
+import { jest } from '@jest/globals';
 
-// Mock EventBus for all tests
-jest.mock('../../events/EventBus', () => ({
-  EventBus: {
-    getInstance: jest.fn(),
-    resetInstance: jest.fn(),
-  },
-}));
+// Polyfill TextEncoder/TextDecoder for Node.js environment
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as typeof global.TextDecoder;
 
-const mockEventBus = mockDeep<EventBus>();
-mockEventBus.start.mockResolvedValue();
-mockEventBus.stop.mockResolvedValue();
-mockEventBus.getRunningState.mockReturnValue(true);
-mockEventBus.publish.mockResolvedValue({ status: EventDeliveryStatus.Delivered });
-mockEventBus.subscribe.mockReturnValue(() => {});
+// Extend Jest matchers
+expect.extend({
+  toHaveBeenCalledExactlyOnceWith(received: jest.Mock, ...expected: any[]) {
+    const pass = received.mock.calls.length === 1 &&
+      received.mock.calls[0].length === expected.length &&
+      received.mock.calls[0].every((arg, i) => this.equals(arg, expected[i]));
 
-beforeAll(() => {
-  // Set up EventBus mock
-  const { EventBus } = jest.requireMock('../../events/EventBus');
-  EventBus.getInstance.mockReturnValue(mockEventBus);
+    return {
+      pass,
+      message: () =>
+        pass
+          ? `Expected function not to have been called exactly once with ${expected}`
+          : `Expected function to have been called exactly once with ${expected}`
+    };
+  }
 });
 
-beforeEach(() => {
-  // Reset all mocks before each test
-  jest.clearAllMocks();
-  mockEventBus.getRunningState.mockReturnValue(true);
+// Mock window.matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
 });
 
+// Mock IntersectionObserver
+class MockIntersectionObserver implements IntersectionObserver {
+  readonly root: Element | null = null;
+  readonly rootMargin: string = '';
+  readonly thresholds: ReadonlyArray<number> = [];
+
+  constructor(private callback: IntersectionObserverCallback) {}
+
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+  takeRecords(): IntersectionObserverEntry[] { return []; }
+}
+
+window.IntersectionObserver = MockIntersectionObserver;
+
+// Mock ResizeObserver
+class MockResizeObserver implements ResizeObserver {
+  constructor(private callback: ResizeObserverCallback) {}
+
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+window.ResizeObserver = MockResizeObserver;
+
+// Suppress console errors during tests
+const originalError = console.error;
+console.error = (...args) => {
+  if (
+    typeof args[0] === 'string' &&
+    args[0].includes('Warning: ReactDOM.render is no longer supported')
+  ) {
+    return;
+  }
+  originalError.call(console, ...args);
+};
+
+// Clean up after each test
 afterEach(() => {
-  // Clean up after each test
   jest.clearAllMocks();
 });

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { AccessibilityManager, type A11yConfig } from '../core/accessibility/AccessibilityManager';
+import React from 'react';
+import { AccessibilityManager, type A11yConfig, type AccessibilityProps } from '../core/accessibility/AccessibilityManager';
 
 export function useAccessibility(componentId: string, config: A11yConfig) {
   useEffect(() => {
@@ -7,7 +8,7 @@ export function useAccessibility(componentId: string, config: A11yConfig) {
   }, [componentId, config])
 
   return {
-    enhanceElement: (element: JSX.Element) =>
+    enhanceElement: <P extends AccessibilityProps>(element: React.ReactElement<P>) =>
       AccessibilityManager.enhanceComponent(componentId, element),
   }
 }

@@ -1,14 +1,9 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { Toast } from '../components/common/Toast';
+import Toast from '../components/common/Toast';
+import type { ToastType } from '../components/common/Toast';
 import { expect } from '@storybook/jest';
-import { within, userEvent } from '@storybook/testing-library';
-import { 
-  InformationCircleIcon, 
-  CheckCircleIcon, 
-  ExclamationTriangleIcon, 
-  XCircleIcon 
-} from '@heroicons/react/24/outline';
+import { within } from '@storybook/testing-library';
 
 const meta = {
   title: 'Components/Toast',
@@ -18,31 +13,22 @@ const meta = {
   },
   tags: ['autodocs'],
   argTypes: {
-    variant: {
+    message: {
+      control: 'text',
+      description: 'Message to display in the toast',
+    },
+    type: {
       control: 'select',
       options: ['info', 'success', 'warning', 'error'],
-      description: 'Visual style variant of the toast',
-    },
-    title: {
-      control: 'text',
-      description: 'Title text of the toast',
-    },
-    description: {
-      control: 'text',
-      description: 'Description text of the toast',
-    },
-    position: {
-      control: 'select',
-      options: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
-      description: 'Position of the toast on the screen',
-    },
-    autoClose: {
-      control: 'boolean',
-      description: 'Whether to automatically close the toast',
+      description: 'Type of toast notification',
     },
     duration: {
       control: 'number',
       description: 'Duration in milliseconds before auto-closing',
+    },
+    onClose: {
+      action: 'closed',
+      description: 'Callback when toast is closed',
     },
   },
 } satisfies Meta<typeof Toast>;
@@ -52,185 +38,66 @@ type Story = StoryObj<typeof meta>;
 
 export const Info: Story = {
   args: {
-    variant: 'info',
-    title: 'Information',
-    description: 'This is an informational message',
-    icon: <InformationCircleIcon className="h-5 w-5" />,
-    'data-testid': 'info-toast',
+    message: 'This is an informational message',
+    type: 'info' as ToastType,
+    onClose: () => {},
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const toast = canvas.getByTestId('info-toast');
-    const title = canvas.getByTestId('info-toast-title');
-    const description = canvas.getByTestId('info-toast-description');
-    const icon = canvas.getByTestId('info-toast-icon');
-    
-    await expect(toast).toBeVisible();
-    await expect(toast).toHaveClass('bg-blue-50');
-    await expect(title).toHaveClass('text-blue-800');
-    await expect(description).toHaveClass('text-blue-700');
-    await expect(icon).toBeVisible();
+    const toast = canvas.getByRole('alert');
+    await expect(toast).toBeInTheDocument();
   },
 };
 
 export const Success: Story = {
   args: {
-    variant: 'success',
-    title: 'Success',
-    description: 'Operation completed successfully',
-    icon: <CheckCircleIcon className="h-5 w-5" />,
-    'data-testid': 'success-toast',
+    message: 'Operation completed successfully',
+    type: 'success' as ToastType,
+    onClose: () => {},
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const toast = canvas.getByTestId('success-toast');
-    
-    await expect(toast).toBeVisible();
-    await expect(toast).toHaveClass('bg-green-50');
+    const toast = canvas.getByRole('alert');
+    await expect(toast).toBeInTheDocument();
   },
 };
 
 export const Warning: Story = {
   args: {
-    variant: 'warning',
-    title: 'Warning',
-    description: 'Please review this important notice',
-    icon: <ExclamationTriangleIcon className="h-5 w-5" />,
-    'data-testid': 'warning-toast',
+    message: 'Please review this important notice',
+    type: 'warning' as ToastType,
+    onClose: () => {},
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const toast = canvas.getByTestId('warning-toast');
-    
-    await expect(toast).toBeVisible();
-    await expect(toast).toHaveClass('bg-yellow-50');
+    const toast = canvas.getByRole('alert');
+    await expect(toast).toBeInTheDocument();
   },
 };
 
 export const Error: Story = {
   args: {
-    variant: 'error',
-    title: 'Error',
-    description: 'An error occurred while processing your request',
-    icon: <XCircleIcon className="h-5 w-5" />,
-    'data-testid': 'error-toast',
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const toast = canvas.getByTestId('error-toast');
-    
-    await expect(toast).toBeVisible();
-    await expect(toast).toHaveClass('bg-red-50');
-  },
-};
-
-export const WithAction: Story = {
-  args: {
-    variant: 'info',
-    title: 'New Update Available',
-    description: 'A new version of the application is available',
-    action: (
-      <button className="bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-800">
-        Update Now
-      </button>
-    ),
-    'data-testid': 'action-toast',
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const action = canvas.getByTestId('action-toast-action');
-    
-    await expect(action).toBeVisible();
-  },
-};
-
-export const WithCloseButton: Story = {
-  args: {
-    title: 'Closeable Toast',
-    description: 'Click the X button to close this toast',
+    message: 'An error occurred while processing your request',
+    type: 'error' as ToastType,
     onClose: () => {},
-    'data-testid': 'close-toast',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const closeButton = canvas.getByTestId('close-toast-close');
-    
-    await expect(closeButton).toBeVisible();
-    await userEvent.click(closeButton);
-    await expect(canvas.queryByTestId('close-toast')).not.toBeInTheDocument();
+    const toast = canvas.getByRole('alert');
+    await expect(toast).toBeInTheDocument();
   },
 };
 
-export const TopLeft: Story = {
+export const CustomDuration: Story = {
   args: {
-    position: 'top-left',
-    title: 'Top Left Toast',
-    description: 'This toast appears in the top-left corner',
-    'data-testid': 'position-toast',
+    message: 'This toast will close in 5 seconds',
+    type: 'info' as ToastType,
+    duration: 5000,
+    onClose: () => {},
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const toast = canvas.getByTestId('position-toast');
-    
-    await expect(toast).toBeVisible();
-    await expect(toast).toHaveClass('top-4');
-    await expect(toast).toHaveClass('left-4');
-  },
-};
-
-export const AutoClosing: Story = {
-  args: {
-    title: 'Auto-closing Toast',
-    description: 'This toast will close automatically after 3 seconds',
-    autoClose: true,
-    duration: 3000,
-    'data-testid': 'auto-close-toast',
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const toast = canvas.getByTestId('auto-close-toast');
-    
-    await expect(toast).toBeVisible();
-    // Wait for auto-close
-    await new Promise(resolve => setTimeout(resolve, 3500));
-    await expect(canvas.queryByTestId('auto-close-toast')).not.toBeInTheDocument();
-  },
-};
-
-export const ComplexToast: Story = {
-  args: {
-    variant: 'success',
-    title: 'File Uploaded Successfully',
-    description: 'Your file has been uploaded and is now ready for sharing',
-    icon: <CheckCircleIcon className="h-5 w-5" />,
-    action: (
-      <div className="flex space-x-2">
-        <button className="bg-green-800 text-white px-3 py-1 rounded hover:bg-green-900">
-          View File
-        </button>
-        <button className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-800">
-          Copy Link
-        </button>
-      </div>
-    ),
-    onClose: () => console.log('Toast closed'),
-    position: 'top-right',
-    'data-testid': 'complex-toast',
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const toast = canvas.getByTestId('complex-toast');
-    const icon = canvas.getByTestId('complex-toast-icon');
-    const title = canvas.getByTestId('complex-toast-title');
-    const description = canvas.getByTestId('complex-toast-description');
-    const action = canvas.getByTestId('complex-toast-action');
-    const closeButton = canvas.getByTestId('complex-toast-close');
-    
-    await expect(toast).toBeVisible();
-    await expect(icon).toBeVisible();
-    await expect(title).toBeVisible();
-    await expect(description).toBeVisible();
-    await expect(action).toBeVisible();
-    await expect(closeButton).toBeVisible();
+    const toast = canvas.getByRole('alert');
+    await expect(toast).toBeInTheDocument();
   },
 };

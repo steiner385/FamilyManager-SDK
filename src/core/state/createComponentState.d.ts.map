@@ -1,0 +1,1 @@
+{"version":3,"file":"createComponentState.d.ts","sourceRoot":"","sources":["createComponentState.ts"],"names":[],"mappings":"AAEA,UAAU,cAAc,CAAC,CAAC;IACxB,KAAK,EAAE,CAAC,CAAA;IACR,QAAQ,EAAE,CAAC,KAAK,EAAE,OAAO,CAAC,CAAC,CAAC,KAAK,IAAI,CAAA;IACrC,KAAK,EAAE,MAAM,IAAI,CAAA;CAClB;AAED,wBAAgB,oBAAoB,CAAC,CAAC,EAAE,YAAY,EAAE,CAAC,kFAQtD"}

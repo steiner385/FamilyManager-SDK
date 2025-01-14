@@ -1,84 +1,103 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
-import { ConfigEncryption, EncryptionOptions, SecureField } from './types';
-import { ConfigError } from '../errors';
+import { createCipheriv, createDecipheriv, randomBytes, Cipher, Decipher } from 'crypto';
+import { ConfigError, ConfigErrorCode } from '../errors';
 
-export class AESConfigEncryption implements ConfigEncryption {
-  private readonly key: Buffer;
-  private readonly defaultAlgorithm: string;
+interface EncryptionMetadata {
+  algorithm: string;
+  iv: string;
+  authTag: string;
+}
 
-  constructor(key: string | Buffer, options?: EncryptionOptions) {
-    this.key = Buffer.isBuffer(key) ? key : Buffer.from(key, 'hex');
-    this.defaultAlgorithm = options?.algorithm || 'aes-256-gcm';
+interface SecureField {
+  encrypted: boolean;
+  value: string;
+  metadata: EncryptionMetadata;
+}
+
+interface EncryptionOptions {
+  algorithm?: string;
+  ivSize?: number;
+}
+
+export class AESConfigEncryption {
+  private readonly defaultAlgorithm = 'aes-256-gcm';
+  private readonly defaultIvSize = 16;
+  private readonly key: Buffer | string;
+
+  constructor(key: Buffer | string) {
+    this.key = key;
   }
 
-  async encrypt(value: string, options?: EncryptionOptions): Promise<string> {
+  private validateKey(): Buffer {
     try {
-      const iv = randomBytes(options?.ivSize || 16);
-      const cipher = createCipheriv(
-        options?.algorithm || this.defaultAlgorithm,
-        this.key,
-        iv
-      );
-
-      const encrypted = Buffer.concat([
-        cipher.update(value, 'utf8'),
-        cipher.final()
-      ]);
-
-      const authTag = cipher.getAuthTag();
-
-      const secureField: SecureField = {
-        encrypted: true,
-        value: encrypted.toString('base64'),
-        metadata: {
-          algorithm: options?.algorithm || this.defaultAlgorithm,
-          iv: iv.toString('base64'),
-          authTag: authTag.toString('base64')
-        }
-      };
-
-      return JSON.stringify(secureField);
-    } catch (error) {
+      const keyBuffer = Buffer.isBuffer(this.key) ? this.key : Buffer.from(this.key);
+      if (keyBuffer.length !== 32) {
+        throw new Error('Key must be 32 bytes');
+      }
+      return keyBuffer;
+    } catch (err) {
       throw new ConfigError(
-        'ENCRYPTION_FAILED',
-        'Failed to encrypt configuration value',
-        { error: error instanceof Error ? error.message : 'Unknown error' }
+        ConfigErrorCode.ENCRYPTION_ERROR,
+        'Invalid encryption key'
       );
     }
   }
 
-  async decrypt(value: string): Promise<string> {
+  async encrypt(plaintext: string, options: EncryptionOptions = {}): Promise<string> {
     try {
-      const secureField: SecureField = JSON.parse(value);
+      const keyBuffer = this.validateKey();
+      const algorithm = options.algorithm || this.defaultAlgorithm;
+      const ivSize = options.ivSize || this.defaultIvSize;
+      const iv = randomBytes(ivSize);
+      const cipher = createCipheriv(algorithm, keyBuffer, iv) as Cipher & { getAuthTag(): Buffer };
       
-      if (!secureField.encrypted) {
-        return secureField.value;
-      }
+      let ciphertext = cipher.update(plaintext, 'utf8', 'base64');
+      ciphertext += cipher.final('base64');
 
-      const { algorithm, iv, authTag } = secureField.metadata || {};
-      if (!algorithm || !iv || !authTag) {
+      const secureField: SecureField = {
+        encrypted: true,
+        value: ciphertext,
+        metadata: {
+          algorithm,
+          iv: iv.toString('base64'),
+          authTag: cipher.getAuthTag().toString('base64')
+        }
+      };
+
+      return JSON.stringify(secureField);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      throw new ConfigError(
+        ConfigErrorCode.ENCRYPTION_ERROR,
+        `Failed to encrypt data: ${error.message}`
+      );
+    }
+  }
+
+  async decrypt(secureFieldJson: string): Promise<string> {
+    try {
+      const keyBuffer = this.validateKey();
+      const secureField: SecureField = JSON.parse(secureFieldJson);
+      
+      if (!secureField.encrypted || !secureField.value || !secureField.metadata) {
         throw new Error('Invalid secure field format');
       }
 
-      const decipher = createDecipheriv(
-        algorithm,
-        this.key,
-        Buffer.from(iv, 'base64')
-      );
+      const { algorithm, iv, authTag } = secureField.metadata;
+      const ivBuffer = Buffer.from(iv, 'base64');
+      const authTagBuffer = Buffer.from(authTag, 'base64');
+      
+      const decipher = createDecipheriv(algorithm, keyBuffer, ivBuffer) as Decipher & { setAuthTag(tag: Buffer): void };
+      decipher.setAuthTag(authTagBuffer);
 
-      decipher.setAuthTag(Buffer.from(authTag, 'base64'));
+      let plaintext = decipher.update(secureField.value, 'base64', 'utf8');
+      plaintext += decipher.final('utf8');
 
-      const decrypted = Buffer.concat([
-        decipher.update(Buffer.from(secureField.value, 'base64')),
-        decipher.final()
-      ]);
-
-      return decrypted.toString('utf8');
-    } catch (error) {
+      return plaintext;
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       throw new ConfigError(
-        'DECRYPTION_FAILED',
-        'Failed to decrypt configuration value',
-        { error: error instanceof Error ? error.message : 'Unknown error' }
+        ConfigErrorCode.DECRYPTION_ERROR,
+        `Failed to decrypt data: ${error.message}`
       );
     }
   }

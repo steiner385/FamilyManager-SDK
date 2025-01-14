@@ -1,7 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { store } from '../store';
+import { useAuthStore } from '../store/auth';
 import { handleApiError } from '../utils/errorHandler';
-
 import { InternalAxiosRequestConfig } from 'axios';
 
 interface ApiConfig extends Omit<AxiosRequestConfig, 'headers'> {
@@ -32,11 +31,11 @@ class ApiService {
   private setupInterceptors() {
     this.instance.interceptors.request.use(
       (config: CustomInternalAxiosRequestConfig) => {
-        const state = store.getState();
-        if (state.auth.isAuthenticated && config.requiresAuth !== false) {
+        const authState = useAuthStore.getState();
+        if (authState.isAuthenticated && config.requiresAuth !== false) {
           // Add auth header if needed
           config.headers = config.headers || {};
-          config.headers['Authorization'] = `Bearer ${state.auth.token}`;
+          config.headers['Authorization'] = `Bearer ${authState.token}`;
         }
         return config;
       },

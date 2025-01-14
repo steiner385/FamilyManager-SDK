@@ -1,3 +1,12 @@
+import React from 'react';
+
+export interface AccessibilityProps {
+  'aria-label'?: string;
+  'aria-describedby'?: string;
+  role?: string;
+  tabIndex?: number;
+}
+
 export interface A11yConfig {
   ariaLabel?: string;
   ariaDescribedBy?: string;
@@ -16,17 +25,17 @@ export class AccessibilityManager {
     return this.configs.get(componentId) || {};
   }
 
-  static enhanceComponent(componentId: string, element: JSX.Element): JSX.Element {
+  static enhanceComponent<P extends AccessibilityProps>(
+    componentId: string, 
+    element: React.ReactElement<P>
+  ): React.ReactElement<P> {
     const config = this.getConfig(componentId);
-    return {
-      ...element,
-      props: {
-        ...element.props,
-        'aria-label': config.ariaLabel,
-        'aria-describedby': config.ariaDescribedBy,
-        role: config.role,
-        tabIndex: config.tabIndex,
-      },
-    };
+    return React.cloneElement<P>(element, {
+      ...element.props,
+      'aria-label': config.ariaLabel,
+      'aria-describedby': config.ariaDescribedBy,
+      role: config.role,
+      tabIndex: config.tabIndex,
+    });
   }
 }

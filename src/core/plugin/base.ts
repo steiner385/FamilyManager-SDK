@@ -1,11 +1,16 @@
 import { EventBus } from '../events/EventBus';
 import { logger } from '../utils/logger';
-import { PluginContext, PluginMetadata } from './types';
+import { PluginContext, PluginMetadata, Plugin } from './types';
 import type { Env } from 'hono/types';
 
 export abstract class BasePlugin {
   private initialized: boolean = false;
   abstract readonly metadata: PluginMetadata;
+  private eventBus: EventBus;
+
+  constructor() {
+    this.eventBus = EventBus.getInstance();
+  }
 
   async initialize(context: PluginContext<Env>): Promise<void> {
     if (this.initialized) {
@@ -14,20 +19,20 @@ export abstract class BasePlugin {
 
     // Validate required dependencies
     if (this.metadata.dependencies) {
-      for (const dep of this.metadata.dependencies) {
-        if (!context.plugins.hasPlugin(dep)) {
-          throw new Error(`Required dependency not found: ${dep}`);
+      for (const [depId] of this.metadata.dependencies) {
+        if (!context.plugins?.hasPlugin(depId)) {
+          throw new Error(`Required dependency not found: ${depId}`);
         }
       }
     }
 
     // Check optional dependencies
     if (this.metadata.optionalDependencies) {
-      for (const dep of this.metadata.optionalDependencies) {
-        if (!context.plugins.hasPlugin(dep)) {
-          logger.warn(`Optional dependency not found: ${dep}`, {
+      for (const [depId, version] of Object.entries(this.metadata.optionalDependencies)) {
+        if (!context.plugins?.hasPlugin(depId)) {
+          logger.warn(`Optional dependency not found: ${depId} (${version})`, {
             plugin: this.metadata.name,
-            dependency: dep
+            dependency: depId
           });
         }
       }
@@ -39,15 +44,13 @@ export abstract class BasePlugin {
       this.initialized = true;
 
       // Publish initialization event
-      await EventBus.getInstance().publish('plugin', {
+      await this.eventBus.emit({
+        id: `plugin-init-${Date.now()}`,
         type: 'PLUGIN_INITIALIZED',
+        channel: 'plugin',
         source: this.metadata.name,
         timestamp: Date.now(),
-        metadata: {
-          service: this.metadata.name,
-          timestamp: Date.now()
-        },
-        payload: {
+        data: {
           name: this.metadata.name,
           version: this.metadata.version
         }
@@ -72,15 +75,13 @@ export abstract class BasePlugin {
       this.initialized = false;
 
       // Publish teardown event
-      await EventBus.getInstance().publish('plugin', {
+      await this.eventBus.emit({
+        id: `plugin-teardown-${Date.now()}`,
         type: 'PLUGIN_TEARDOWN',
+        channel: 'plugin',
         source: this.metadata.name,
         timestamp: Date.now(),
-        metadata: {
-          service: this.metadata.name,
-          timestamp: Date.now()
-        },
-        payload: {
+        data: {
           name: this.metadata.name,
           version: this.metadata.version
         }

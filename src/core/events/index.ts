@@ -2,7 +2,7 @@
 export * from './types';
 
 // Event system implementations
-export * from './EventBus';
+export { EventBus, eventBus } from './EventBus';
 export * from './router';
 export * from './batch';
 export * from './validator';
@@ -16,6 +16,3 @@ export * from './constants';
 
 // Test utilities
 export * from './utils/test-helpers';
-
-// Default event bus instance
-export { eventBus } from './EventBus';

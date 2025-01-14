@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "../../dist/store",
+    "rootDir": "..",
+    "tsBuildInfoFile": "../../dist/store/.tsbuildinfo",
+    "types": ["node", "@testing-library/jest-dom"]
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx"
+  ],
+  "references": [
+    { "path": "../types" }
+  ]
+}

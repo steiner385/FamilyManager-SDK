@@ -1,21 +1,16 @@
 {
-  "extends": "../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "rootDir": "../",
-    "baseUrl": "../",
     "outDir": "../../dist/utils",
-    "types": ["node"]
+    "rootDir": "..",
+    "tsBuildInfoFile": "../../dist/utils/.tsbuildinfo"
   },
   "include": [
     "./**/*.ts",
     "./**/*.tsx"
   ],
-  "exclude": [
-    "**/__tests__/**/*",
-    "**/*.test.*",
-    "**/*.spec.*"
+  "references": [
+    { "path": "../types" }
   ]
 }

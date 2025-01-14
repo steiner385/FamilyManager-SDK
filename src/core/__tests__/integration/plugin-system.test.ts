@@ -1,30 +1,30 @@
-import { PluginManager } from '../../plugin/PluginManager'
-import { ComponentRegistry } from '../../registry/ComponentRegistry'
-import { ThemeManager } from '../../theme/ThemeManager'
-import { createMockPlugin } from '../../testing/utils/testHelpers'
-import { Theme } from '../../../types/base'
-import '@testing-library/jest-dom'
-import { describe, it, expect, beforeEach } from '@jest/globals'
+import { PluginManager } from '../../plugin/PluginManager';
+import { ComponentRegistry } from '../../registry/ComponentRegistry';
+import { ThemeManager } from '../../theme/ThemeManager';
+import { createMockPlugin } from '../../testing/utils/testHelpers';
+import { Theme } from '../../../types/base';
+import '@testing-library/jest-dom';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 
 describe('Plugin System Integration', () => {
-  let pluginManager: PluginManager
-  let componentRegistry: ComponentRegistry
-  let themeManager: ThemeManager
+  let pluginManager: PluginManager;
+  let componentRegistry: ComponentRegistry;
+  let themeManager: ThemeManager;
 
   beforeEach(() => {
     // Reset all singletons
     // @ts-ignore
-    PluginManager.instance = null
+    PluginManager.instance = null;
     // @ts-ignore
-    ComponentRegistry.instance = null
+    ComponentRegistry.instance = null;
     // @ts-ignore
-    ThemeManager.instance = null
+    ThemeManager.instance = null;
 
-pluginManager = PluginManager.getInstance()
-pluginManager.initialize()
-componentRegistry = ComponentRegistry.getInstance()
-    themeManager = ThemeManager.getInstance()
-  })
+    pluginManager = PluginManager.getInstance();
+    pluginManager.initialize();
+    componentRegistry = ComponentRegistry.getInstance();
+    themeManager = ThemeManager.getInstance();
+  });
 
   it('handles complete plugin lifecycle', async () => {
     // Create test plugin with components and theme
@@ -56,49 +56,48 @@ componentRegistry = ComponentRegistry.getInstance()
           large: '24px'
         }
       } satisfies Theme
-    })
+    });
 
-await pluginManager.registerPlugin(mockPlugin)
-    const pluginId = `mock-${mockPlugin.name}`
-    expect(pluginManager.isPluginInstalled(pluginId)).toBe(true)
+    await pluginManager.registerPlugin(mockPlugin);
+    const pluginId = mockPlugin.id;
+    expect(pluginManager.isPluginInstalled(pluginId)).toBe(true);
 
     // Initialize plugin
-    await pluginManager.initializePlugin(pluginId)
-    expect(pluginManager.isInitialized(pluginId)).toBe(true)
+    await pluginManager.initializePlugin(pluginId);
+    expect(pluginManager.isInitialized(pluginId)).toBe(true);
 
     // Verify components are registered
-    expect(componentRegistry.get('TestComponent')).toBeTruthy()
+    expect(componentRegistry.get('TestComponent')).toBeTruthy();
 
     // Verify theme is applied
-    const currentTheme = themeManager.getCurrentTheme()
-    expect(currentTheme.colors?.custom).toBe('#ff0000')
+    const currentTheme = themeManager.getCurrentTheme();
+    expect(currentTheme.colors?.custom).toBe('#ff0000');
 
     // Uninstall plugin
-    await pluginManager.uninstallPlugin(pluginId)
-    expect(pluginManager.isPluginInstalled(pluginId)).toBe(false)
-  })
+    await pluginManager.uninstallPlugin(pluginId);
+    expect(pluginManager.isPluginInstalled(pluginId)).toBe(false);
+  });
 
   it('handles plugin dependencies correctly', async () => {
+    // First create and register the dependency plugin
     const dependencyPlugin = createMockPlugin({
       name: 'dependency-plugin',
       version: '1.0.0'
-    })
+    });
 
+    await pluginManager.registerPlugin(dependencyPlugin);
+    await pluginManager.initializePlugin(dependencyPlugin.id);
+
+    // Then create and register the main plugin that depends on it
     const mainPlugin = createMockPlugin({
       name: 'main-plugin',
       version: '1.0.0',
-      dependencies: ['dependency-plugin']
-    })
+      dependencies: [`mock-dependency-plugin`] // Use the full ID including the 'mock-' prefix
+    });
 
-    const depId = `mock-${dependencyPlugin.name}`
-    const mainId = `mock-${mainPlugin.name}`
+    await pluginManager.registerPlugin(mainPlugin);
+    await pluginManager.initializePlugin(mainPlugin.id);
 
-    await pluginManager.registerPlugin(dependencyPlugin)
-    await pluginManager.initializePlugin(depId)
-
-    await pluginManager.registerPlugin(mainPlugin)
-    await pluginManager.initializePlugin(mainId)
-
-    expect(pluginManager.isInitialized(mainId)).toBe(true)
-  })
-})
+    expect(pluginManager.isInitialized(mainPlugin.id)).toBe(true);
+  });
+});

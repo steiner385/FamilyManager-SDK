@@ -1,5 +1,5 @@
 import { logger } from '../utils/logger';
-import { Plugin } from './types';
+import { Plugin, PluginMetrics } from './types';
 import { routeRegistry } from '../routing/RouteRegistry';
 import { eventBus } from '../events/EventBus';
 
@@ -55,12 +55,12 @@ export class PluginManager {
     }
 
     // Validate plugin dependencies
-    if (plugin.config?.metadata?.dependencies?.required) {
-      for (const [depId, version] of Object.entries(plugin.config.metadata.dependencies.required)) {
+    if (plugin.dependencies) {
+      const deps = plugin.dependencies.required;
+      for (const [depId] of Object.entries(deps)) {
         if (!this.installedPlugins.has(depId)) {
           throw new Error(`Missing required dependency: ${depId}`);
         }
-        // TODO: Add version check if needed
       }
     }
 
@@ -88,7 +88,7 @@ export class PluginManager {
 
     // Check for dependent plugins
     for (const [id, p] of this.installedPlugins) {
-      if (p.dependencies?.includes(pluginId)) {
+      if (p.dependencies?.required[pluginId]) {
         throw new Error(`Cannot unregister plugin ${pluginId} because it is required by ${id}`);
       }
     }
@@ -122,12 +122,28 @@ export class PluginManager {
     }
 
     // Initialize plugin
-    if (plugin.initialize || plugin.onInit) {
-      await (plugin.initialize || plugin.onInit)?.();
+    if (plugin.initialize) {
+      await plugin.initialize();
+    }
+    if (plugin.onInit) {
+      await plugin.onInit();
     }
 
     this.activePlugins.add(pluginId);
     logger.info(`Initialized plugin: ${plugin.name} (${pluginId})`);
+  }
+
+  async getPluginMetrics(pluginName: string, timeRange?: string): Promise<PluginMetrics> {
+    const plugin = this.installedPlugins.get(pluginName);
+    if (!plugin) {
+      throw new Error(`Plugin ${pluginName} is not installed`);
+    }
+
+    if (!plugin.getPluginMetrics) {
+      throw new Error(`Plugin ${pluginName} does not support metrics`);
+    }
+
+    return plugin.getPluginMetrics(pluginName, timeRange);
   }
 
   isInitialized(pluginId: string): boolean {

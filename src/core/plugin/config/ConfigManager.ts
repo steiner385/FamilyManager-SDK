@@ -85,27 +85,29 @@ export class ConfigManager {
       const finalConfig = this.mergeWithDefaults(processedConfig, schema);
       this.configs.set(pluginName, finalConfig);
       
-      this.eventBus.publish('config', {
-        type: 'config:config:changed',
-        source: 'config-manager',
-        payload: {
+      await this.eventBus.emit({
+        id: `config-changed-${Date.now()}`,
+        type: 'CONFIG_CHANGED',
+        channel: 'config',
+        timestamp: Date.now(),
+        data: {
           pluginName,
           config: finalConfig
-        },
-        timestamp: Date.now()
+        }
       });
       
       logger.info(`Configuration set for plugin: ${pluginName}`, { config: finalConfig });
       return { isValid: true, errors: [] };
     } catch (error) {
-      this.eventBus.publish('config', {
-        type: 'config:config:validation-failed',
-        source: 'config-manager',
-        payload: {
+      await this.eventBus.emit({
+        id: `config-validation-failed-${Date.now()}`,
+        type: 'CONFIG_VALIDATION_FAILED',
+        channel: 'config',
+        timestamp: Date.now(),
+        data: {
           pluginName,
-          error
-        },
-        timestamp: Date.now()
+          error: error instanceof Error ? error.message : String(error)
+        }
       });
       throw error;
     }

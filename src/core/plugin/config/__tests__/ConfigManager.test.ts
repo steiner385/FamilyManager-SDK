@@ -1,37 +1,61 @@
 import { ConfigManager } from '../ConfigManager';
-import { ConfigMiddleware } from '../middleware/types';
-import { ConfigEncryption } from '../security/types';
+import { ConfigMiddleware as BaseConfigMiddleware, MiddlewareContext } from '../middleware/types';
+import { ConfigEncryption, PluginConfig, ConfigMiddleware } from '../types';
 import { EventBus } from '../../../events/EventBus';
+import { BaseEvent, EventDeliveryStatus, EventHandler } from '../../../events/types';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+
+const createMockEventBus = () => {
+  const mock = {
+    start: jest.fn(),
+    stop: jest.fn(),
+    registerChannel: jest.fn(),
+    emit: jest.fn(),
+    subscribe: jest.fn(),
+    unsubscribe: jest.fn(),
+    getRunningState: jest.fn(),
+    getSubscriptionCount: jest.fn(),
+    clearSubscriptions: jest.fn(),
+    getChannels: jest.fn()
+  };
+
+  // Type assertions for mock implementations
+  (mock.start as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+  (mock.stop as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+  (mock.emit as jest.MockedFunction<() => Promise<EventDeliveryStatus>>).mockResolvedValue(EventDeliveryStatus.SUCCESS);
+  (mock.subscribe as jest.MockedFunction<() => () => void>).mockReturnValue(() => {});
+  (mock.getRunningState as jest.MockedFunction<() => boolean>).mockReturnValue(true);
+  (mock.getSubscriptionCount as jest.MockedFunction<() => number>).mockReturnValue(0);
+  (mock.getChannels as jest.MockedFunction<() => string[]>).mockReturnValue([]);
+
+  return mock;
+};
+
+type MockEventBus = ReturnType<typeof createMockEventBus>;
 
 jest.mock('../../../events/EventBus', () => ({
   EventBus: {
-    getInstance: jest.fn().mockReturnValue({
-      start: jest.fn().mockResolvedValue(undefined),
-      registerChannel: jest.fn(),
-      publish: jest.fn(),
-      subscribe: jest.fn(),
-      unsubscribe: jest.fn()
-    })
+    getInstance: jest.fn().mockImplementation(() => createMockEventBus())
   }
 }));
 
 describe('ConfigManager', () => {
   let configManager: ConfigManager;
-  let mockEventBus: jest.Mocked<EventBus>;
+  let mockEventBus: MockEventBus;
+  let mockContext: MiddlewareContext;
 
   beforeEach(() => {
     // Reset the singleton instance
     (ConfigManager as any).instance = null;
     
-    mockEventBus = {
-      start: jest.fn().mockResolvedValue(undefined),
-      registerChannel: jest.fn(),
-      publish: jest.fn(),
-      subscribe: jest.fn(),
-      unsubscribe: jest.fn()
-    } as any;
+    mockEventBus = createMockEventBus();
+    mockContext = {
+      pluginName: 'test-plugin',
+      environment: 'test',
+      timestamp: Date.now()
+    };
 
-    jest.spyOn(EventBus, 'getInstance').mockReturnValue(mockEventBus);
+    jest.spyOn(EventBus, 'getInstance').mockReturnValue(mockEventBus as unknown as EventBus);
     configManager = ConfigManager.getInstance();
   });
 
@@ -40,13 +64,13 @@ describe('ConfigManager', () => {
       value: { type: 'number', required: true }
     });
     const initialConfig = { value: 1 };
-    const middleware1: ConfigMiddleware = async (config, next) => {
-      config.value++;
-      await next(config);
+    const middleware1: ConfigMiddleware = async (config: PluginConfig, next) => {
+      const newConfig = { ...config, value: (config as any).value + 1 };
+      await next(newConfig);
     };
-    const middleware2: ConfigMiddleware = async (config, next) => {
-      config.value *= 2;
-      await next(config);
+    const middleware2: ConfigMiddleware = async (config: PluginConfig, next) => {
+      const newConfig = { ...config, value: (config as any).value * 2 };
+      await next(newConfig);
     };
 
     configManager.addMiddleware(middleware1);
@@ -59,10 +83,10 @@ describe('ConfigManager', () => {
   });
 
   it('should handle encryption of sensitive fields', async () => {
-    const mockEncryption: jest.Mocked<ConfigEncryption> = {
-      encrypt: jest.fn().mockImplementation(value => Promise.resolve(`encrypted:${value}`)),
-      decrypt: jest.fn().mockImplementation(value => Promise.resolve(value.replace('encrypted:', '')))
-    };
+    const mockEncryption = {
+      encrypt: jest.fn((value: string) => Promise.resolve(`encrypted:${value}`)),
+      decrypt: jest.fn((value: string) => Promise.resolve(value.replace('encrypted:', '')))
+    } as ConfigEncryption;
 
     configManager.setEncryption(mockEncryption);
     configManager.registerSchema('test-plugin', {
@@ -77,7 +101,7 @@ describe('ConfigManager', () => {
 
     await configManager.setConfig('test-plugin', config);
 
-    expect(mockEncryption.encrypt).toHaveBeenCalledWith(expect.stringContaining('secret'));
+    expect(mockEncryption.encrypt).toHaveBeenCalledWith('secret');
     
     const savedConfig = await configManager.getConfig('test-plugin');
     expect(savedConfig.username).toBe('test');
@@ -91,16 +115,14 @@ describe('ConfigManager', () => {
     const config = { test: 'value' };
     await configManager.setConfig('test-plugin', config);
 
-    expect(mockEventBus.publish).toHaveBeenCalledWith(
-      'config',
+    expect(mockEventBus.emit).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'config:config:changed',
-        source: 'config-manager',
-        payload: expect.objectContaining({
+        type: 'CONFIG_CHANGED',
+        channel: 'config',
+        data: expect.objectContaining({
           pluginName: 'test-plugin',
           config: expect.any(Object)
-        }),
-        timestamp: expect.any(Number)
+        })
       })
     );
   });
@@ -110,7 +132,7 @@ describe('ConfigManager', () => {
       value: { type: 'string', required: true }
     });
 
-    const failingMiddleware: ConfigMiddleware = async (config, next) => {
+    const failingMiddleware: ConfigMiddleware = async (config: PluginConfig, next) => {
       throw new Error('Validation failed');
     };
 
@@ -120,16 +142,14 @@ describe('ConfigManager', () => {
       .rejects
       .toThrow('Validation failed');
 
-    expect(mockEventBus.publish).toHaveBeenCalledWith(
-      'config',
+    expect(mockEventBus.emit).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'config:config:validation-failed',
-        source: 'config-manager',
-        payload: expect.objectContaining({
+        type: 'CONFIG_VALIDATION_FAILED',
+        channel: 'config',
+        data: expect.objectContaining({
           pluginName: 'test-plugin',
-          error: expect.any(Error)
-        }),
-        timestamp: expect.any(Number)
+          error: expect.any(String)
+        })
       })
     );
   });

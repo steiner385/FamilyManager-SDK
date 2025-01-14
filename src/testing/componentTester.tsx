@@ -21,12 +21,14 @@ function TestWrapper({ children, components = {} }: WrapperProps) {
   );
 }
 
+import type { RenderResult } from '@testing-library/react';
+
 export function renderWithProviders(
   ui: React.ReactElement,
   options?: Omit<RenderOptions, 'wrapper'> & {
     components?: Record<string, React.ComponentType>;
   }
-) {
+): RenderResult {
   const { components, ...renderOptions } = options || {};
   
   return render(ui, {

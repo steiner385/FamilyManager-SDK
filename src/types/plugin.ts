@@ -1,4 +1,5 @@
 import type { BaseConfig, BaseState, BaseRouteConfig } from './base';
+import type { PluginRoute, PluginContext } from '@core/plugin/types';
 
 export interface Message {
   id: string;
@@ -32,12 +33,7 @@ export interface PluginConfig extends BaseConfig {
   config?: any; // For Zod schema or other validation
 }
 
-export type PluginStateType = 'started' | 'stopped' | 'error';
-
-export interface PluginState extends BaseState {
-  isEnabled: boolean;
-  status: PluginStateType;
-}
+export type PluginState = 'registered' | 'active' | 'error' | 'inactive';
 
 export interface PluginMetrics {
   memory: {
@@ -86,8 +82,11 @@ export interface Plugin {
   state: PluginState;
   permissions?: string[];
   defaultLayout?: string;
+  routes?: PluginRoute[];
+  initialize?: <T = any>(context?: PluginContext<T>) => Promise<void>;
   onInit?: () => Promise<void>;
   onUnload?: () => Promise<void>;
+  teardown?: () => Promise<void>;
   getHealth?: () => Promise<PluginHealthCheck>;
   getPluginMetrics?: (pluginName: string, timeRange?: string) => Promise<PluginMetrics>;
 }

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { ErrorBoundary } from '../components/common/ErrorBoundary';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 import { expect } from '@storybook/jest';
 import { within, waitFor } from '@storybook/testing-library';
 

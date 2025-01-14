@@ -1,0 +1,1 @@
+{"version":3,"file":"usePluginNavigation.d.ts","sourceRoot":"","sources":["usePluginNavigation.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,uBAAuB,CAAC;AAEzD,UAAU,yBAAyB;IACjC,eAAe,EAAE,CAAC,IAAI,EAAE,MAAM,KAAK,IAAI,CAAC;IACxC,SAAS,EAAE,MAAM,WAAW,EAAE,CAAC;CAChC;AAED,wBAAgB,mBAAmB,CAAC,UAAU,EAAE,MAAM,GAAG,yBAAyB,CAajF"}

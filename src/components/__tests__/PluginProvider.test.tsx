@@ -2,20 +2,20 @@ import React from 'react';
 import { render, act } from '@testing-library/react';
 import { PluginProvider, usePluginContext } from '../PluginProvider';
 import { PluginManager } from '../../core/plugin/PluginManager';
-import type { Plugin, PluginConfig, PluginState } from '../../types/plugin';
+import type { Plugin, PluginConfig, PluginState, PluginStatus } from '../../core/plugin/types';
 import { jest, describe, beforeEach, afterEach, it, expect } from '@jest/globals';
 import '@testing-library/jest-dom';
 
 // Create mock functions
-const mockInstallPlugin = jest.fn();
-const mockGetPlugin = jest.fn();
-const mockIsPluginReady = jest.fn();
+const mockRegisterPlugin = jest.fn().mockImplementation(async () => {});
+const mockGetPlugin = jest.fn().mockImplementation(() => undefined);
+const mockIsPluginReady = jest.fn().mockImplementation(() => false);
 
 // Mock the PluginManager
 jest.mock('../../core/plugin/PluginManager', () => ({
   PluginManager: {
     getInstance: () => ({
-      installPlugin: mockInstallPlugin,
+      registerPlugin: mockRegisterPlugin,
       getPlugin: mockGetPlugin,
       isInitialized: mockIsPluginReady
     })
@@ -23,15 +23,14 @@ jest.mock('../../core/plugin/PluginManager', () => ({
 }));
 
 // Mock ErrorBoundary
-jest.mock('../common/ErrorBoundary', () => ({
-  ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>
-}));
+jest.mock('../common/ErrorBoundary', () => {
+  return ({ children }: { children: React.ReactNode }) => <>{children}</>;
+});
 
 describe('PluginProvider', () => {
+  const pluginStatus: PluginStatus = 'active';
+
   const mockPluginConfig: PluginConfig = {
-    id: 'test-plugin',
-    name: 'test-plugin',
-    version: '1.0.0',
     metadata: {
       id: 'test-plugin',
       name: 'test-plugin',
@@ -43,7 +42,7 @@ describe('PluginProvider', () => {
 
   const mockPluginState: PluginState = {
     isEnabled: true,
-    status: 'started',
+    status: pluginStatus,
     isInitialized: true,
     error: null
   };
@@ -52,9 +51,10 @@ describe('PluginProvider', () => {
     id: 'test-plugin',
     name: 'test-plugin',
     version: '1.0.0',
-    status: 'active',
+    status: pluginStatus,
     config: mockPluginConfig,
-    state: mockPluginState
+    state: mockPluginState,
+    metadata: mockPluginConfig.metadata
   };
 
   // Test component that uses the plugin context
@@ -92,7 +92,7 @@ describe('PluginProvider', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockInstallPlugin.mockImplementation(() => Promise.resolve());
+    mockRegisterPlugin.mockImplementation(async () => {});
     mockGetPlugin.mockImplementation(() => mockPlugin);
     mockIsPluginReady.mockImplementation(() => true);
     jest.useFakeTimers();
@@ -136,7 +136,7 @@ describe('PluginProvider', () => {
   });
 
   it('throws error when usePluginContext is used outside provider', () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleError = jest.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {});
     
     expect(() => {
       render(<TestComponent />);
@@ -160,7 +160,7 @@ describe('PluginProvider', () => {
       getByTestId('install-button').click();
     });
 
-    expect(mockInstallPlugin).toHaveBeenCalledWith(mockPlugin);
+    expect(mockRegisterPlugin).toHaveBeenCalledWith(mockPlugin);
   });
 
   it('should handle plugin retrieval', async () => {
@@ -200,10 +200,11 @@ describe('PluginProvider', () => {
   });
 
   it('should handle plugin installation errors', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {});
     
-    const error = new Error('Installation failed');
-    mockInstallPlugin.mockRejectedValueOnce(error);
+    mockRegisterPlugin.mockImplementation(async () => {
+      throw new Error('Installation failed');
+    });
 
     const { getByTestId } = render(
       <PluginProvider>
@@ -222,7 +223,7 @@ describe('PluginProvider', () => {
     });
 
     // Verify expectations
-    expect(mockInstallPlugin).toHaveBeenCalledWith(mockPlugin);
+    expect(mockRegisterPlugin).toHaveBeenCalledWith(mockPlugin);
     expect(consoleSpy).toHaveBeenCalled();
 
     consoleSpy.mockRestore();
@@ -278,11 +279,8 @@ describe('PluginProvider', () => {
       id: 'another-plugin',
       name: 'another-plugin',
       version: '1.0.0',
-      status: 'active',
+      status: pluginStatus,
       config: {
-        id: 'another-plugin',
-        name: 'another-plugin',
-        version: '1.0.0',
         metadata: {
           id: 'another-plugin',
           name: 'another-plugin',
@@ -293,9 +291,16 @@ describe('PluginProvider', () => {
       },
       state: {
         isEnabled: true,
-        status: 'started',
+        status: pluginStatus,
         isInitialized: true,
         error: null
+      },
+      metadata: {
+        id: 'another-plugin',
+        name: 'another-plugin',
+        version: '1.0.0',
+        author: 'Test Author',
+        description: 'Another Test Plugin'
       }
     };
 
@@ -342,8 +347,8 @@ describe('PluginProvider', () => {
       installButton.click();
     });
 
-    expect(mockInstallPlugin).toHaveBeenCalledWith(mockPlugin);
-    expect(mockInstallPlugin).toHaveBeenCalledWith(anotherPlugin);
+    expect(mockRegisterPlugin).toHaveBeenCalledWith(mockPlugin);
+    expect(mockRegisterPlugin).toHaveBeenCalledWith(anotherPlugin);
 
     const getButton = getByTestId('get-both');
     await act(async () => {

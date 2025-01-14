@@ -1,36 +1,38 @@
-import { useAppSelector, RootState } from '../store';
-import { Permission } from '../types/auth';
+import { useCallback } from 'react';
+import { useAuthStore } from '../store/auth';
+import { Permission, UserRole } from '../types/auth';
 
 export function usePermissions() {
-  const user = useAppSelector((state: RootState) => state.auth.user);
+  const { user, permissions } = useAuthStore();
 
-  const hasPermission = (requiredPermission: Permission): boolean => {
+  const hasPermission = useCallback((permissionName: string): boolean => {
+    if (!user || !permissions) return false;
+
+    const permission = permissions.find((p: Permission) => p.name === permissionName);
+    if (!permission) return false;
+
+    return permission.roles.includes(user.role);
+  }, [user, permissions]);
+
+  const hasRole = useCallback((role: UserRole): boolean => {
     if (!user) return false;
+    return user.role === role;
+  }, [user]);
 
-    switch (requiredPermission) {
-      case 'admin':
-        return user.role === 'admin';
-      case 'user':
-        return user.role === 'admin' || user.role === 'user';
-      case 'guest':
-        return true;
-      default:
-        return false;
-    }
-  };
+  const getPermissions = useCallback((): Permission[] => {
+    return permissions || [];
+  }, [permissions]);
 
-  const hasAnyPermission = (permissions: Permission[]): boolean => {
-    return permissions.some(permission => hasPermission(permission));
-  };
-
-  const hasAllPermissions = (permissions: Permission[]): boolean => {
-    return permissions.every(permission => hasPermission(permission));
-  };
+  const getUserRole = useCallback((): UserRole | null => {
+    return user?.role || null;
+  }, [user]);
 
   return {
     hasPermission,
-    hasAnyPermission,
-    hasAllPermissions,
-    userRole: user?.role
+    hasRole,
+    getPermissions,
+    getUserRole,
+    permissions,
+    userRole: user?.role,
   };
 }

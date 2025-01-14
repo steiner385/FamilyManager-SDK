@@ -13,13 +13,19 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
-    "noEmit": true,
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@core/*": ["src/core/*"],
+      "@components/*": ["src/components/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@utils/*": ["src/utils/*"],
+      "@testing/*": ["src/testing/*"],
+      "@types/*": ["src/types/*"],
+      "@contexts/*": ["src/contexts/*"]
     },
-    "types": ["jest", "@testing-library/jest-dom"]
+    "types": []
   },
   "include": [
     "src/**/*.ts",
@@ -31,6 +37,13 @@
     "node_modules",
     "dist",
     "build",
-    "coverage"
+    "coverage",
+    "src/core/testing/mocks/*.js",
+    "src/examples/**/*.js",
+    "**/__tests__/**/*",
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/testing/**/*",
+    "e2e/**/*"
   ]
 }

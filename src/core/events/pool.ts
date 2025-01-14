@@ -13,18 +13,10 @@ class ManagedEvent<T = unknown> implements PooledEvent<T> {
   timestamp: number = 0;
   data: T = {} as T;
   source?: string;
-  status: EventDeliveryStatus = EventDeliveryStatus.Pending;
+  status: EventDeliveryStatus = EventDeliveryStatus.PENDING;
   attempts: number = 0;
   lastAttempt?: number;
-  _inUse: boolean = false;
-
-  isInUse(): boolean {
-    return this._inUse;
-  }
-
-  markInUse(): void {
-    this._inUse = true;
-  }
+  isInUse: boolean = false;
 
   reset(): void {
     this.id = '';
@@ -34,10 +26,10 @@ class ManagedEvent<T = unknown> implements PooledEvent<T> {
     this.timestamp = 0;
     this.data = {} as T;
     this.source = undefined;
-    this.status = EventDeliveryStatus.Pending;
+    this.status = EventDeliveryStatus.PENDING;
     this.attempts = 0;
     this.lastAttempt = undefined;
-    this._inUse = false;
+    this.isInUse = false;
   }
 }
 
@@ -58,10 +50,10 @@ export class EventPool {
 
   acquire(): PooledEvent | null {
     // Try to find an available event
-    const event = this.pool.find(e => !e.isInUse());
+    const event = this.pool.find(e => !e.isInUse);
     
     if (event) {
-      event.markInUse();
+      event.isInUse = true;
       return event;
     }
 
@@ -76,7 +68,7 @@ export class EventPool {
         const newEvent = new ManagedEvent();
         this.pool.push(newEvent);
         if (i === 0) {
-          newEvent.markInUse();
+          newEvent.isInUse = true;
           return newEvent;
         }
       }
@@ -124,11 +116,11 @@ export class EventPool {
   }
 
   getStats(): { size: number; available: number; inUse: number; total: number } {
-    const inUse = this.pool.filter(e => e.isInUse()).length;
+    const inUseCount = this.pool.filter(e => e.isInUse).length;
     return {
       size: this.pool.length,
-      available: this.pool.length - inUse,
-      inUse,
+      available: this.pool.length - inUseCount,
+      inUse: inUseCount,
       total: this.config.maxSize
     };
   }

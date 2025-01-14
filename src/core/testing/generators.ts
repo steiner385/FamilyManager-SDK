@@ -1,38 +1,79 @@
-import { randomBytes } from 'crypto';
+import { addDays, subtractDays } from './date-utils';
 
-export function generateId(length = 16): string {
-  return randomBytes(length).toString('hex');
+/**
+ * Generate a random date between two dates
+ */
+export function generateRandomDate(start: Date, end: Date): Date {
+  const startTime = start.getTime();
+  const endTime = end.getTime();
+  const randomTime = startTime + Math.random() * (endTime - startTime);
+  return new Date(randomTime);
 }
 
+/**
+ * Generate a random date in the future
+ */
+export function generateRandomDateInFuture(maxDays: number = 365): Date {
+  const now = new Date();
+  const future = addDays(now, maxDays);
+  return generateRandomDate(now, future);
+}
+
+/**
+ * Generate a random date in the past
+ */
+export function generateRandomDateInPast(maxDays: number = 365): Date {
+  const now = new Date();
+  const past = subtractDays(now, maxDays);
+  return generateRandomDate(past, now);
+}
+
+/**
+ * Generate a random email address
+ */
 export function generateRandomEmail(): string {
-  return `test_${Date.now()}_${generateId(8)}@example.com`;
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const length = Math.floor(Math.random() * 10) + 5;
+  const username = Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  const domains = ['example.com', 'test.com', 'demo.com', 'sample.org'];
+  const domain = domains[Math.floor(Math.random() * domains.length)];
+  return `${username}@${domain}`;
 }
 
-export function generateRandomString(length = 8): string {
-  return generateId(length);
+/**
+ * Generate a random string of specified length
+ */
+export function generateRandomString(length: number = 10): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
+/**
+ * Generate a random number between min and max (inclusive)
+ */
 export function generateRandomNumber(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+/**
+ * Generate a random boolean
+ */
 export function generateRandomBoolean(): boolean {
-  return Math.random() < 0.5;
+  return Math.random() >= 0.5;
 }
 
-export function generateRandomArray<T>(generator: () => T, length = 5): T[] {
+/**
+ * Generate a random array of items
+ */
+export function generateRandomArray<T>(generator: () => T, length: number = 5): T[] {
   return Array.from({ length }, generator);
 }
 
-export function pickRandom<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-export function shuffleArray<T>(array: T[]): T[] {
-  const result = [...array];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
+/**
+ * Generate a random subset of an array
+ */
+export function generateRandomSubset<T>(array: T[], minSize: number = 1): T[] {
+  const size = Math.floor(Math.random() * (array.length - minSize + 1)) + minSize;
+  const shuffled = [...array].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, size);
 }

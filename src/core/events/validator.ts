@@ -1,9 +1,11 @@
-import { BaseEvent, ValidationResult } from './types';
+import { BaseEvent, ValidationResult, ValidationError } from './types';
 
 export interface ValidationRule<T = unknown> {
   name: string;
   validate: (event: BaseEvent<T>) => boolean | Promise<boolean>;
   errorMessage: string;
+  errorCode: string;
+  errorPath: string[];
 }
 
 export interface ValidatorConfig {
@@ -41,30 +43,57 @@ export class AsyncValidator {
 
   async validate<T>(event: BaseEvent<T>): Promise<ValidationResult> {
     if (!this.isRunning) {
-      return { isValid: false, errors: ['Validator is not running'] };
+      return {
+        isValid: false,
+        errors: [{
+          path: ['validator'],
+          code: 'VALIDATOR_NOT_RUNNING',
+          message: 'Validator is not running'
+        }]
+      };
     }
 
-    const errors: string[] = [];
+    const errors: ValidationError[] = [];
 
     // Schema validation
     if (this.config.validateSchema) {
       if (!event.id) {
-        errors.push('Missing required field: id');
+        errors.push({
+          path: ['id'],
+          code: 'MISSING_FIELD',
+          message: 'Missing required field: id'
+        });
       }
       if (!event.type || event.type.trim() === '') {
-        errors.push('Invalid event type');
+        errors.push({
+          path: ['type'],
+          code: 'INVALID_TYPE',
+          message: 'Invalid event type'
+        });
       }
       if (!event.channel) {
-        errors.push('Missing required field: channel');
+        errors.push({
+          path: ['channel'],
+          code: 'MISSING_FIELD',
+          message: 'Missing required field: channel'
+        });
       }
       if (event.data === undefined || event.data === null) {
-        errors.push('Missing required field: data');
+        errors.push({
+          path: ['data'],
+          code: 'MISSING_FIELD',
+          message: 'Missing required field: data'
+        });
       }
     }
 
     // Timestamp validation
     if (this.config.validateTimestamp && (typeof event.timestamp !== 'number' || event.timestamp < 0)) {
-      errors.push('Invalid timestamp');
+      errors.push({
+        path: ['timestamp'],
+        code: 'INVALID_TIMESTAMP',
+        message: 'Invalid timestamp'
+      });
     }
 
     // Run custom validation rules
@@ -72,16 +101,24 @@ export class AsyncValidator {
       try {
         const isValid = await Promise.resolve(rule.validate(event));
         if (!isValid) {
-          errors.push(rule.errorMessage);
+          errors.push({
+            path: rule.errorPath,
+            code: rule.errorCode,
+            message: rule.errorMessage
+          });
         }
       } catch (error) {
-        errors.push(error instanceof Error ? error.message : 'Unknown validation error');
+        errors.push({
+          path: rule.errorPath,
+          code: 'VALIDATION_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown validation error'
+        });
       }
     }
 
     return {
       isValid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined
+      errors
     };
   }
 

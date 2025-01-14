@@ -1,31 +1,44 @@
+/// <reference types="@testing-library/jest-dom" />
+
 import '@testing-library/jest-dom';
 import { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers';
 
 declare global {
   namespace jest {
-    interface Matchers<R = void, T = {}> extends TestingLibraryMatchers<typeof expect.stringContaining, R> {
+    interface Matchers<R = void> extends TestingLibraryMatchers<typeof expect.stringContaining, R> {
+      // Add custom matchers here
+      toHaveBeenCalledExactlyOnceWith(...args: any[]): R;
       toBeInTheDocument(): R;
-      toHaveStyle(css: Record<string, any>): R;
-      toHaveTextContent(text: string | RegExp, options?: { normalizeWhitespace: boolean }): R;
       toHaveAttribute(attr: string, value?: string): R;
-      toBeVisible(): R;
-      toBeDisabled(): R;
-      toBeEnabled(): R;
       toHaveClass(...classNames: string[]): R;
-      toHaveFocus(): R;
-      toBeChecked(): R;
-      toBePartiallyChecked(): R;
-      toHaveDescription(text: string | RegExp): R;
-      toHaveDisplayValue(value: string | RegExp | (string | RegExp)[]): R;
-      toHaveValue(value: string | string[] | number | null): R;
-      toBeRequired(): R;
-      toBeValid(): R;
-      toBeInvalid(): R;
-      toHaveErrorMessage(text: string | RegExp): R;
-      toHaveAccessibleDescription(text: string | RegExp): R;
-      toHaveAccessibleName(text: string | RegExp): R;
+      toHaveTextContent(text: string | RegExp): R;
     }
+  }
+
+  // Extend window with test-specific properties
+  interface Window {
+    IntersectionObserver: {
+      new(callback: IntersectionObserverCallback, options?: IntersectionObserverInit): IntersectionObserver;
+    };
+    ResizeObserver: {
+      new(callback: ResizeObserverCallback): ResizeObserver;
+    };
   }
 }
 
-export {};
+// Extend expect
+declare module '@jest/expect' {
+  interface AsymmetricMatchers {
+    toBeInTheDocument(): void;
+    toHaveAttribute(attr: string, value?: string): void;
+    toHaveClass(...classNames: string[]): void;
+    toHaveTextContent(text: string | RegExp): void;
+  }
+
+  interface Matchers<R> {
+    toBeInTheDocument(): R;
+    toHaveAttribute(attr: string, value?: string): R;
+    toHaveClass(...classNames: string[]): R;
+    toHaveTextContent(text: string | RegExp): R;
+  }
+}

@@ -2,7 +2,7 @@ import React from 'react'
 import { usePlugin } from '../hooks/usePlugin'
 import { usePluginUIStore } from '../core/store/PluginUIStore'
 import { LoadingSpinner } from './common/LoadingSpinner'
-import { ErrorBoundary } from './common/ErrorBoundary'
+import ErrorBoundary from './common/ErrorBoundary'
 
 interface PluginContainerProps {
   pluginName: string

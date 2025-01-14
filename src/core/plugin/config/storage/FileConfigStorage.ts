@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { ConfigStorage } from './types';
-import { PluginConfig } from '../types';
+import { PluginConfig } from '../../types';
 import { logger } from '../../../../utils/logger';
 
 export class FileConfigStorage implements ConfigStorage {
@@ -40,7 +40,8 @@ export class FileConfigStorage implements ConfigStorage {
     try {
       const configPath = this.getConfigPath(pluginName);
       const data = await fs.readFile(configPath, 'utf8');
-      return JSON.parse(data);
+      const config = JSON.parse(data) as PluginConfig;
+      return config;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return null;

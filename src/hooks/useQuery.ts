@@ -1,44 +1,70 @@
-import { 
-  useQuery as useReactQuery, 
-  UseQueryResult,
-  QueryKey,
-  UseQueryOptions
-} from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
-import { handleApiError, getErrorMessage } from '../utils/errorHandler';
 
-export function useQuery<TData = unknown, TError = unknown>(
-  queryKey: QueryKey,
-  queryFn: () => Promise<TData>,
-  options: Omit<UseQueryOptions<TData, TError>, 'queryKey' | 'queryFn'> = {}
-): UseQueryResult<TData, TError> {
-  const { showNotification } = useNotification();
+interface QueryOptions<T> {
+  onSuccess?: (data: T) => void;
+  onError?: (error: Error) => void;
+  showSuccessNotification?: boolean;
+  showErrorNotification?: boolean;
+  successMessage?: string;
+  errorMessage?: string;
+}
 
-  const defaultRetry = (failureCount: number, error: unknown) => {
-    const apiError = handleApiError(error);
-    
-    // Don't retry on client errors (4xx)
-    if (apiError.status && apiError.status >= 400 && apiError.status < 500) {
-      return false;
-    }
-    
-    // Retry server errors up to 3 times
-    return failureCount < 3;
-  };
+interface QueryState<T> {
+  data: T | null;
+  error: Error | null;
+  isLoading: boolean;
+}
 
-  return useReactQuery({
-    queryKey: Array.isArray(queryKey) ? queryKey : [queryKey],
-    queryFn: async () => {
-      try {
-        return await queryFn();
-      } catch (error) {
-        const apiError = handleApiError(error);
-        const message = getErrorMessage(apiError);
-        showNotification('error', message);
-        throw error;
-      }
-    },
-    retry: options.retry ?? defaultRetry,
-    ...options
+export function useQuery<T = any>() {
+  const [state, setState] = useState<QueryState<T>>({
+    data: null,
+    error: null,
+    isLoading: false,
   });
+
+  const { addNotification } = useNotification();
+
+  const execute = useCallback(async (
+    queryFn: () => Promise<T>,
+    options: QueryOptions<T> = {}
+  ) => {
+    const {
+      onSuccess,
+      onError,
+      showSuccessNotification = false,
+      showErrorNotification = true,
+      successMessage = 'Operation completed successfully',
+      errorMessage = 'An error occurred',
+    } = options;
+
+    setState(prev => ({ ...prev, isLoading: true }));
+
+    try {
+      const data = await queryFn();
+      setState({ data, error: null, isLoading: false });
+      
+      if (showSuccessNotification) {
+        addNotification(successMessage, 'success');
+      }
+      
+      onSuccess?.(data);
+      return data;
+    } catch (error) {
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      setState({ data: null, error: errorObj, isLoading: false });
+      
+      if (showErrorNotification) {
+        addNotification(errorMessage, 'error');
+      }
+      
+      onError?.(errorObj);
+      throw errorObj;
+    }
+  }, [addNotification]);
+
+  return {
+    ...state,
+    execute,
+  };
 }

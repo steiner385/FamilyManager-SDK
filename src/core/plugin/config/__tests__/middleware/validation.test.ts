@@ -1,54 +1,97 @@
 import { createValidationMiddleware } from '../../middleware/validation';
-import { ConfigValidator } from '../../validation';
 import { ConfigError } from '../../errors';
+import { ConfigValidator, ConfigValidationResult } from '../../validation';
+import { PluginConfig } from '../../types';
+import { NextFunction, MiddlewareContext } from '../../middleware/types';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
 describe('Validation Middleware', () => {
   let mockValidator: jest.Mocked<ConfigValidator>;
-  
+  let mockNext: jest.MockedFunction<NextFunction>;
+  let config: PluginConfig;
+  let schema: Record<string, any>;
+  let context: MiddlewareContext;
+
   beforeEach(() => {
     mockValidator = {
       validate: jest.fn()
     };
-  });
 
-  afterEach(() => {
-    mockValidator.validate.mockClear();
-    jest.clearAllMocks();
-  });
+    mockNext = jest.fn();
+    
+    config = {
+      metadata: {
+        name: 'test-plugin',
+        version: '1.0.0'
+      },
+      settings: {
+        enabled: true
+      }
+    };
 
-  afterAll(() => {
-    jest.restoreAllMocks();
+    schema = {
+      type: 'object',
+      properties: {
+        metadata: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            version: { type: 'string' }
+          }
+        },
+        settings: {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' }
+          }
+        }
+      }
+    };
+
+    context = {
+      pluginName: 'test-plugin',
+      environment: 'test',
+      timestamp: Date.now()
+    };
   });
 
   it('should pass valid configuration through', async () => {
-    const config = { test: 'value' };
-    mockValidator.validate.mockResolvedValue({ isValid: true, errors: [] });
-    
-    const middleware = createValidationMiddleware(mockValidator);
-    const next = jest.fn();
+    const validResult: ConfigValidationResult = {
+      isValid: true,
+      errors: []
+    };
+    mockValidator.validate.mockReturnValue(validResult);
+    const middleware = createValidationMiddleware(mockValidator, schema);
 
-    await middleware(config, next);
+    await middleware(config, mockNext, context);
 
-    expect(next).toHaveBeenCalledWith(config);
-    expect(mockValidator.validate).toHaveBeenCalledWith(config);
+    expect(mockValidator.validate).toHaveBeenCalledWith(
+      config,
+      schema,
+      expect.objectContaining({
+        pluginName: context.pluginName,
+        environment: context.environment
+      })
+    );
+    expect(mockNext).toHaveBeenCalledWith(config);
   });
 
   it('should throw ConfigError for invalid configuration', async () => {
-    const config = { test: 'invalid' };
-    const validationErrors = [{ path: ['test'], code: 'INVALID', message: 'Invalid value' }];
-    
-    mockValidator.validate.mockResolvedValue({ 
-      isValid: false, 
-      errors: validationErrors 
-    });
-    
-    const middleware = createValidationMiddleware(mockValidator);
-    const next = jest.fn();
+    const invalidResult: ConfigValidationResult = {
+      isValid: false,
+      errors: [{
+        path: ['settings', 'enabled'],
+        message: 'must be boolean',
+        code: 'INVALID_TYPE'
+      }]
+    };
+    mockValidator.validate.mockReturnValue(invalidResult);
+    const middleware = createValidationMiddleware(mockValidator, schema);
 
-    await expect(middleware(config, next))
+    await expect(middleware(config, mockNext, context))
       .rejects
       .toThrow(ConfigError);
-    
-    expect(next).not.toHaveBeenCalled();
+
+    expect(mockNext).not.toHaveBeenCalled();
   });
 });

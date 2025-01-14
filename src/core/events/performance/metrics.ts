@@ -1,4 +1,4 @@
-import { PerformanceMetrics } from '../__tests__/performance/types';
+import { PerformanceMetrics } from './types';
 
 const metrics: PerformanceMetrics = {
   startTime: Date.now(),

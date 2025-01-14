@@ -1,5 +1,5 @@
 import { useUIComponent } from '../hooks/useUIComponent'
-import { ErrorBoundary } from './common/ErrorBoundary'
+import ErrorBoundary from './common/ErrorBoundary'
 
 interface DynamicComponentProps {
   id: string

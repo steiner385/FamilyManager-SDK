@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import type { Plugin, PluginConfig, PluginState } from '../../../types/plugin';
+import { Plugin, PluginConfig, PluginState, PluginDependencyConfig } from '../../plugin/types';
 import type { Theme } from '../../../types/base';
 
 interface MockPluginOptions {
@@ -12,39 +12,45 @@ interface MockPluginOptions {
 }
 
 export function createMockPlugin(options: MockPluginOptions): Plugin {
+  const dependencies = options.dependencies 
+    ? new PluginDependencyConfig(
+        options.dependencies.reduce((acc, dep) => ({
+          ...acc,
+          [dep]: '1.0.0'
+        }), {})
+      )
+    : undefined;
+
   const config: PluginConfig = {
-    id: `mock-${options.name}`,
-    name: options.name,
-    version: options.version,
     metadata: {
       id: `mock-${options.name}`,
       name: options.name,
       version: options.version,
       description: options.description || `Mock plugin for ${options.name}`,
       author: 'Test Author',
-      dependencies: options.dependencies ? {
-        required: options.dependencies.reduce((acc, dep) => ({
-          ...acc,
-          [dep]: '1.0.0'
-        }), {})
-      } : undefined
+      dependencies
     }
   };
 
   const state: PluginState = {
     isEnabled: true,
-    status: 'started',
+    status: 'active',
     isInitialized: false,
     error: null
   };
 
-  return {
-    id: config.id,
+  const plugin: Plugin = {
+    id: `mock-${options.name}`,
     name: options.name,
     version: options.version,
     status: 'active',
     config,
     state,
+    metadata: config.metadata,
+    dependencies,
+    async initialize() {
+      return Promise.resolve();
+    },
     async onInit() {
       // Register components if provided
       if (options.components) {
@@ -86,6 +92,30 @@ export function createMockPlugin(options: MockPluginOptions): Plugin {
           }
         }
       };
-    }
+    },
+    async onUnload() {
+      return Promise.resolve();
+    },
+    async teardown() {
+      return Promise.resolve();
+    },
+    getPluginMetrics: async (pluginName: string, timeRange?: string) => ({
+      memory: {
+        current: 50,
+        trend: 0,
+        history: []
+      },
+      cpu: {
+        current: 30,
+        trend: 0,
+        history: []
+      },
+      responseTime: {
+        current: 100,
+        trend: 0,
+        history: []
+      }
+    })
   };
+  return plugin;
 }

@@ -1,3 +1,4 @@
+// Import necessary modules
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logging/Logger';
 import { 
@@ -9,9 +10,10 @@ import {
   EventBusConfig 
 } from './types';
 
+// EventBus class definition
 export class EventBus {
   private static instance: EventBus;
-  private subscriptions: Map<string, EventSubscription[]>;
+  private subscriptions: Map<string, Map<string, EventSubscription>>;
   private channels: Set<string>;
   private emitterConfig: EventEmitterConfig;
   private busConfig: EventBusConfig;
@@ -60,42 +62,38 @@ export class EventBus {
       throw new Error(`Channel ${channel} is already registered`);
     }
     this.channels.add(channel);
+    this.subscriptions.set(channel, new Map());
     logger.debug(`Registered channel: ${channel}`);
   }
 
-  public subscribe<T>(eventType: string, handler: EventHandler<T>): string {
+  public subscribe<T>(channel: string, handler: EventHandler<T>): string {
     if (!this.isRunning) {
       throw new Error('Cannot subscribe while EventBus is stopped');
     }
 
-    if (!this.channels.has(eventType)) {
-      throw new Error(`Channel ${eventType} is not registered`);
+    if (!this.channels.has(channel)) {
+      throw new Error(`Channel ${channel} is not registered`);
     }
+
+    const id = uuidv4();
     const subscription: EventSubscription = {
-      id: uuidv4(),
-      eventType,
+      id,
+      eventType: channel,
       handler,
+      unsubscribe: () => this.unsubscribe(id)
     };
 
-    if (!this.subscriptions.has(eventType)) {
-      this.subscriptions.set(eventType, []);
-    }
+    const channelSubs = this.subscriptions.get(channel)!;
+    channelSubs.set(id, subscription);
+    logger.debug(`Subscribed to channel ${channel}`, { subscriptionId: id });
 
-    this.subscriptions.get(eventType)!.push(subscription);
-    logger.debug(`Subscribed to event ${eventType}`, { subscriptionId: subscription.id });
-
-    return subscription.id;
+    return id;
   }
 
   public unsubscribe(subscriptionId: string): void {
-    for (const [eventType, subs] of this.subscriptions.entries()) {
-      const index = subs.findIndex(sub => sub.id === subscriptionId);
-      if (index !== -1) {
-        subs.splice(index, 1);
-        logger.debug(`Unsubscribed from event ${eventType}`, { subscriptionId });
-        if (subs.length === 0) {
-          this.subscriptions.delete(eventType);
-        }
+    for (const [channel, subs] of this.subscriptions.entries()) {
+      if (subs.delete(subscriptionId)) {
+        logger.debug(`Unsubscribed from channel ${channel}`, { subscriptionId });
         return;
       }
     }
@@ -110,8 +108,8 @@ export class EventBus {
       throw new Error(`Channel ${event.type} is not registered`);
     }
 
-    const subscribers = this.subscriptions.get(event.type) || [];
-    if (subscribers.length === 0) {
+    const channelSubs = this.subscriptions.get(event.type);
+    if (!channelSubs || channelSubs.size === 0) {
       logger.debug(`No subscribers for event ${event.type}`);
       return EventDeliveryStatus.SUCCESS;
     }
@@ -119,23 +117,25 @@ export class EventBus {
     let failedCount = 0;
     let successCount = 0;
     const results = await Promise.allSettled(
-      subscribers.map(sub => this.deliverWithRetry(sub, event))
+      Array.from(channelSubs.values()).map(sub => this.deliverWithRetry(sub, event))
     );
 
-    results.forEach((result, index) => {
+    results.forEach(result => {
       if (result.status === 'rejected') {
         failedCount++;
-        logger.error(`Failed to deliver event to subscriber ${subscribers[index].id}`, {
+        logger.error(`Failed to deliver event to subscriber`, {
           error: result.reason,
-          eventType: event.type
+          type: event.type
         });
       } else {
         successCount++;
       }
     });
 
-    if (failedCount > 0) {
+    if (failedCount > 0 && successCount > 0) {
       return EventDeliveryStatus.PARTIAL;
+    } else if (failedCount > 0) {
+      return EventDeliveryStatus.FAILED;
     }
     return EventDeliveryStatus.SUCCESS;
   }
@@ -149,14 +149,14 @@ export class EventBus {
       await subscription.handler(event);
     } catch (error) {
       if (attempt >= this.emitterConfig.maxRetries!) {
-        logger.error(`Max retries reached for event ${event.type}`, {
+        logger.error(`Max retries reached for event delivery`, {
           subscriptionId: subscription.id,
           error,
         });
         throw error;
       }
 
-      logger.warn(`Retrying event delivery for ${event.type}`, {
+      logger.warn(`Retrying event delivery`, {
         attempt,
         subscriptionId: subscription.id,
       });
@@ -166,12 +166,14 @@ export class EventBus {
     }
   }
 
-  public getSubscriptionCount(eventType: string): number {
-    return this.subscriptions.get(eventType)?.length || 0;
+  public getSubscriptionCount(channel: string): number {
+    return this.subscriptions.get(channel)?.size || 0;
   }
 
   public clearSubscriptions(): void {
-    this.subscriptions.clear();
+    for (const channelSubs of this.subscriptions.values()) {
+      channelSubs.clear();
+    }
   }
 
   public getChannels(): string[] {
