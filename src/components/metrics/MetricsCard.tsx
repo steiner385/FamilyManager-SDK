@@ -45,7 +45,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
     card: `bg-white rounded-lg shadow-sm p-4 ${styles.card || ''}`,
     title: `text-gray-600 text-sm font-medium ${styles.title || ''}`,
     value: `text-gray-900 text-2xl font-semibold mt-1 ${styles.value || ''}`,
-    change: `${trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-gray-500'} ${styles.change || ''}`,
+    change: `${trend === 'up' ? 'text-green-700' : trend === 'down' ? 'text-red-500' : 'text-gray-500'} ${styles.change || ''}`,
     timeframe: `text-gray-500 text-sm ${styles.timeframe || ''}`
   };
 
@@ -103,12 +103,12 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       style={{ cursor: onClick ? 'pointer' : 'default' }}
     >
       <div className="flex items-center justify-between">
-        <h3 
+        <h2 
           className={defaultStyles.title}
           data-testid={dataTestId ? `${dataTestId}-title` : 'metrics-card-title'}
         >
           {title}
-        </h3>
+        </h2>
         {tooltip && (
           <div 
             data-testid={dataTestId ? `${dataTestId}-tooltip` : 'metrics-card-tooltip'}
