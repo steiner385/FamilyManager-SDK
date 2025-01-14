@@ -12,9 +12,9 @@
     "storybook": "storybook dev -p 6010",
     "build-storybook": "storybook build --quiet",
     "test-storybook": "test-storybook --maxWorkers=2 --ci",
-    "test-storybook:ci": "npm run build-storybook && node scripts/test-storybook.mjs \"*.stories.@(ts|tsx)\"",
-    "test-storybook:coverage": "test-storybook --coverage",
-    "test-storybook:watch": "test-storybook --watch"
+    "test-storybook:ci": "start-server-and-test 'serve storybook-static -p 6011' http://localhost:6011 'test-storybook --url http://localhost:6011'",
+    "test-storybook:coverage": "test-storybook --coverage && serve-coverage",
+    "test-storybook:watch": "concurrently \"serve storybook-static -p 6011\" \"test-storybook --watch --url http://localhost:6011\""
   },
   "keywords": [
     "familymanager",
