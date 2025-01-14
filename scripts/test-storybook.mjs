@@ -258,6 +258,7 @@ console.log('Starting test runner...');
 // Keep track of server instance
 let serverInstance;
 
+// Start test execution
 runTests()
   .then(() => {
     console.log(`✓ ${storyFile} tests passed`);
