@@ -16,6 +16,7 @@ const __dirname = dirname(__filename);
 process.stdout._handle?.setBlocking?.(true);
 process.stderr._handle?.setBlocking?.(true);
 
+try {
 // Get story file name from command line argument
 const storyFile = process.argv[2];
 if (!storyFile) {
@@ -31,7 +32,6 @@ if (!storyFile) {
     }
     throw error;
   }
-}
 
 console.debug('Debug: Script started');
 
@@ -275,4 +275,4 @@ runTests()
     console.error(`✗ ${storyFile} tests failed:`, error);
     console.error('Error stack:', error.stack);
     process.exit(1);
-  });
+});
