@@ -16,17 +16,10 @@ const __dirname = dirname(__filename);
 process.stdout._handle?.setBlocking?.(true);
 process.stderr._handle?.setBlocking?.(true);
 
-// Get story file name from command line argument
-const storyFile = process.argv[2];
-if (!storyFile) {
-  console.error('Please provide a story file name as an argument');
-  console.error('Example: node test-storybook.js LoadingSpinner.stories.tsx');
-  process.exit(1);
-}
-
-// Convert story file name to testMatch pattern
-const testPattern = `src/stories/${storyFile}`;
-console.log(`Testing ${testPattern}...`);
+// Get story file pattern from command line argument
+const storyPattern = process.argv[2] || "*.stories.@(ts|tsx)";
+const testPattern = `src/stories/${storyPattern}`;
+console.log(`Testing pattern: ${testPattern}...`);
 
 // Kill any existing storybook processes
 try {
