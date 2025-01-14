@@ -11,10 +11,10 @@
     "lint": "eslint . --ext .ts,.tsx",
     "storybook": "storybook dev -p 6010",
     "build-storybook": "storybook build --quiet",
-    "test-storybook": "test-storybook --maxWorkers=2 --ci",
-    "test-storybook:ci": "start-server-and-test 'serve storybook-static -p 6011 --no-request-logging' http://localhost:6011 'test-storybook --url http://localhost:6011'",
-    "test-storybook:coverage": "test-storybook --coverage && serve-coverage",
-    "test-storybook:watch": "concurrently \"serve storybook-static -p 6011 --no-request-logging\" \"test-storybook --watch --url http://localhost:6011\""
+    "test-storybook": "test-storybook --maxWorkers=2 --ci --quiet",
+    "test-storybook:ci": "start-server-and-test 'serve storybook-static -p 6011 --no-request-logging' http://localhost:6011 'test-storybook --url http://localhost:6011 --quiet'",
+    "test-storybook:coverage": "test-storybook --coverage --quiet && serve-coverage",
+    "test-storybook:watch": "concurrently \"serve storybook-static -p 6011 --no-request-logging\" \"test-storybook --watch --url http://localhost:6011 --quiet\""
   },
   "keywords": [
     "familymanager",
