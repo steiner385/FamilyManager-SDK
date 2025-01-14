@@ -23,6 +23,7 @@ if (!storyFile) {
   console.error('Please provide a story file name as an argument');
   console.error('Example: node test-storybook.js LoadingSpinner.stories.tsx');
   process.exit(1);
+}
 } catch (error) {
     console.error('Error during test execution:', error);
     if (serverInstance) {
