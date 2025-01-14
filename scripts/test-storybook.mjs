@@ -124,9 +124,6 @@ async function startStaticServer() {
 // Keep track of server instance
 let serverInstance;
 
-// Keep track of server instance
-let serverInstance;
-
 async function runTests() {
   try {
     console.log('Starting test execution...');
@@ -258,8 +255,6 @@ process.on('unhandledRejection', (error) => {
 
 // Run tests and handle errors
 console.log('Starting test runner...');
-// Keep track of server instance
-let serverInstance;
 
 // Start test execution
 runTests()
