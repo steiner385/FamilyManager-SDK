@@ -158,8 +158,8 @@ async function runTests() {
       'test-storybook',
       '--ci',
       '--url', 'http://localhost:6011',
-      '--timeout', '60000',
       '--verbose',
+      '--maxWorkers', '1',
       '--testMatch', testPattern
     ], {
       stdio: 'inherit',
