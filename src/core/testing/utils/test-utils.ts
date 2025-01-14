@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
+import type { Plugin, PluginState } from '../../plugin/types';
 
 // Mock the Prisma module
 jest.mock('../../lib/prisma', () => ({
@@ -11,12 +12,48 @@ const { prisma: mockPrisma } = jest.requireMock('../../lib/prisma') as {
   prisma: DeepMockProxy<PrismaClient>
 };
 
-import type { User, Family } from '@prisma/client';
+// Define UserRole enum
+enum UserRole {
+  PARENT = 'PARENT',
+  MEMBER = 'MEMBER',
+  ADMIN = 'ADMIN'
+}
 
-import type { Prisma } from '@prisma/client';
+// Define TokenPayload interface
+interface TokenPayload {
+  userId: string;
+  email: string;
+  role: UserRole;
+  familyId?: string;
+  iat?: number;
+  exp?: number;
+}
 
-// Mock data types that exclude relations
-type MockUser = {
+// Define Prisma interfaces
+interface PrismaUser {
+  id: string;
+  email: string;
+  password: string;
+  role: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  createdAt: Date;
+  updatedAt: Date;
+  familyId: string | null;
+}
+
+interface PrismaFamily {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  members: PrismaUser[];
+}
+
+// Mock data types
+type MockUser = PrismaUser & {
   id: string;
   email: string;
   password: string;
@@ -29,14 +66,7 @@ type MockUser = {
   familyId: string | null;
 };
 
-type MockFamily = {
-  id: string;
-  name: string;
-  description: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  members: MockUser[];
-};
+type MockFamily = PrismaFamily;
 
 // Configure mock behavior
 const mockData = {
