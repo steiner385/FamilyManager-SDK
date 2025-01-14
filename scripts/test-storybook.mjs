@@ -34,12 +34,15 @@ try {
 async function buildStorybook() {
   console.log('Building Storybook...');
   return new Promise((resolve, reject) => {
+    console.log('Spawning build process...');
     const build = spawn('npm', ['run', 'build-storybook'], {
       stdio: 'inherit',
-      shell: true
+      shell: true,
+      env: { ...process.env, FORCE_COLOR: '1' }
     });
 
     build.on('exit', (code) => {
+      console.log(`Build process exited with code ${code}`);
       if (code === 0) {
         resolve();
       } else {
@@ -47,7 +50,10 @@ async function buildStorybook() {
       }
     });
 
-    build.on('error', reject);
+    build.on('error', (error) => {
+      console.error('Build process error:', error);
+      reject(error);
+    });
   });
 }
 
@@ -68,11 +74,17 @@ async function startStaticServer() {
 async function runTests() {
   let server;
   try {
+    console.log('Starting test execution...');
+    
     // Build Storybook first
+    console.log('Building Storybook...');
     await buildStorybook();
+    console.log('Build completed successfully');
 
     // Start static file server
+    console.log('Starting static server...');
     server = await startStaticServer();
+    console.log('Static server started successfully');
 
     // Wait for server to be ready
     await waitOn({
@@ -121,7 +133,19 @@ async function runTests() {
   }
 }
 
+// Set up error handling for uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled Rejection:', error);
+  process.exit(1);
+});
+
 // Run tests and handle errors
+console.log('Starting test runner...');
 runTests()
   .then(() => {
     console.log(`✓ ${storyFile} tests passed`);
@@ -129,5 +153,6 @@ runTests()
   })
   .catch((error) => {
     console.error(`✗ ${storyFile} tests failed:`, error);
+    console.error('Error stack:', error.stack);
     process.exit(1);
   });
