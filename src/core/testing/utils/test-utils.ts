@@ -2,15 +2,28 @@ import { PrismaClient } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import type { Plugin, PluginState } from '../../plugin/types';
 
-// Mock the Prisma module
-jest.mock('../../lib/prisma', () => ({
-  prisma: mockDeep<PrismaClient>(),
-}));
+// Mock data interfaces
+interface MockFamilyCreateArgs {
+  data: {
+    name: string;
+    description?: string | null;
+    members?: {
+      connect?: { id: string } | { id: string }[];
+    };
+  };
+}
 
-// Get the mocked prisma instance
-const { prisma: mockPrisma } = jest.requireMock('../../lib/prisma') as {
-  prisma: DeepMockProxy<PrismaClient>
-};
+interface MockFamilyUpdateArgs {
+  where: { id: string };
+  data: {
+    name?: string;
+    description?: string | null;
+    members?: {
+      connect?: { id: string } | { id: string }[];
+      disconnect?: { id: string } | { id: string }[];
+    };
+  };
+}
 
 // Define UserRole enum
 enum UserRole {
@@ -67,6 +80,16 @@ type MockUser = PrismaUser & {
 };
 
 type MockFamily = PrismaFamily;
+
+// Mock the Prisma module
+jest.mock('../../lib/prisma', () => ({
+  prisma: mockDeep<PrismaClient>(),
+}));
+
+// Get the mocked prisma instance
+const { prisma: mockPrisma } = jest.requireMock('../../lib/prisma') as {
+  prisma: DeepMockProxy<PrismaClient>
+};
 
 // Configure mock behavior
 const mockData = {
@@ -405,6 +428,83 @@ const mockData: MockDataStore = {
   users: new Map(),
   families: new Map()
 };
+
+// Helper functions for test data generation
+export function generateMockId(prefix: string = 'test'): string {
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+}
+
+export function generateMockEmail(role: string = 'user'): string {
+  return `${role.toLowerCase()}_${Date.now()}@test.com`;
+}
+
+export function generateMockFamily(overrides: Partial<MockFamily> = {}): MockFamily {
+  return {
+    id: generateMockId('family'),
+    name: `Test Family ${Date.now()}`,
+    description: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    members: [],
+    ...overrides
+  };
+}
+
+export function generateMockUser(overrides: Partial<MockUser> = {}): MockUser {
+  return {
+    id: generateMockId('user'),
+    email: generateMockEmail(),
+    password: 'hashedPassword123',
+    role: UserRole.MEMBER,
+    firstName: 'Test',
+    lastName: 'User',
+    username: `testuser_${Date.now()}`,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    familyId: null,
+    ...overrides
+  };
+}
+
+// Test cleanup utility
+export class TestCleanup {
+  private static userIds: Set<string> = new Set();
+  private static familyIds: Set<string> = new Set();
+
+  static trackUser(userId: string): void {
+    this.userIds.add(userId);
+  }
+
+  static trackFamily(familyId: string): void {
+    this.familyIds.add(familyId);
+  }
+
+  static async cleanup(): Promise<void> {
+    // Clean up families first to handle cascading
+    for (const familyId of this.familyIds) {
+      const family = mockData.families.get(familyId);
+      if (family) {
+        // Update users to remove family reference
+        family.members.forEach(member => {
+          const user = mockData.users.get(member.id);
+          if (user) {
+            mockData.users.set(member.id, { ...user, familyId: null });
+          }
+        });
+        mockData.families.delete(familyId);
+      }
+    }
+
+    // Clean up users
+    for (const userId of this.userIds) {
+      mockData.users.delete(userId);
+    }
+
+    // Clear tracking sets
+    this.userIds.clear();
+    this.familyIds.clear();
+  }
+}
 
 export function generateFutureDate(daysFromNow: number): string {
   const date = new Date();
