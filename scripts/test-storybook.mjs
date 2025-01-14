@@ -12,6 +12,10 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Enable console output flushing
+process.stdout._handle?.setBlocking?.(true);
+process.stderr._handle?.setBlocking?.(true);
+
 // Get story file name from command line argument
 const storyFile = process.argv[2];
 if (!storyFile) {
@@ -19,6 +23,8 @@ if (!storyFile) {
   console.error('Example: node test-storybook.js LoadingSpinner.stories.tsx');
   process.exit(1);
 }
+
+console.debug('Debug: Script started');
 
 // Convert story file name to testMatch pattern
 const testPattern = `src/stories/${storyFile}`;
@@ -34,6 +40,7 @@ try {
 
 async function buildStorybook() {
   console.log('Building Storybook...');
+  process.stdout.write('Starting build process...\n');
   return new Promise((resolve, reject) => {
     console.log('Spawning build process...');
     
@@ -144,6 +151,7 @@ async function runTests() {
 
     // Run the tests
     console.log('Running test-storybook...');
+    process.stdout.write('Spawning test process...\n');
     const testProcess = spawn('npx', [
       'test-storybook',
       '--ci',
