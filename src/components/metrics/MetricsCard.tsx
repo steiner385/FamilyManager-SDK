@@ -72,7 +72,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
     return (
       <div 
         data-testid={dataTestId ? `${dataTestId}-error` : 'metrics-card-error'}
-        className={`${defaultStyles.card} text-red-500`}
+        className={`${defaultStyles.card} text-red-700`}
       >
         {error}
       </div>

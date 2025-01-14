@@ -16,6 +16,7 @@ junit.xml
 playwright-report/
 test-results/
 e2e/test-setup.ts
+storybook-static/
 
 # IDE
 .idea/

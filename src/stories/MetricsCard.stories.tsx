@@ -110,7 +110,7 @@ export const Error: Story = {
     
     await expect(error).toBeVisible();
     await expect(error).toHaveTextContent('Failed to load metrics data');
-    await expect(error).toHaveClass('text-red-500');
+    await expect(error).toHaveClass('text-red-700');
   },
 };
 
