@@ -1,6 +1,21 @@
 import { PrismaClient } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
+import { logger } from '../../logging/Logger';
 import type { Plugin, PluginState } from '../../plugin/types';
+
+class MockDatabaseError extends Error {
+  constructor(message: string, public operation: string, public details?: any) {
+    super(message);
+    this.name = 'MockDatabaseError';
+  }
+}
+
+class MockValidationError extends Error {
+  constructor(message: string, public fields: Record<string, string[]>) {
+    super(message);
+    this.name = 'MockValidationError';
+  }
+}
 
 // Mock data interfaces
 interface MockFamilyCreateArgs {
@@ -97,6 +112,27 @@ const mockData = {
   families: new Map<string, MockFamily>()
 };
 
+// Helper functions
+function validateUserData(data: Partial<MockUser>): void {
+  const errors: Record<string, string[]> = {};
+
+  if (data.email && !data.email.includes('@')) {
+    errors.email = ['Invalid email format'];
+  }
+
+  if (data.password && data.password.length < 8) {
+    errors.password = ['Password must be at least 8 characters'];
+  }
+
+  if (data.username && data.username.length < 3) {
+    errors.username = ['Username must be at least 3 characters'];
+  }
+
+  if (Object.keys(errors).length > 0) {
+    throw new MockValidationError('Validation failed', errors);
+  }
+}
+
 // Mock user operations
 mockPrisma.user.create.mockImplementation(async (args: { 
   data: {
@@ -111,41 +147,60 @@ mockPrisma.user.create.mockImplementation(async (args: {
     family?: { connect: { id: string } };
   }
 }) => {
-  const data = args.data as Required<typeof args.data>;
-  const user: MockUser = {
-    id: data.id || `test-${Date.now()}`,  // Use provided ID if available
-    email: data.email,
-    password: data.password,
-    role: data.role || 'MEMBER',
-    firstName: data.firstName || 'Test',
-    lastName: data.lastName || 'User',
-    username: data.username,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    familyId: (data.family as any)?.connect?.id || null
-  };
+  try {
+    validateUserData(args.data);
 
-  // Store the user in our mock data store
-  mockData.users.set(user.id, user);
-  console.log('Created user:', user.id);
-  console.log('Current users:', Array.from(mockData.users.keys()));
+    const data = args.data;
+    const user: MockUser = {
+      id: data.id || generateMockId('user'),
+      email: data.email,
+      password: data.password,
+      role: data.role || UserRole.MEMBER,
+      firstName: data.firstName || 'Test',
+      lastName: data.lastName || 'User',
+      username: data.username,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      familyId: (data.family as any)?.connect?.id || data.familyId || null
+    };
 
-  // Create a mock that matches what we need
-  const mockClient = {
-    ...user,
-    family: () => Promise.resolve(null),
-    createdTasks: () => Promise.resolve([]),
-    assignedTasks: () => Promise.resolve([]),
-    $fragment: jest.fn(),
-    $on: jest.fn(),
-    $connect: jest.fn(),
-    $disconnect: jest.fn(),
-    $use: jest.fn(),
-    $transaction: jest.fn(),
-    $extends: jest.fn()
-  };
+    // Check for duplicate email
+    const existingUser = Array.from(mockData.users.values())
+      .find(u => u.email === user.email);
+    
+    if (existingUser) {
+      throw new MockDatabaseError(
+        'Unique constraint violation on email',
+        'create',
+        { email: user.email }
+      );
+    }
 
-  return Promise.resolve(mockClient);
+    // Check family exists if connecting
+    if (user.familyId && !mockData.families.has(user.familyId)) {
+      throw new MockDatabaseError(
+        'Foreign key constraint violation on familyId',
+        'create',
+        { familyId: user.familyId }
+      );
+    }
+
+    mockData.users.set(user.id, user);
+    TestCleanup.trackUser(user.id);
+
+    return mockDeep<any>({
+      ...user,
+      family: () => user.familyId ? mockData.families.get(user.familyId) : null,
+      createdTasks: () => [],
+      assignedTasks: () => []
+    });
+  } catch (error) {
+    logger.error('Failed to create mock user:', {
+      error,
+      data: args.data
+    });
+    throw error;
+  }
 });
 
 mockPrisma.user.update.mockImplementation(async (args: {
@@ -219,9 +274,54 @@ mockPrisma.user.update.mockImplementation(async (args: {
   return mockUser;
 });
 
+// Transaction support
+interface MockTransaction {
+  id: string;
+  operations: Array<{
+    type: 'create' | 'update' | 'delete';
+    model: string;
+    data: any;
+  }>;
+  timestamp: number;
+}
+
+const mockTransactions = new Map<string, MockTransaction>();
+
+mockPrisma.$transaction.mockImplementation(async (operations: any[]) => {
+  const transactionId = generateMockId('transaction');
+  const transaction: MockTransaction = {
+    id: transactionId,
+    operations: [],
+    timestamp: Date.now()
+  };
+
+  try {
+    const results = [];
+    for (const operation of operations) {
+      const result = await operation;
+      results.push(result);
+      transaction.operations.push({
+        type: 'create',
+        model: 'unknown',
+        data: result
+      });
+    }
+    
+    mockTransactions.set(transactionId, transaction);
+    return results;
+  } catch (error) {
+    logger.error('Transaction failed:', {
+      transactionId,
+      error
+    });
+    throw error;
+  }
+});
+
 // Add a global beforeAll reset for tests
 beforeAll(() => {
   resetTestData();
+  mockTransactions.clear();
 });
 
 mockPrisma.user.findUnique.mockImplementation((args) => {
@@ -428,6 +528,72 @@ const mockData: MockDataStore = {
   users: new Map(),
   families: new Map()
 };
+
+// Pagination and filtering types
+interface PaginationOptions {
+  skip?: number;
+  take?: number;
+}
+
+interface FilterOptions {
+  where?: Record<string, any>;
+  orderBy?: Record<string, 'asc' | 'desc'>;
+}
+
+function applyFilters<T extends Record<string, any>>(
+  items: T[],
+  filters: FilterOptions
+): T[] {
+  let result = [...items];
+
+  if (filters.where) {
+    result = result.filter(item => {
+      return Object.entries(filters.where).every(([key, value]) => {
+        if (typeof value === 'object' && value !== null) {
+          return Object.entries(value).every(([operator, operand]) => {
+            switch (operator) {
+              case 'contains':
+                return String(item[key]).includes(String(operand));
+              case 'gt':
+                return item[key] > operand;
+              case 'gte':
+                return item[key] >= operand;
+              case 'lt':
+                return item[key] < operand;
+              case 'lte':
+                return item[key] <= operand;
+              case 'in':
+                return Array.isArray(operand) && operand.includes(item[key]);
+              default:
+                return true;
+            }
+          });
+        }
+        return item[key] === value;
+      });
+    });
+  }
+
+  if (filters.orderBy) {
+    result.sort((a, b) => {
+      for (const [key, direction] of Object.entries(filters.orderBy)) {
+        if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
+        if (a[key] > b[key]) return direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+
+  return result;
+}
+
+function applyPagination<T>(
+  items: T[],
+  options: PaginationOptions
+): T[] {
+  const { skip = 0, take } = options;
+  return take ? items.slice(skip, skip + take) : items.slice(skip);
+}
 
 // Helper functions for test data generation
 export function generateMockId(prefix: string = 'test'): string {
