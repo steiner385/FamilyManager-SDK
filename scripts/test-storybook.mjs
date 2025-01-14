@@ -101,12 +101,22 @@ async function startStaticServer() {
             source: '**',
             headers: [
               { key: 'Access-Control-Allow-Origin', value: '*' },
-              { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }
+              { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+              { key: 'Content-Type', value: 'text/html; charset=utf-8' }
             ]
           }
         ],
-        directoryListing: false
+        directoryListing: false,
+        rewrites: [
+          { source: '/iframe.html', destination: '/iframe.html' },
+          { source: '/**', destination: '/index.html' }
+        ]
       });
+    });
+
+    // Add error handling for the server
+    server.on('error', (err) => {
+      console.error('Server error:', err);
     });
 
     server.on('error', (error) => {
@@ -190,9 +200,10 @@ async function runTests() {
     const testProcess = spawn('npx', [
       'test-storybook',
       '--ci',
-      '--url', 'http://localhost:6011',
+      '--url', 'http://127.0.0.1:6011',
       '--verbose',
-      '--maxWorkers', '1'
+      '--maxWorkers', '1',
+      '--no-cache'
     ], {
       stdio: 'inherit',
       shell: true,
