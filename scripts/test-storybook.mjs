@@ -158,6 +158,7 @@ async function runTests() {
     
     const testProcess = spawn('npx', [
       'test-storybook',
+      testPattern,
       '--ci',
       '--url', 'http://127.0.0.1:6011',
       '--verbose',
