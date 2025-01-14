@@ -16,7 +16,6 @@ const __dirname = dirname(__filename);
 process.stdout._handle?.setBlocking?.(true);
 process.stderr._handle?.setBlocking?.(true);
 
-try {
 // Get story file name from command line argument
 const storyFile = process.argv[2];
 if (!storyFile) {
@@ -24,15 +23,6 @@ if (!storyFile) {
   console.error('Example: node test-storybook.js LoadingSpinner.stories.tsx');
   process.exit(1);
 }
-} catch (error) {
-    console.error('Error during test execution:', error);
-    if (serverInstance) {
-      console.log('Closing static server due to error...');
-      await new Promise((resolve) => serverInstance.close(resolve));
-      console.log('Static server closed');
-    }
-    throw error;
-  }
 
 console.debug('Debug: Script started');
 
