@@ -38,26 +38,26 @@ try {
   process.exit(1);
 }
 
-console.log('Starting Storybook tests in CI mode...');
+console.log('Starting Storybook server...');
 
 // Start storybook in CI mode
 const storybook = spawn('npx', ['storybook', 'dev', '--ci', '--port', '6011'], {
-  stdio: 'inherit', // Change to inherit to see all output
+  stdio: 'pipe', // Change to pipe to capture all output
   shell: true
 });
 
-// Handle storybook process errors and output
-storybook.on('error', (error) => {
-  console.error('Failed to start Storybook:', error);
-  process.exit(1);
-});
-
+// Handle storybook process output
 storybook.stdout?.on('data', (data) => {
-  console.log(`Storybook stdout: ${data}`);
+  console.log(`Storybook: ${data}`);
 });
 
 storybook.stderr?.on('data', (data) => {
-  console.error(`Storybook stderr: ${data}`);
+  console.error(`Storybook error: ${data}`);
+});
+
+storybook.on('error', (error) => {
+  console.error('Failed to start Storybook:', error);
+  process.exit(1);
 });
 
 // Handle storybook process exit
@@ -76,8 +76,8 @@ async function runTests() {
     console.log('Waiting for Storybook server to be ready...');
     
     await waitOn({
-      resources: ['http://localhost:6011/iframe.html'],
-      timeout: 60000,
+      resources: ['http://localhost:6011'],
+      timeout: 90000, // Increase timeout to 90 seconds
       interval: 1000,
       validateStatus: function(status) {
         return status === 200;
@@ -87,8 +87,8 @@ async function runTests() {
 
     console.log('Storybook server is ready!');
 
-    // Add a small delay to ensure the server is fully initialized
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Add a longer delay to ensure the server is fully initialized
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     console.log(`Running tests for ${storyFile}...`);
     
@@ -97,49 +97,50 @@ async function runTests() {
       'test-storybook',
       '--ci',
       '--url', 'http://localhost:6011',
-      '--timeout', '60000',
+      '--timeout', '90000',
       '--verbose',
       '--debug',
-      '--testMatch', testPattern,
-      '--config-dir', '.storybook'
+      '--testMatch', testPattern
     ], {
-      stdio: 'inherit', // Change to inherit to see all output
+      stdio: 'inherit',
       shell: true
     });
 
-    // Add handlers for test process output
-    testProcess.stdout?.on('data', (data) => {
-      console.log(`Test stdout: ${data}`);
-    });
+    return new Promise((resolve, reject) => {
+      testProcess.on('exit', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Test process exited with code ${code}`));
+        }
+      });
 
-    testProcess.stderr?.on('data', (data) => {
-      console.error(`Test stderr: ${data}`);
-    });
-
-    testProcess.on('error', (error) => {
-      console.error('Test process error:', error);
-    });
-
-    testProcess.on('exit', (code, signal) => {
-      console.log(`Test process exited with code ${code}`);
-      if (signal) {
-        console.log(`Test process was killed with signal ${signal}`);
-      }
-      
-      // Kill storybook process
-      console.log('Cleaning up...');
-      storybook.kill();
-      execSync('pkill -f storybook || true');
-      
-      process.exit(code || 0);
+      testProcess.on('error', (error) => {
+        reject(error);
+      });
     });
 
   } catch (error) {
     console.error('Error during test execution:', error);
+    throw error;
+  } finally {
+    // Cleanup
     storybook.kill();
-    execSync('pkill -f storybook || true');
-    process.exit(1);
+    try {
+      execSync('pkill -f storybook || true');
+    } catch (error) {
+      // Ignore cleanup errors
+    }
   }
 }
 
-runTests();
+// Run tests and handle errors
+runTests()
+  .then(() => {
+    console.log(`✓ ${storyFile} tests passed`);
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error(`✗ ${storyFile} tests failed:`, error);
+    process.exit(1);
+  });
