@@ -37,9 +37,8 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const content = canvas.getByText('Normal content without errors');
-    
     await expect(content).toBeVisible();
-  },
+  }
 };
 
 export const WithError: Story = {

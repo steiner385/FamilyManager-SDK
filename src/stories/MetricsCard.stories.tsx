@@ -154,7 +154,7 @@ export const NegativeTrend: Story = {
     
     await expect(value).toHaveTextContent('2.5%');
     await expect(change).toHaveTextContent('-1.2%');
-    await expect(change).toHaveClass('text-red-500');
+    await expect(change).toHaveClass('text-red-800');
   },
 };
 
