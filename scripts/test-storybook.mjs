@@ -24,21 +24,16 @@ if (!storyFile) {
   process.exit(1);
 }
 
-console.debug('Debug: Script started');
-
 // Convert story file name to testMatch pattern
 const testPattern = `src/stories/${storyFile}`;
-console.log(`Running tests for story: ${testPattern}`);
+console.log(`Testing ${testPattern}...`);
 
 // Kill any existing storybook processes
 try {
-  console.log('Cleaning up any existing storybook dev server processes...');
-  // More specific pkill that only targets the dev server
   execSync('pkill -f "storybook dev" || true');
   await new Promise(resolve => setTimeout(resolve, 1000));
 } catch (error) {
   // Ignore errors from pkill
-  console.log('No existing storybook processes found');
 }
 
 // Ensure storybook-static directory exists
