@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Plugin, PluginManager } from '../core/plugin/PluginManager'
+import { Plugin } from '../types/plugin'
+import { PluginManager } from '../core/plugin/PluginManager'
 
-interface PluginState {
+interface PluginHookState {
   plugin: Plugin | null
   isReady: boolean
   error: Error | null
 }
 
-export function usePlugin(pluginName: string): PluginState {
-  const [state, setState] = useState<PluginState>({
+export function usePlugin(pluginName: string): PluginHookState {
+  const [state, setState] = useState<PluginHookState>({
     plugin: null,
     isReady: false,
     error: null
@@ -16,32 +17,26 @@ export function usePlugin(pluginName: string): PluginState {
 
   useEffect(() => {
     const manager = PluginManager.getInstance()
-    const plugin = manager.getPlugin(pluginName)
-
-    if (!plugin) {
-      setState({
-        plugin: null,
-        isReady: false,
-        error: new Error(`Plugin ${pluginName} not found`)
-      })
-      return
-    }
-
-    if (manager.isInitialized(pluginName)) {
-      setState({
-        plugin: plugin,
-        isReady: true,
-        error: null
-      })
-      return
-    }
-
+    
     async function initializePlugin() {
       try {
-        await manager.initializePlugin(pluginName)
-        const initializedPlugin = manager.getPlugin(pluginName)
+        const plugin = manager.getPlugin(pluginName)
+        
+        if (!plugin) {
+          setState({
+            plugin: null,
+            isReady: false,
+            error: new Error(`Plugin ${pluginName} not found`)
+          })
+          return
+        }
+
+        if (!manager.isInitialized(pluginName)) {
+          await manager.initializePlugin(pluginName)
+        }
+
         setState({
-          plugin: initializedPlugin || null,
+          plugin,
           isReady: true,
           error: null
         })
@@ -49,7 +44,7 @@ export function usePlugin(pluginName: string): PluginState {
         setState({
           plugin: null,
           isReady: false,
-          error: error as Error
+          error: error instanceof Error ? error : new Error('Failed to initialize plugin')
         })
       }
     }

@@ -1,7 +1,8 @@
+import React from 'react'
 import { usePlugin } from '../hooks/usePlugin'
 import { usePluginUIStore } from '../core/store/PluginUIStore'
-import { DynamicLayout } from './DynamicLayout'
 import { LoadingSpinner } from './common/LoadingSpinner'
+import { ErrorBoundary } from './common/ErrorBoundary'
 
 interface PluginContainerProps {
   pluginName: string
@@ -11,30 +12,47 @@ interface PluginContainerProps {
 export function PluginContainer({ pluginName, className = '' }: PluginContainerProps) {
   const { plugin, isReady, error } = usePlugin(pluginName)
   const { pluginLayouts } = usePluginUIStore()
-  
+
   if (error) {
     return (
-      <div className="p-4 bg-error-50 text-error-500 rounded-md">
-        Failed to load plugin: {error.message}
+      <div className="p-4 bg-red-50 text-red-700 rounded-md" role="alert">
+        <h3 className="font-medium">Plugin Error</h3>
+        <p className="mt-1 text-sm">{error.message}</p>
       </div>
     )
   }
 
-  if (!isReady) {
-    return <LoadingSpinner className="m-4" />
+  if (!isReady || !plugin) {
+    return (
+      <div className="flex justify-center items-center p-4">
+        <LoadingSpinner size="medium" label={`Loading ${pluginName}`} />
+      </div>
+    )
   }
 
-  const layoutId = pluginLayouts[pluginName] || plugin?.defaultLayout
+  const layoutId = pluginLayouts[plugin.id] || plugin.defaultLayout
 
   return (
-    <div className={className}>
-      {layoutId ? (
-        <DynamicLayout layoutId={layoutId} />
-      ) : (
-        <div className="p-4 text-gray-500">
-          No layout configured for this plugin
+    <ErrorBoundary
+      fallback={
+        <div className="p-4 bg-red-50 text-red-700 rounded-md">
+          Failed to render plugin content
         </div>
-      )}
-    </div>
+      }
+    >
+      <div className={className} data-plugin-id={plugin.id}>
+        {layoutId ? (
+          <div className="h-full">
+            {plugin.routes?.map(route => (
+              <route.component key={route.path} />
+            ))}
+          </div>
+        ) : (
+          <div className="p-4 text-gray-500">
+            No layout configured for this plugin
+          </div>
+        )}
+      </div>
+    </ErrorBoundary>
   )
 }
