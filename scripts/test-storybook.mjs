@@ -195,7 +195,7 @@ async function runTests() {
       clearInterval(keepalive);
       if (serverInstance) {
         console.log('Closing Storybook server...');
-        serverInstance.kill();
+        serverInstance.close();
         console.log('Storybook server closed');
       }
     }
@@ -203,7 +203,7 @@ async function runTests() {
     console.error('Error during test execution:', error);
     if (serverInstance) {
       console.log('Closing Storybook server due to error...');
-      serverInstance.kill();
+      serverInstance.close();
       console.log('Storybook server closed');
     }
     throw error;
