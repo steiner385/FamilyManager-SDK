@@ -101,10 +101,12 @@ async function startStaticServer() {
           {
             source: '**',
             headers: [
-              { key: 'Access-Control-Allow-Origin', value: '*' }
+              { key: 'Access-Control-Allow-Origin', value: '*' },
+              { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }
             ]
           }
-        ]
+        ],
+        directoryListing: false
       });
     });
 
@@ -113,7 +115,7 @@ async function startStaticServer() {
       reject(error);
     });
 
-    server.listen(6011, () => {
+    server.listen(6011, 'localhost', () => {
       console.log('Static server running at http://localhost:6011');
       resolve(server);
     });
@@ -144,18 +146,36 @@ async function runTests() {
     await waitOn({
       resources: [
         'http://localhost:6011/iframe.html',
-        'http://localhost:6011/index.html',
-        'http://localhost:6011/assets/iframe-0454fe63.js'
+        'http://localhost:6011/index.html'
       ],
       timeout: 30000,
-      interval: 1000,
+      interval: 500,
       validateStatus: function(status) {
         return status === 200;
+      },
+      verbose: true,
+      headers: {
+        'Accept': 'text/html'
       }
     });
 
+    // Verify server is responding correctly
+    try {
+      const response = await fetch('http://localhost:6011/iframe.html');
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      }
+      const text = await response.text();
+      if (!text.includes('storybook')) {
+        throw new Error('Invalid server response - missing expected content');
+      }
+    } catch (error) {
+      console.error('Server verification failed:', error);
+      throw error;
+    }
+
     // Additional delay to ensure everything is loaded
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     console.log('Server is ready, running tests...');
 
@@ -172,7 +192,8 @@ async function runTests() {
       '--ci',
       '--url', 'http://localhost:6011',
       '--verbose',
-      '--maxWorkers', '1'
+      '--maxWorkers', '1',
+      '--timeout', '60000'
     ], {
       stdio: 'inherit',
       shell: true,
