@@ -17,9 +17,10 @@ export class ComponentTestHelper {
 
   static createWrapper(providers: React.ComponentType<TestWrapperProps>[]) {
     return ({ children }: TestWrapperProps) => {
-      return providers.reduce((wrapped, Provider) => (
-        React.createElement(Provider, { children: wrapped })
-      ), children);
+      return providers.reduce((wrapped, Provider) => 
+        React.createElement(Provider, null, wrapped),
+        children
+      );
     };
   }
 
