@@ -9,7 +9,6 @@ jest.mock('@headlessui/react', () => {
     return <Component {...props}>{children}</Component>;
   };
   Dialog.displayName = 'Dialog';
-  Dialog.displayName = 'Dialog';
   
   Dialog.Panel = ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div data-testid="modal-panel" className={className}>{children}</div>

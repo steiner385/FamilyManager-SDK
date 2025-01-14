@@ -2,7 +2,8 @@ import '@testing-library/jest-dom';
 import { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers';
 
 declare global {
-  interface JestMatchers<R = void, T = {}> extends TestingLibraryMatchers<typeof expect.stringContaining, R> {
+  namespace jest {
+    interface Matchers<R = void, T = {}> extends TestingLibraryMatchers<typeof expect.stringContaining, R> {
       toBeInTheDocument(): R;
       toHaveStyle(css: Record<string, any>): R;
       toHaveTextContent(text: string | RegExp, options?: { normalizeWhitespace: boolean }): R;
@@ -30,3 +31,5 @@ declare global {
 declare module '@testing-library/jest-dom' {
   export interface JestMatchers<R = void, T = {}> extends TestingLibraryMatchers<typeof expect.stringContaining, R> {}
 }
+
+export {};
