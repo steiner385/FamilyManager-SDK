@@ -93,7 +93,18 @@ async function startStaticServer() {
   return new Promise((resolve, reject) => {
     const server = createServer((request, response) => {
       return handler(request, response, {
-        public: 'storybook-static'
+        public: 'storybook-static',
+        rewrites: [
+          { source: '**', destination: '/index.html' }
+        ],
+        headers: [
+          {
+            source: '**',
+            headers: [
+              { key: 'Access-Control-Allow-Origin', value: '*' }
+            ]
+          }
+        ]
       });
     });
 
@@ -131,17 +142,7 @@ async function runTests() {
     // Wait for server to be ready
     console.log('Waiting for server to be ready...');
     await waitOn({
-      resources: ['http://localhost:6011'],
-      timeout: 30000,
-      interval: 1000,
-      validateStatus: function(status) {
-        return status === 200;
-      }
-    });
-
-    // Wait for server to be ready
-    await waitOn({
-      resources: ['http://localhost:6011'],
+      resources: ['http://localhost:6011/iframe.html'],
       timeout: 30000,
       interval: 1000,
       validateStatus: function(status) {
