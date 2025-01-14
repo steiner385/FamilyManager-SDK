@@ -52,8 +52,11 @@ export const WithError: Story = {
     
     // Check for error UI elements
     // These errors are expected as part of testing error boundary behavior
-    const error = await canvas.findByText('Test error triggered');
-    await expect(error).toBeVisible();
+    // We expect the error boundary to catch and display the error
+    const errorMessage = await canvas.findByText('Something went wrong');
+    const errorDetail = await canvas.findByText('Test error triggered');
+    await expect(errorMessage).toBeVisible();
+    await expect(errorDetail).toBeVisible();
   },
 };
 
