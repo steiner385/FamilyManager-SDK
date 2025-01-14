@@ -34,40 +34,47 @@ console.log(`Running tests for story: ${testPattern}`);
 try {
   console.log('Cleaning up any existing storybook processes...');
   execSync('pkill -f storybook || true');
+  // Add a small delay to ensure processes are cleaned up
+  await new Promise(resolve => setTimeout(resolve, 1000));
 } catch (error) {
   // Ignore errors from pkill
+  console.log('No existing processes found or error killing processes');
+}
+
+// Ensure storybook-static directory exists
+if (!fs.existsSync('storybook-static')) {
+  fs.mkdirSync('storybook-static', { recursive: true });
 }
 
 async function buildStorybook() {
   console.log('Building Storybook...');
   process.stdout.write('Starting build process...\n');
+  
+  // Clean existing build
+  if (fs.existsSync('storybook-static')) {
+    fs.rmSync('storybook-static', { recursive: true });
+  }
+  fs.mkdirSync('storybook-static');
+
   return new Promise((resolve, reject) => {
     console.log('Spawning build process...');
     
-    // First ensure the storybook-static directory exists and is empty
-    try {
-      if (fs.existsSync('storybook-static')) {
-        fs.rmSync('storybook-static', { recursive: true });
-      }
-      fs.mkdirSync('storybook-static');
-    } catch (error) {
-      console.error('Error preparing storybook-static directory:', error);
-    }
-
     const build = spawn('npm', ['run', 'build-storybook'], {
       stdio: 'inherit',
       shell: true,
       env: { ...process.env, FORCE_COLOR: '1', NODE_ENV: 'test' }
     });
 
+    let timeout = setTimeout(() => {
+      build.kill();
+      reject(new Error('Storybook build timed out after 5 minutes'));
+    }, 300000);
+
     build.on('exit', (code) => {
+      clearTimeout(timeout);
       console.log(`Build process exited with code ${code}`);
-      // Verify the build output exists
-      if (!fs.existsSync('storybook-static/index.html')) {
-        reject(new Error('Storybook build failed - no output files found'));
-        return;
-      }
-      if (code === 0) {
+      
+      if (code === 0 && fs.existsSync('storybook-static/index.html')) {
         resolve();
       } else {
         reject(new Error(`Storybook build failed with code ${code}`));
@@ -75,15 +82,10 @@ async function buildStorybook() {
     });
 
     build.on('error', (error) => {
+      clearTimeout(timeout);
       console.error('Build process error:', error);
       reject(error);
     });
-
-    // Add timeout
-    setTimeout(() => {
-      build.kill();
-      reject(new Error('Storybook build timed out after 5 minutes'));
-    }, 300000);
   });
 }
 
