@@ -12,12 +12,9 @@
     "storybook": "storybook dev -p 6010",
     "build-storybook": "storybook build --quiet",
     "test-storybook": "test-storybook --maxWorkers=2 --ci",
-    "test-storybook:ci": "node ./scripts/test-all-stories.mjs",
-    "test-storybook:single": "node ./scripts/test-storybook.mjs",
+    "test-storybook:ci": "start-storybook --ci --quiet && test-storybook --ci --maxWorkers=2",
     "test-storybook:coverage": "test-storybook --coverage",
-    "test-storybook:watch": "test-storybook --watch",
-    "test-storybook:component": "node ./scripts/test-storybook.mjs",
-    "kill-storybook": "pkill -f storybook || true"
+    "test-storybook:watch": "test-storybook --watch"
   },
   "keywords": [
     "familymanager",
