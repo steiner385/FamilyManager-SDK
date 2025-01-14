@@ -130,7 +130,7 @@ export const WithAction: Story = {
     title: 'New Update Available',
     description: 'A new version of the application is available',
     action: (
-      <button className="bg-blue-800 text-white px-3 py-1 rounded hover:bg-blue-900">
+      <button className="bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-800">
         Update Now
       </button>
     ),
@@ -205,7 +205,7 @@ export const ComplexToast: Story = {
     icon: <CheckCircleIcon className="h-5 w-5" />,
     action: (
       <div className="flex space-x-2">
-        <button className="bg-green-800 text-white px-3 py-1 rounded hover:bg-green-900">
+        <button className="bg-green-700 text-white px-3 py-1 rounded hover:bg-green-800">
           View File
         </button>
         <button className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300">
