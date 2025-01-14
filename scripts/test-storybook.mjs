@@ -194,7 +194,7 @@ async function runTests() {
       '--verbose',
       '--maxWorkers', '1',
       '--no-cache',
-      '--test-runner-path', '.storybook/test-runner.js'
+      '--config-dir', '.storybook'
     ], {
       stdio: 'inherit',
       shell: true,
