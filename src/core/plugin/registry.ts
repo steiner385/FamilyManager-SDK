@@ -59,3 +59,5 @@ class PluginRegistry {
 }
 
 export const pluginRegistry = new PluginRegistry();
+export { PluginRegistry };
+export type { PluginState };

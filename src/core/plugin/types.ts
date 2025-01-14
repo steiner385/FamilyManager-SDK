@@ -2,11 +2,7 @@ import { Route } from '../routing/RouteRegistry';
 import { ReactElement } from 'react';
 import { Logger } from '../logging/Logger';
 
-export interface PluginState {
-  isInstalled: boolean;
-  isActive: boolean;
-  error?: Error;
-}
+export type PluginState = 'registered' | 'active' | 'error' | 'inactive';
 
 export interface PluginMetadata {
   id: string;
@@ -26,16 +22,17 @@ export interface Plugin {
   id: string;
   name: string;
   version: string;
-  description?: string;
-  author?: string;
-  status: PluginState;
+  status: 'active' | 'inactive' | 'error';
   config: PluginConfig;
-  state: any;
-  routes?: PluginRoute[];
+  state: PluginState;
   permissions?: string[];
+  defaultLayout?: string;
+  routes?: PluginRoute[];
   initialize?: <T = any>(context?: PluginContext<T>) => Promise<void>;
   onInit?: () => Promise<void>;
+  onUnload?: () => Promise<void>;
   teardown?: () => Promise<void>;
+  getHealth?: () => Promise<PluginHealthCheck>;
 }
 
 export interface PluginRoute extends Route {

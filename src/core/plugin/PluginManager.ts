@@ -37,6 +37,10 @@ export class PluginManager {
     return PluginManager.instance;
   }
 
+  async installPlugin(plugin: Plugin): Promise<void> {
+    return this.registerPlugin(plugin);
+  }
+
   async registerPlugin(plugin: Plugin, context?: any): Promise<void> {
     if (!this.initialized) {
       throw new Error('PluginManager must be initialized before registering plugins');
@@ -51,11 +55,12 @@ export class PluginManager {
     }
 
     // Validate plugin dependencies
-    if (plugin.dependencies) {
-      for (const dep of plugin.dependencies) {
-        if (!this.installedPlugins.has(dep)) {
-          throw new Error(`Missing required dependency: ${dep}`);
+    if (plugin.config?.metadata?.dependencies?.required) {
+      for (const [depId, version] of Object.entries(plugin.config.metadata.dependencies.required)) {
+        if (!this.installedPlugins.has(depId)) {
+          throw new Error(`Missing required dependency: ${depId}`);
         }
+        // TODO: Add version check if needed
       }
     }
 
