@@ -32,7 +32,7 @@ export function PluginCard({
             <h3 className="text-lg font-medium">{metadata.name}</h3>
             <p className="text-sm text-gray-500">{metadata.description}</p>
           </div>
-          <Badge variant={isEnabled ? 'success' : 'secondary'} size="small">
+          <Badge variant={isEnabled ? 'success' : 'secondary'} size="sm">
             {isEnabled ? 'Enabled' : 'Disabled'}
           </Badge>
         </div>
@@ -47,7 +47,7 @@ export function PluginCard({
             <span className="font-medium">Dependencies:</span>
             <div className="flex flex-wrap gap-1 mt-1">
               {metadata.dependencies.map((dep: string) => (
-                <Badge key={dep} variant="info" size="small">{dep}</Badge>
+                <Badge key={dep} variant="info" size="sm">{dep}</Badge>
               ))}
             </div>
           </div>
@@ -58,21 +58,21 @@ export function PluginCard({
             <>
               <Button
                 variant="secondary"
-                size="small"
+                size="sm"
                 onClick={isEnabled ? onDisable : onEnable}
               >
                 {isEnabled ? 'Disable' : 'Enable'}
               </Button>
               <Button
                 variant="secondary"
-                size="small"
+                size="sm"
                 onClick={onConfigure}
               >
                 Configure
               </Button>
               <Button
                 variant="danger"
-                size="small"
+                size="sm"
                 onClick={onUninstall}
               >
                 Uninstall
@@ -81,7 +81,7 @@ export function PluginCard({
           ) : (
             <Button
               variant="primary"
-              size="small"
+              size="sm"
               onClick={onEnable}
             >
               Install
