@@ -114,7 +114,7 @@ async function startStaticServer() {
       reject(error);
     });
 
-    server.listen(6011, '127.0.0.1', () => {
+    server.listen(6011, 'localhost', () => {
       console.log('Static server running at http://localhost:6011');
       resolve(server);
     });
@@ -187,6 +187,9 @@ async function runTests() {
       await buildStorybook();
     }
 
+    // Keep track of whether tests are done
+    let testsDone = false;
+    
     const testProcess = spawn('npx', [
       'test-storybook',
       '--ci',
@@ -203,28 +206,38 @@ async function runTests() {
 
     console.log('Test process started');
 
-    return new Promise((resolve, reject) => {
-      testProcess.on('exit', (code) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`Test process exited with code ${code}`));
-        }
+    // Set up a keepalive interval
+    const keepalive = setInterval(() => {
+      if (!testsDone) {
+        fetch('http://127.0.0.1:6011/iframe.html')
+          .catch(() => {}); // Ignore errors
+      }
+    }, 1000);
+
+    try {
+      await new Promise((resolve, reject) => {
+        testProcess.on('exit', (code) => {
+          testsDone = true;
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`Test process exited with code ${code}`));
+          }
+        });
+
+        testProcess.on('error', (err) => {
+          testsDone = true;
+          reject(err);
+        });
       });
-
-      testProcess.on('error', reject);
-    });
-
-  } catch (error) {
-    console.error('Error during test execution:', error);
-    throw error;
-  } finally {
-    if (server) {
-      console.log('Closing static server...');
-      await new Promise((resolve) => server.close(resolve));
-      console.log('Static server closed');
+    } finally {
+      clearInterval(keepalive);
+      if (server) {
+        console.log('Closing static server...');
+        await new Promise((resolve) => server.close(resolve));
+        console.log('Static server closed');
+      }
     }
-  }
 }
 
 // Set up error handling for uncaught exceptions
