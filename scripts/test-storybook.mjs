@@ -94,9 +94,8 @@ async function startStaticServer() {
     const server = createServer((request, response) => {
       return handler(request, response, {
         public: 'storybook-static',
-        rewrites: [
-          { source: '**', destination: '/index.html' }
-        ],
+        cleanUrls: false,
+        trailingSlash: false,
         headers: [
           {
             source: '**',
@@ -141,41 +140,42 @@ async function runTests() {
     server = await startStaticServer();
     console.log('Static server started successfully');
 
-    // Wait for server to be ready
+    // Wait for server to be ready and verify key files
     console.log('Waiting for server to be ready...');
-    await waitOn({
-      resources: [
-        'http://localhost:6011/iframe.html',
-        'http://localhost:6011/index.html'
-      ],
-      timeout: 30000,
-      interval: 500,
-      validateStatus: function(status) {
-        return status === 200;
-      },
-      verbose: true,
-      headers: {
-        'Accept': 'text/html'
-      }
-    });
+    const requiredFiles = [
+      'iframe.html',
+      'index.html',
+      'assets/iframe-0454fe63.js'
+    ];
+    
+    for (const file of requiredFiles) {
+      const url = `http://localhost:6011/${file}`;
+      console.log(`Checking ${url}...`);
+      
+      await waitOn({
+        resources: [url],
+        timeout: 30000,
+        interval: 500,
+        validateStatus: function(status) {
+          return status === 200;
+        },
+        headers: {
+          'Accept': '*/*'
+        }
+      });
 
-    // Verify server is responding correctly
-    try {
-      const response = await fetch('http://localhost:6011/iframe.html');
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      // Verify file content
+      const response = await fetch(url);
+      const content = await response.text();
+      if (!content || content.length === 0) {
+        throw new Error(`Empty response from ${file}`);
       }
-      const text = await response.text();
-      if (!text.includes('storybook')) {
-        throw new Error('Invalid server response - missing expected content');
-      }
-    } catch (error) {
-      console.error('Server verification failed:', error);
-      throw error;
+      console.log(`✓ ${file} verified`);
     }
 
     // Additional delay to ensure everything is loaded
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    console.log('All required files verified, waiting for full initialization...');
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     console.log('Server is ready, running tests...');
 
