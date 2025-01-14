@@ -75,8 +75,19 @@ const mockData = {
 };
 
 // Mock user operations
-// @ts-expect-error - Prisma mock types don't match exactly with our test implementation
-mockPrisma.user.create.mockImplementation((args: { data: Prisma.UserCreateInput }) => {
+mockPrisma.user.create.mockImplementation(async (args: { 
+  data: {
+    id?: string;
+    email: string;
+    password: string;
+    role?: string;
+    firstName?: string;
+    lastName?: string;
+    username: string;
+    familyId?: string;
+    family?: { connect: { id: string } };
+  }
+}) => {
   const data = args.data as Required<typeof args.data>;
   const user: MockUser = {
     id: data.id || `test-${Date.now()}`,  // Use provided ID if available
@@ -114,8 +125,18 @@ mockPrisma.user.create.mockImplementation((args: { data: Prisma.UserCreateInput 
   return Promise.resolve(mockClient);
 });
 
-// Add user update mock
-mockPrisma.user.update.mockImplementation((args: Prisma.UserUpdateArgs) => {
+mockPrisma.user.update.mockImplementation(async (args: {
+  where: { id: string };
+  data: Partial<{
+    email: string;
+    password: string;
+    role: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    familyId: string;
+  }>;
+}) => {
   const user = mockData.users.get(args.where.id as string);
   if (!user) {
     console.log('User not found for update:', args.where.id);
@@ -367,14 +388,38 @@ mockPrisma.family.update.mockImplementation((args: Prisma.FamilyUpdateArgs) => {
   return mockFamily;
 });
 
-import { hashPassword, generateToken, type TokenPayload, setTestTokenVerification, verifyToken } from '../../utils/auth';
-import { UserRole } from '../../types/user-role';
+import { PrismaClient } from '@prisma/client';
+import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import jwt from 'jsonwebtoken';
+import { hashPassword, generateToken, verifyToken } from '../../utils/auth';
+import type { TokenPayload } from '../../utils/auth';
+import { UserRole } from '../../types/user-role';
+
+// Mock data store type
+interface MockDataStore {
+  users: Map<string, MockUser>;
+  families: Map<string, MockFamily>;
+}
+
+const mockData: MockDataStore = {
+  users: new Map(),
+  families: new Map()
+};
 
 export function generateFutureDate(daysFromNow: number): string {
   const date = new Date();
   date.setDate(date.getDate() + daysFromNow);
   return date.toISOString();
+}
+
+interface TestUserData {
+  email?: string;
+  password?: string;
+  role?: UserRole;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  familyId?: string;
 }
 
 interface TestUser {
@@ -408,7 +453,7 @@ export function getTestUsers() {
   };
 }
 
-export async function createTestUser(data: Partial<TestUser> & { familyId?: string }) {
+export async function createTestUser(data: TestUserData) {
   const timestamp = Date.now();
   const hashedPassword = await hashPassword(data.password || 'TestPass123!');
 
@@ -490,7 +535,7 @@ export async function createTestUser(data: Partial<TestUser> & { familyId?: stri
 }
 
 // Add a global reset function for test data
-export function resetTestData() {
+export function resetTestData(): void {
   // Reset mock data maps
   mockData.users.clear();
   mockData.families.clear();
