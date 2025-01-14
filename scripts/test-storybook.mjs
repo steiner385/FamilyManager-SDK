@@ -32,13 +32,13 @@ console.log(`Running tests for story: ${testPattern}`);
 
 // Kill any existing storybook processes
 try {
-  console.log('Cleaning up any existing storybook processes...');
-  execSync('pkill -f storybook || true');
-  // Add a small delay to ensure processes are cleaned up
+  console.log('Cleaning up any existing storybook dev server processes...');
+  // More specific pkill that only targets the dev server
+  execSync('pkill -f "storybook dev" || true');
   await new Promise(resolve => setTimeout(resolve, 1000));
 } catch (error) {
   // Ignore errors from pkill
-  console.log('No existing processes found or error killing processes');
+  console.log('No existing storybook processes found');
 }
 
 // Ensure storybook-static directory exists
