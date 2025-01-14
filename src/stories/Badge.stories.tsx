@@ -57,6 +57,7 @@ export const Primary: Story = {
     variant: 'primary',
     'data-testid': 'primary-badge',
   },
+  tags: ['test'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const badge = canvas.getByTestId('primary-badge');
@@ -73,6 +74,7 @@ export const Secondary: Story = {
     variant: 'secondary',
     'data-testid': 'secondary-badge',
   },
+  tags: ['test'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const badge = canvas.getByTestId('secondary-badge');

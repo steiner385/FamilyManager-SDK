@@ -160,11 +160,12 @@ async function runTests() {
       'test-storybook',
       '--ci',
       '--url', 'http://127.0.0.1:6011',
-      '--stories', testPattern,
+      '--includeTags', 'test',
       '--verbose',
       '--maxWorkers', '1',
       '--no-cache',
-      '--config-dir', '.storybook'
+      '--config-dir', '.storybook',
+      '--headless'
     ], {
       stdio: 'inherit',
       shell: true,
