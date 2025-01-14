@@ -44,8 +44,7 @@ export const Default: Story = {
 
 export const WithError: Story = {
   args: {
-    testErrorTrigger: true,
-    children: <div>This content won't be shown due to the error</div>,
+    children: <div>{(() => { throw new Error('Test error triggered'); })()}</div>,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -61,8 +60,7 @@ export const WithError: Story = {
 
 export const WithCustomFallback: Story = {
   args: {
-    testErrorTrigger: true,
-    children: <div>This content won't be shown due to the error</div>,
+    children: <div>{(() => { throw new Error('Test error triggered'); })()}</div>,
     fallback: (
       <div className="text-center p-4 bg-yellow-100 rounded-lg">
         <h2 className="text-xl font-bold text-yellow-800">Custom Error View</h2>

@@ -43,10 +43,10 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
 }) => {
   const defaultStyles = {
     card: `bg-white rounded-lg shadow-sm p-4 ${styles.card || ''}`,
-    title: `text-gray-900 text-base font-bold ${styles.title || ''}`,
+    title: `text-gray-900 text-lg font-bold ${styles.title || ''}`,
     value: `text-gray-900 text-3xl font-bold mt-2 ${styles.value || ''}`,
-    change: `${trend === 'up' ? 'text-green-700' : trend === 'down' ? 'text-red-700' : 'text-gray-700'} ${styles.change || ''}`,
-    timeframe: `text-gray-500 text-sm ${styles.timeframe || ''}`
+    change: `${trend === 'up' ? 'text-green-800' : trend === 'down' ? 'text-red-800' : 'text-gray-800'} ${styles.change || ''}`,
+    timeframe: `text-gray-700 text-sm ${styles.timeframe || ''}`
   };
 
   const defaultFormatters = {
@@ -103,7 +103,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       style={{ cursor: onClick ? 'pointer' : 'default' }}
     >
       <div className="flex items-center justify-between">
-        <h3
+        <h2
           className={defaultStyles.title}
           data-testid={dataTestId ? `${dataTestId}-title` : 'metrics-card-title'}
         >

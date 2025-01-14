@@ -205,10 +205,10 @@ export const ComplexToast: Story = {
     icon: <CheckCircleIcon className="h-5 w-5" />,
     action: (
       <div className="flex space-x-2">
-        <button className="bg-green-700 text-white px-3 py-1 rounded hover:bg-green-800">
+        <button className="bg-green-800 text-white px-3 py-1 rounded hover:bg-green-900">
           View File
         </button>
-        <button className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300">
+        <button className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-800">
           Copy Link
         </button>
       </div>

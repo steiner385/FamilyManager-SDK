@@ -53,10 +53,10 @@ export const Default: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const chart = canvas.getByTestId('line-chart');
-    const svg = canvas.getByTestId('line-chart-svg');
-    const line = canvas.getByTestId('line-chart-line');
-    const points = canvas.getAllByTestId('line-chart-point');
+    const chart = canvas.getByTestId('default-chart');
+    const svg = canvas.getByTestId('default-chart-svg');
+    const line = canvas.getByTestId('default-chart-line');
+    const points = canvas.getAllByTestId('default-chart-point');
     
     await expect(chart).toBeVisible();
     await expect(svg).toBeVisible();
