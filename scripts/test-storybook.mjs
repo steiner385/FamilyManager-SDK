@@ -240,6 +240,7 @@ async function runTests() {
         console.log('Static server closed');
       }
     }
+  }
 }
 
 // Set up error handling for uncaught exceptions
