@@ -48,16 +48,13 @@ if (!fs.existsSync('storybook-static')) {
 
 async function buildStorybook() {
   console.log('Building Storybook...');
-  process.stdout.write('Starting build process...\n');
   
-  // Clean existing build
   if (fs.existsSync('storybook-static')) {
     fs.rmSync('storybook-static', { recursive: true });
   }
   fs.mkdirSync('storybook-static');
 
   return new Promise((resolve, reject) => {
-    console.log('Spawning build process...');
     
     const build = spawn('npm', ['run', 'build-storybook'], {
       stdio: 'inherit',
@@ -67,44 +64,26 @@ async function buildStorybook() {
 
     let timeout = setTimeout(() => {
       build.kill();
-      reject(new Error('Storybook build timed out after 5 minutes'));
+      reject(new Error('Build timed out after 5 minutes'));
     }, 300000);
 
     build.on('exit', (code) => {
       clearTimeout(timeout);
-      console.log(`Build process exited with code ${code}`);
-      
       if (code === 0 && fs.existsSync('storybook-static/index.html')) {
         resolve();
       } else {
-        reject(new Error(`Storybook build failed with code ${code}`));
+        reject(new Error(`Build failed with code ${code}`));
       }
     });
 
-    build.on('error', (error) => {
-      clearTimeout(timeout);
-      console.error('Build process error:', error);
-      reject(error);
-    });
+    build.on('error', reject);
   });
 }
 
 async function startStorybookServer() {
   return new Promise((resolve, reject) => {
-    console.log('Starting static server...');
-    const server = createServer((req, res) => {
-      return handler(req, res, {
-        public: 'storybook-static'
-      });
-    });
-
-    server.listen(6011, (err) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(server);
-    });
+    const server = createServer((req, res) => handler(req, res, { public: 'storybook-static' }));
+    server.listen(6011, (err) => err ? reject(err) : resolve(server));
   });
 }
 
@@ -115,20 +94,11 @@ async function runTests() {
   try {
     console.log('Starting test execution...');
     
-    // Check if storybook-static exists
     if (!fs.existsSync('storybook-static')) {
-      console.log('No storybook-static directory found, building Storybook...');
       await buildStorybook();
-      console.log('Build completed successfully');
-    } else {
-      console.log('Using existing storybook-static directory');
     }
 
-    // Start Storybook dev server
     serverInstance = await startStorybookServer();
-
-    // Wait for Storybook server to be ready
-    console.log('Waiting for Storybook server to be ready...');
     await waitOn({
       resources: ['http://localhost:6011/iframe.html'],
       timeout: 60000,
