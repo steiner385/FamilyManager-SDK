@@ -4,6 +4,7 @@ export interface BaseEvent<T = any> {
   channel: string;
   timestamp: number;
   data: T;
+  metadata?: Record<string, any>;
   source?: string;
 }
 
