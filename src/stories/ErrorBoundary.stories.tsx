@@ -50,12 +50,12 @@ export const WithError: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     
-    // Check for error UI elements
-    // These errors are expected as part of testing error boundary behavior
-    // We expect the error boundary to catch and display the error
-    // These errors are expected as part of testing error boundary behavior
+    // We expect the error boundary to catch and handle the error
     const errorMessage = await canvas.findByText('Something went wrong');
+    const errorTitle = await canvas.findByText('Error');
+    
     await expect(errorMessage).toBeVisible();
+    await expect(errorTitle).toBeVisible();
   },
 };
 

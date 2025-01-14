@@ -43,9 +43,9 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
 }) => {
   const defaultStyles = {
     card: `bg-white rounded-lg shadow-sm p-4 ${styles.card || ''}`,
-    title: `text-gray-900 text-sm font-bold ${styles.title || ''}`,
-    value: `text-gray-900 text-2xl font-bold mt-1 ${styles.value || ''}`,
-    change: `${trend === 'up' ? 'text-green-900' : trend === 'down' ? 'text-red-900' : 'text-gray-900'} ${styles.change || ''}`,
+    title: `text-gray-900 text-base font-bold ${styles.title || ''}`,
+    value: `text-gray-900 text-3xl font-bold mt-2 ${styles.value || ''}`,
+    change: `${trend === 'up' ? 'text-green-700' : trend === 'down' ? 'text-red-700' : 'text-gray-700'} ${styles.change || ''}`,
     timeframe: `text-gray-500 text-sm ${styles.timeframe || ''}`
   };
 
