@@ -122,7 +122,6 @@ async function startStaticServer() {
 }
 
 async function runTests() {
-  let server;
   try {
     console.log('Starting test execution...');
     
@@ -253,6 +252,7 @@ process.on('unhandledRejection', (error) => {
 
 // Run tests and handle errors
 console.log('Starting test runner...');
+let server;
 runTests()
   .then(() => {
     console.log(`✓ ${storyFile} tests passed`);
@@ -262,4 +262,11 @@ runTests()
     console.error(`✗ ${storyFile} tests failed:`, error);
     console.error('Error stack:', error.stack);
     process.exit(1);
+  })
+  .finally(async () => {
+    if (server) {
+      console.log('Ensuring server is closed...');
+      await new Promise((resolve) => server.close(resolve));
+      console.log('Server closed');
+    }
   });
