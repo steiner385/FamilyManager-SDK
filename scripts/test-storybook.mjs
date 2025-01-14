@@ -192,8 +192,7 @@ async function runTests() {
       '--ci',
       '--url', 'http://localhost:6011',
       '--verbose',
-      '--maxWorkers', '1',
-      '--timeout', '60000'
+      '--maxWorkers', '1'
     ], {
       stdio: 'inherit',
       shell: true,
