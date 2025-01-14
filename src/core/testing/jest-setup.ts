@@ -1,18 +1,15 @@
 import { TextEncoder, TextDecoder } from 'util';
+import nodeFetch from 'node-fetch';
 
 // Set up globals for tests
 global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder as any;
+global.TextDecoder = TextDecoder as typeof TextDecoder;
 
 // Set up Request and Response globals if they don't exist
 if (!global.Request) {
-  global.Request = class Request {
-    constructor(input: RequestInfo | URL, init?: RequestInit) {
-      return new (require('node-fetch').Request)(input, init);
-    }
-  } as any;
+  global.Request = nodeFetch.Request as typeof Request;
 }
 
 if (!global.Response) {
-  global.Response = require('node-fetch').Response;
+  global.Response = nodeFetch.Response as typeof Response;
 }
