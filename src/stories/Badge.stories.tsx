@@ -60,7 +60,6 @@ export const Primary: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const badge = canvas.getByTestId('primary-badge');
-    
     await expect(badge).toBeVisible();
     await expect(badge).toHaveClass('bg-blue-100');
     await expect(badge).toHaveClass('text-blue-800');

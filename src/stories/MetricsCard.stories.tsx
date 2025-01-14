@@ -188,7 +188,7 @@ export const Clickable: Story = {
     trend: 'up',
     change: 8.3,
     timeframe: 'vs last month',
-    onClick: () => console.log('Metrics card clicked'),
+    onClick: () => {},
     'data-testid': 'clickable-metrics',
   },
   play: async ({ canvasElement }) => {

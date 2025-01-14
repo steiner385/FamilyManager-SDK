@@ -148,7 +148,7 @@ export const WithCloseButton: Story = {
   args: {
     title: 'Closeable Toast',
     description: 'Click the X button to close this toast',
-    onClose: () => console.log('Toast closed'),
+    onClose: () => {},
     'data-testid': 'close-toast',
   },
   play: async ({ canvasElement }) => {
