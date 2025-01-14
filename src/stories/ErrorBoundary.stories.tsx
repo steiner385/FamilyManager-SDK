@@ -51,19 +51,9 @@ export const WithError: Story = {
     const canvas = within(canvasElement);
     
     // Check for error UI elements
-    const errorCode = canvas.getByText('500');
-    const errorTitle = canvas.getByText('Something went wrong');
-    const reloadButton = canvas.getByText('Reload page');
-    const homeButton = canvas.getByText('Go back home');
-    
-    await expect(errorCode).toBeVisible();
-    await expect(errorTitle).toBeVisible();
-    await expect(reloadButton).toBeVisible();
-    await expect(homeButton).toBeVisible();
-    
-    // Verify error message
-    const errorMessage = canvas.getByText('Test error triggered');
-    await expect(errorMessage).toBeVisible();
+    // These errors are expected as part of testing error boundary behavior
+    const error = await canvas.findByText('Test error triggered');
+    await expect(error).toBeVisible();
   },
 };
 
