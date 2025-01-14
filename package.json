@@ -9,6 +9,7 @@
     "build": "tsc",
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "storybook": "storybook dev -p 6010",
     "build-storybook": "storybook build --quiet",
     "test-storybook": "test-storybook --maxWorkers=2 --ci",
