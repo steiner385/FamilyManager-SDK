@@ -91,26 +91,20 @@ async function buildStorybook() {
 
 async function startStorybookServer() {
   return new Promise((resolve, reject) => {
-    console.log('Starting Storybook dev server...');
-    const storybookProcess = spawn('npm', ['run', 'storybook', '--', '--port', '6011'], {
-      stdio: 'inherit',
-      shell: true,
-      env: { ...process.env, NODE_ENV: 'development' }
+    console.log('Starting static server...');
+    const server = createServer((req, res) => {
+      return handler(req, res, {
+        public: 'storybook-static'
+      });
     });
 
-    storybookProcess.on('error', (error) => {
-      console.error('Storybook server error:', error);
-      reject(error);
-    });
-
-    storybookProcess.on('exit', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Storybook server exited with code ${code}`));
+    server.listen(6011, (err) => {
+      if (err) {
+        reject(err);
+        return;
       }
+      resolve(server);
     });
-
-    // Wait a bit to ensure the server starts
-    setTimeout(() => resolve(storybookProcess), 5000);
   });
 }
 
