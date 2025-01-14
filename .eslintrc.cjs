@@ -38,6 +38,18 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': ['warn', {
       'argsIgnorePattern': '^_',
       'varsIgnorePattern': '^_'
-    }]
+    }],
+    '@typescript-eslint/ban-types': ['error', {
+      types: {
+        '{}': false
+      }
+    }],
+    'react/prop-types': 'off',
+    '@typescript-eslint/ban-ts-comment': ['error', {
+      'ts-expect-error': 'allow-with-description',
+      'ts-ignore': false
+    }],
+    'react/no-unescaped-entities': 'off',
+    'no-case-declarations': 'off'
   }
 };
