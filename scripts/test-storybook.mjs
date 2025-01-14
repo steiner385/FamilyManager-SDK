@@ -20,7 +20,7 @@ if (!storyFile) {
 }
 
 // Convert story file name to testMatch pattern
-const testPattern = `**/src/stories/${storyFile}`;
+const testPattern = `src/stories/${storyFile}`;
 console.log(`Running tests for story: ${testPattern}`);
 
 // Kill any existing storybook processes
@@ -58,17 +58,23 @@ async function buildStorybook() {
 }
 
 async function startStaticServer() {
-  const server = createServer((request, response) => {
-    return handler(request, response, {
-      public: 'storybook-static'
+  return new Promise((resolve, reject) => {
+    const server = createServer((request, response) => {
+      return handler(request, response, {
+        public: 'storybook-static'
+      });
+    });
+
+    server.on('error', (error) => {
+      console.error('Server error:', error);
+      reject(error);
+    });
+
+    server.listen(6011, () => {
+      console.log('Static server running at http://localhost:6011');
+      resolve(server);
     });
   });
-
-  server.listen(6011, () => {
-    console.log('Static server running at http://localhost:6011');
-  });
-
-  return server;
 }
 
 async function runTests() {
@@ -128,7 +134,9 @@ async function runTests() {
     throw error;
   } finally {
     if (server) {
-      server.close();
+      console.log('Closing static server...');
+      await new Promise((resolve) => server.close(resolve));
+      console.log('Static server closed');
     }
   }
 }
