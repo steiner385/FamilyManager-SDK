@@ -101,22 +101,12 @@ async function startStaticServer() {
             source: '**',
             headers: [
               { key: 'Access-Control-Allow-Origin', value: '*' },
-              { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
-              { key: 'Content-Type', value: 'text/html; charset=utf-8' }
+              { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }
             ]
           }
         ],
-        directoryListing: false,
-        rewrites: [
-          { source: '/iframe.html', destination: '/iframe.html' },
-          { source: '/**', destination: '/index.html' }
-        ]
+        directoryListing: false
       });
-    });
-
-    // Add error handling for the server
-    server.on('error', (err) => {
-      console.error('Server error:', err);
     });
 
     server.on('error', (error) => {
@@ -124,7 +114,7 @@ async function startStaticServer() {
       reject(error);
     });
 
-    server.listen(6011, 'localhost', () => {
+    server.listen(6011, '127.0.0.1', () => {
       console.log('Static server running at http://localhost:6011');
       resolve(server);
     });
@@ -203,7 +193,8 @@ async function runTests() {
       '--url', 'http://127.0.0.1:6011',
       '--verbose',
       '--maxWorkers', '1',
-      '--no-cache'
+      '--no-cache',
+      '--test-runner-path', '.storybook/test-runner.js'
     ], {
       stdio: 'inherit',
       shell: true,
