@@ -52,8 +52,12 @@
     "@types/node": "^20.10.6",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^19.0.3",
+    "@types/jest-axe": "^3.5.9",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/react-router-dom": "^5.3.3",
     "@types/testing-library__jest-dom": "^6.0.0",
     "@types/uuid": "^10.0.0",
+    "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
     "@typescript-eslint/parser": "^6.18.1",
     "@vitejs/plugin-react": "^4.3.4",
@@ -92,9 +96,13 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
+    "@tanstack/react-query": "^5.0.0",
     "hono": "^4.6.16",
+    "jsonwebtoken": "^9.0.0",
+    "react-router-dom": "^6.21.0",
     "tailwind-merge": "^2.6.0",
     "uuid": "^11.0.5",
+    "winston": "^3.11.0",
     "zod": "^3.24.1"
   }
 }
