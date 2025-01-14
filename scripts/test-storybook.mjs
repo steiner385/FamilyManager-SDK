@@ -240,7 +240,16 @@ async function runTests() {
         console.log('Static server closed');
       }
     }
+  } catch (error) {
+    console.error('Error during test execution:', error);
+    if (serverInstance) {
+      console.log('Closing static server due to error...');
+      await new Promise((resolve) => serverInstance.close(resolve));
+      console.log('Static server closed');
+    }
+    throw error;
   }
+}
 }
 
 // Set up error handling for uncaught exceptions
