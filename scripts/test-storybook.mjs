@@ -105,15 +105,30 @@ async function runTests() {
   try {
     console.log('Starting test execution...');
     
-    // Build Storybook first
-    console.log('Building Storybook...');
-    await buildStorybook();
-    console.log('Build completed successfully');
+    // Check if storybook-static exists
+    if (!fs.existsSync('storybook-static')) {
+      console.log('No storybook-static directory found, building Storybook...');
+      await buildStorybook();
+      console.log('Build completed successfully');
+    } else {
+      console.log('Using existing storybook-static directory');
+    }
 
     // Start static file server
     console.log('Starting static server...');
     server = await startStaticServer();
     console.log('Static server started successfully');
+
+    // Wait for server to be ready
+    console.log('Waiting for server to be ready...');
+    await waitOn({
+      resources: ['http://localhost:6011'],
+      timeout: 30000,
+      interval: 1000,
+      validateStatus: function(status) {
+        return status === 200;
+      }
+    });
 
     // Wait for server to be ready
     await waitOn({
@@ -128,6 +143,7 @@ async function runTests() {
     console.log('Server is ready, running tests...');
 
     // Run the tests
+    console.log('Running test-storybook...');
     const testProcess = spawn('npx', [
       'test-storybook',
       '--ci',
@@ -137,8 +153,11 @@ async function runTests() {
       '--testMatch', testPattern
     ], {
       stdio: 'inherit',
-      shell: true
+      shell: true,
+      env: { ...process.env, NODE_ENV: 'test', CI: 'true' }
     });
+
+    console.log('Test process started');
 
     return new Promise((resolve, reject) => {
       testProcess.on('exit', (code) => {
