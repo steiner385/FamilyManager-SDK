@@ -16,7 +16,7 @@
     "test-storybook:single": "node ./scripts/test-storybook.mjs",
     "test-storybook:coverage": "test-storybook --coverage",
     "test-storybook:watch": "test-storybook --watch",
-    "test-storybook:component": "pkill -f storybook || true && (storybook dev --ci --port 6010 & wait-on tcp:6010 && test-storybook --ci --url http://localhost:6010 && pkill -f storybook)",
+    "test-storybook:component": "node ./scripts/test-storybook.mjs",
     "kill-storybook": "pkill -f storybook || true"
   },
   "keywords": [

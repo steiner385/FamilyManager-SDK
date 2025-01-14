@@ -5,6 +5,8 @@ import waitOn from 'wait-on';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { createServer } from 'http';
+import handler from 'serve-handler';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,84 +31,72 @@ try {
   // Ignore errors from pkill
 }
 
-// Start storybook in CI mode
-console.log('Starting Storybook server...');
-const storybook = spawn('npx', ['storybook', 'dev', '--ci', '--port', '6011'], {
-  stdio: ['pipe', 'pipe', 'pipe'], // Explicitly set all streams to pipe
-  shell: true,
-  env: { ...process.env, FORCE_COLOR: '1' } // Force colored output
-});
+async function buildStorybook() {
+  console.log('Building Storybook...');
+  return new Promise((resolve, reject) => {
+    const build = spawn('npm', ['run', 'build-storybook'], {
+      stdio: 'inherit',
+      shell: true
+    });
 
-let serverStarted = false;
+    build.on('exit', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Storybook build failed with code ${code}`));
+      }
+    });
 
-// Handle storybook process output
-storybook.stdout.on('data', (data) => {
-  const output = data.toString();
-  console.log(output);
-  if (output.includes('Storybook') && output.includes('started')) {
-    serverStarted = true;
-  }
-});
-
-storybook.stderr.on('data', (data) => {
-  console.error(`Storybook error: ${data}`);
-});
-
-storybook.on('error', (error) => {
-  console.error('Failed to start Storybook:', error);
-  cleanup();
-  process.exit(1);
-});
-
-function cleanup() {
-  console.log('Cleaning up...');
-  storybook.kill();
-  try {
-    execSync('pkill -f storybook || true');
-  } catch (error) {
-    // Ignore cleanup errors
-  }
+    build.on('error', reject);
+  });
 }
 
-// Handle process termination
-process.on('SIGINT', cleanup);
-process.on('SIGTERM', cleanup);
+async function startStaticServer() {
+  const server = createServer((request, response) => {
+    return handler(request, response, {
+      public: 'storybook-static'
+    });
+  });
 
-// Wait for storybook to be ready then run tests
+  server.listen(6011, () => {
+    console.log('Static server running at http://localhost:6011');
+  });
+
+  return server;
+}
+
 async function runTests() {
+  let server;
   try {
-    console.log('Waiting for Storybook server to be ready...');
-    
-    // Wait for server to start
+    // Build Storybook first
+    await buildStorybook();
+
+    // Start static file server
+    server = await startStaticServer();
+
+    // Wait for server to be ready
     await waitOn({
       resources: ['http://localhost:6011'],
-      timeout: 90000,
+      timeout: 30000,
       interval: 1000,
       validateStatus: function(status) {
         return status === 200;
-      },
-      verbose: true
+      }
     });
 
-    if (!serverStarted) {
-      throw new Error('Storybook server failed to start properly');
-    }
+    console.log('Server is ready, running tests...');
 
-    console.log('Storybook server is ready!');
-    console.log(`Running tests for ${storyFile}...`);
-    
-    // Run the tests with specific testMatch pattern
+    // Run the tests
     const testProcess = spawn('npx', [
       'test-storybook',
       '--ci',
       '--url', 'http://localhost:6011',
-      '--timeout', '90000',
+      '--timeout', '60000',
       '--verbose',
       '--testMatch', testPattern
     ], {
       stdio: 'inherit',
-      shell: true,
-      env: { ...process.env, FORCE_COLOR: '1' }
+      shell: true
     });
 
     return new Promise((resolve, reject) => {
@@ -118,16 +108,16 @@ async function runTests() {
         }
       });
 
-      testProcess.on('error', (error) => {
-        reject(error);
-      });
+      testProcess.on('error', reject);
     });
 
   } catch (error) {
     console.error('Error during test execution:', error);
     throw error;
   } finally {
-    cleanup();
+    if (server) {
+      server.close();
+    }
   }
 }
 
