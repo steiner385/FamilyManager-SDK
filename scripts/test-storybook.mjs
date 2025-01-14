@@ -164,8 +164,7 @@ async function runTests() {
       '--verbose',
       '--maxWorkers', '1',
       '--no-cache',
-      '--config-dir', '.storybook',
-      '--headless'
+      '--config-dir', '.storybook'
     ], {
       stdio: 'inherit',
       shell: true,
