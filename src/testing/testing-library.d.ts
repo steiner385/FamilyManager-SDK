@@ -28,8 +28,4 @@ declare global {
   }
 }
 
-declare module '@testing-library/jest-dom' {
-  export interface JestMatchers<R = void, T = {}> extends TestingLibraryMatchers<typeof expect.stringContaining, R> {}
-}
-
 export {};
