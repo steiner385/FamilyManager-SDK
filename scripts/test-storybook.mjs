@@ -124,6 +124,9 @@ async function startStaticServer() {
 // Keep track of server instance
 let serverInstance;
 
+// Keep track of server instance
+let serverInstance;
+
 async function runTests() {
   try {
     console.log('Starting test execution...');
