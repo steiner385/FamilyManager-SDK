@@ -1,5 +1,11 @@
 import { Hono } from 'hono';
 import { apiRoutes } from '../../routes/api';
+import fetch, { Request as NodeRequest, Response as NodeResponse } from 'node-fetch';
+
+// Make Request available globally for tests
+(global as any).Request = NodeRequest;
+(global as any).Response = NodeResponse;
+(global as any).fetch = fetch;
 
 export const setupTestApp = () => {
   const app = new Hono();
@@ -21,15 +27,29 @@ export const setupTestApp = () => {
 
   // Create a wrapper around the app to handle test requests
   const testApp = {
-    request: async (input: Request | string, init?: RequestInit) => {
-      const request = input instanceof Request ? input : new Request(input, init);
+    request: async (input: NodeRequest | string, init?: RequestInit) => {
+      const request = typeof input === 'string' ? new NodeRequest(input, init as any) : input;
       const url = new URL(request.url);
       // Remove the hostname part as Hono expects just the path
       const path = url.pathname + url.search;
+      
+      // Convert body to string if it exists
+      let body: string | undefined;
+      if (request.body) {
+        body = await request.text();
+      }
+
+      // Convert headers to plain object
+      const headers: Record<string, string> = {};
+      request.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+
+      // Make the request using Hono's request method
       return app.request(path, {
         method: request.method,
-        headers: request.headers,
-        body: request.body,
+        headers,
+        body,
       });
     }
   };

@@ -59,10 +59,9 @@ describe('LineChart', () => {
       />
     );
 
-    const svg = screen.getByTestId('line-chart-svg');
-    const line = svg.querySelector('.line-chart-line');
-    const points = svg.querySelectorAll('.line-chart-point');
-    const axes = svg.querySelectorAll('.line-chart-axis');
+    const line = screen.getByTestId('line-chart-line');
+    const points = screen.getAllByTestId('line-chart-point');
+    const axes = screen.getAllByTestId('line-chart-axis');
 
     expect(line).toHaveAttribute('stroke', '#ff0000');
     expect(line).toHaveAttribute('stroke-width', '2');

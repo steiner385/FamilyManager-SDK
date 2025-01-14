@@ -1,7 +1,7 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 
 const config: StorybookConfig = {
-  stories: ['../src/stories/Progress.stories.@(ts|tsx)'],
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
   addons: [
     '@storybook/addon-links',
     '@storybook/addon-essentials',
@@ -25,26 +25,36 @@ const config: StorybookConfig = {
   features: {
     storyStoreV7: true,
   },
-  viteFinal: async (viteConfig) => {
+  viteFinal: async (config) => {
     return {
-      ...viteConfig,
+      ...config,
       optimizeDeps: {
-        ...viteConfig.optimizeDeps,
+        ...config.optimizeDeps,
         include: [
           '@storybook/react-vite',
           '@storybook/testing-library',
           '@storybook/jest',
+          '@storybook/addon-interactions',
         ],
       },
       build: {
-        ...viteConfig.build,
+        ...config.build,
         sourcemap: true,
       },
       resolve: {
-        ...viteConfig.resolve,
+        ...config.resolve,
         alias: {
-          ...viteConfig.resolve?.alias,
+          ...config.resolve?.alias,
           '@': '/src',
+        },
+      },
+      server: {
+        ...config.server,
+        fs: {
+          strict: false,
+        },
+        hmr: {
+          port: 6010,
         },
       },
     };

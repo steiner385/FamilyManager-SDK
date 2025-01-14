@@ -146,20 +146,22 @@ describe('MetricsCard', () => {
   });
 
   it('handles tooltip display', async () => {
-    const tooltipContent = 'Total revenue across all channels';
+    const tooltipText = 'Total revenue across all channels';
     const user = userEvent.setup();
 
     render(
       <MetricsCard 
         {...mockData}
-        tooltip={tooltipContent}
+        tooltip={tooltipText}
       />
     );
 
-    const infoIcon = screen.getByTestId('metrics-card-info');
-    await user.hover(infoIcon);
+    const tooltipContainer = screen.getByTestId('metrics-card-tooltip');
+    await user.hover(tooltipContainer);
 
-    expect(screen.getByText(tooltipContent)).toBeInTheDocument();
+    const tooltipContent = screen.getByTestId('metrics-card-tooltip-content');
+    expect(tooltipContent).toBeInTheDocument();
+    expect(tooltipContent).toHaveTextContent(tooltipText);
   });
 
   it('handles neutral trend', () => {

@@ -3,20 +3,27 @@ import { render, screen, fireEvent } from '../../../testing/simple-test-utils';
 import { Modal } from '../Modal';
 
 // Mock Headless UI's Transition component
-jest.mock('@headlessui/react', () => ({
-  Transition: {
-    Root: ({ show, children }: { show: boolean; children: React.ReactNode }) => show ? children : null,
-    Child: ({ children }: { children: React.ReactNode }) => children,
-  },
-  Dialog: {
-    Panel: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-      <div className={className}>{children}</div>
-    ),
-    Title: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-      <h1 className={className}>{children}</h1>
-    ),
-  },
-}));
+jest.mock('@headlessui/react', () => {
+  const Dialog = ({ children, ...props }: { children: React.ReactNode } & any) => {
+    const Component = props.as || 'div';
+    return <Component {...props}>{children}</Component>;
+  };
+  Dialog.Panel = ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="modal-panel" className={className}>{children}</div>
+  );
+  Dialog.Title = ({ children, className, ...props }: { children: React.ReactNode; className?: string } & any) => (
+    <h1 className={className} {...props}>{children}</h1>
+  );
+
+  return {
+    Transition: {
+      Root: ({ show, children }: { show: boolean; children: React.ReactNode }) => show ? children : null,
+      Child: ({ children }: { children: React.ReactNode }) => children,
+    },
+    Dialog,
+    Fragment: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
 
 describe('Modal', () => {
   const mockOnClose = jest.fn();

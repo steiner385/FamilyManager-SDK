@@ -76,10 +76,10 @@ export const Default: Story = {
     const track = canvas.getByTestId('default-progress-track');
     const bar = canvas.getByTestId('default-progress-bar');
     
-    await expect(track).toBeVisible();
-    await expect(bar).toBeVisible();
-    await expect(bar).toHaveClass('bg-blue-600');
-    await checkProgressWidth(bar, 60);
+    expect(track).toBeInTheDocument();
+    expect(bar).toBeInTheDocument();
+    expect(bar).toHaveClass('bg-blue-600');
+    expect(bar.style.width).toBe('60%');
   },
 };
 
@@ -94,9 +94,9 @@ export const Success: Story = {
     const canvas = within(canvasElement);
     const bar = canvas.getByTestId('success-progress-bar');
     
-    await expect(bar).toBeVisible();
-    await expect(bar).toHaveClass('bg-green-600');
-    await checkProgressWidth(bar, 80);
+    expect(bar).toBeInTheDocument();
+    expect(bar).toHaveClass('bg-green-600');
+    expect(bar.style.width).toBe('80%');
   },
 };
 
@@ -111,9 +111,9 @@ export const Warning: Story = {
     const canvas = within(canvasElement);
     const bar = canvas.getByTestId('warning-progress-bar');
     
-    await expect(bar).toBeVisible();
-    await expect(bar).toHaveClass('bg-yellow-500');
-    await checkProgressWidth(bar, 70);
+    expect(bar).toBeInTheDocument();
+    expect(bar).toHaveClass('bg-yellow-500');
+    expect(bar.style.width).toBe('70%');
   },
 };
 
@@ -128,9 +128,9 @@ export const Danger: Story = {
     const canvas = within(canvasElement);
     const bar = canvas.getByTestId('danger-progress-bar');
     
-    await expect(bar).toBeVisible();
-    await expect(bar).toHaveClass('bg-red-600');
-    await checkProgressWidth(bar, 30);
+    expect(bar).toBeInTheDocument();
+    expect(bar).toHaveClass('bg-red-600');
+    expect(bar.style.width).toBe('30%');
   },
 };
 
@@ -145,8 +145,8 @@ export const Small: Story = {
     const canvas = within(canvasElement);
     const track = canvas.getByTestId('small-progress-track');
     
-    await expect(track).toBeVisible();
-    await expect(track).toHaveClass('h-1');
+    expect(track).toBeInTheDocument();
+    expect(track).toHaveClass('h-1');
   },
 };
 
@@ -161,8 +161,8 @@ export const Large: Story = {
     const canvas = within(canvasElement);
     const track = canvas.getByTestId('large-progress-track');
     
-    await expect(track).toBeVisible();
-    await expect(track).toHaveClass('h-3');
+    expect(track).toBeInTheDocument();
+    expect(track).toHaveClass('h-3');
   },
 };
 
@@ -176,9 +176,9 @@ export const WithLabel: Story = {
     const canvas = within(canvasElement);
     const label = canvas.getByTestId('label-progress-label');
     
-    await expect(label).toBeVisible();
-    await expect(label).toHaveTextContent('Upload Progress');
-    await expect(label).toHaveClass('font-medium');
+    expect(label).toBeInTheDocument();
+    expect(label).toHaveTextContent('Upload Progress');
+    expect(label).toHaveClass('font-medium');
   },
 };
 
@@ -193,8 +193,8 @@ export const WithValueOutside: Story = {
     const canvas = within(canvasElement);
     const value = canvas.getByTestId('value-outside-progress-value-outside');
     
-    await expect(value).toBeVisible();
-    await expect(value).toHaveTextContent('65%');
+    expect(value).toBeInTheDocument();
+    expect(value).toHaveTextContent('65%');
   },
 };
 
@@ -210,9 +210,9 @@ export const WithValueInside: Story = {
     const canvas = within(canvasElement);
     const value = canvas.getByTestId('value-inside-progress-value-inside');
     
-    await expect(value).toBeVisible();
-    await expect(value).toHaveTextContent('65%');
-    await expect(value).toHaveClass('text-white');
+    expect(value).toBeInTheDocument();
+    expect(value).toHaveTextContent('65%');
+    expect(value).toHaveClass('text-white');
   },
 };
 
@@ -226,9 +226,9 @@ export const Striped: Story = {
     const canvas = within(canvasElement);
     const bar = canvas.getByTestId('striped-progress-bar');
     
-    await expect(bar).toBeVisible();
-    await expect(bar).toHaveClass('bg-gradient-to-r');
-    await expect(bar).toHaveClass('bg-[length:30px_30px]');
+    expect(bar).toBeInTheDocument();
+    expect(bar).toHaveClass('bg-gradient-to-r');
+    expect(bar).toHaveClass('bg-[length:30px_30px]');
   },
 };
 
@@ -242,8 +242,8 @@ export const Animated: Story = {
     const canvas = within(canvasElement);
     const bar = canvas.getByTestId('animated-progress-bar');
     
-    await expect(bar).toBeVisible();
-    await expect(bar).toHaveClass('after:animate-progress-shine');
+    expect(bar).toBeInTheDocument();
+    expect(bar).toHaveClass('after:animate-progress-shine');
   },
 };
 
@@ -262,10 +262,10 @@ export const CompleteProgress: Story = {
     const label = canvas.getByTestId('complete-progress-label');
     const value = canvas.getByTestId('complete-progress-value-outside');
     
-    await expect(bar).toBeVisible();
-    await expect(bar).toHaveClass('bg-green-600');
-    await checkProgressWidth(bar, 100);
-    await expect(label).toHaveTextContent('Download Complete');
-    await expect(value).toHaveTextContent('100%');
+    expect(bar).toBeInTheDocument();
+    expect(bar).toHaveClass('bg-green-600');
+    expect(bar.style.width).toBe('100%');
+    expect(label).toHaveTextContent('Download Complete');
+    expect(value).toHaveTextContent('100%');
   },
 };

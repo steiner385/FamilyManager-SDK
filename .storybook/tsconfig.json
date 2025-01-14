@@ -1,12 +1,11 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "emitDecoratorMetadata": true,
     "outDir": "",
     "module": "ESNext",
     "target": "ES2020",
     "lib": ["ESNext", "DOM"],
-    "types": ["node", "@storybook/react"],
+    "types": ["node"],
     "jsx": "react-jsx",
     "allowJs": true,
     "skipLibCheck": true,
@@ -17,14 +16,14 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "incremental": true,
+    "rootDir": "..",
+    "baseUrl": "..",
     "paths": {
-      "@/*": ["../src/*"]
+      "@/*": ["src/*"]
     }
   },
   "include": [
-    "../src/**/*.stories.tsx",
-    "../src/**/*.stories.ts",
-    "../src/**/*.stories.mdx",
+    "../src/stories/LoadingSpinner.stories.tsx",
     "./preview.tsx",
     "./main.ts"
   ],
