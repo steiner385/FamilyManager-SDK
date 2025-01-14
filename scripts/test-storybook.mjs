@@ -160,7 +160,6 @@ async function runTests() {
       'test-storybook',
       '--ci',
       '--url', 'http://127.0.0.1:6011',
-      '--includeTags', 'test',
       '--verbose',
       '--maxWorkers', '1',
       '--no-cache',
