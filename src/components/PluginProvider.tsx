@@ -27,7 +27,9 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
 
   // Use separate useCallback hooks for each function
   const installPlugin = React.useCallback(
-    (plugin: Plugin) => manager.installPlugin(plugin),
+    async (plugin: Plugin) => {
+      await manager.registerPlugin(plugin);
+    },
     [manager]
   );
 

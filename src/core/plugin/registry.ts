@@ -9,20 +9,19 @@ class PluginRegistry {
   private logger = Logger.getInstance();
 
   register(plugin: Plugin): void {
-    const name = plugin.metadata.name;
-    if (this.plugins.has(name)) {
-      throw new Error(`Plugin ${name} is already registered`);
-    }
-    this.plugins.set(name, plugin);
-    this.pluginStates.set(name, 'registered');
-    
-    // Register routes if plugin has them
-    if (plugin.routes) {
-      const routeRegistry = RouteRegistry.getInstance();
-      routeRegistry.registerPluginRoutes(name, plugin.routes);
+    if (this.plugins.has(plugin.id)) {
+      throw new Error(`Plugin ${plugin.id} is already registered`);
     }
     
-    this.logger.debug(`Registered plugin: ${name}`);
+    this.plugins.set(plugin.id, plugin);
+    this.pluginStates.set(plugin.id, {
+      isEnabled: true,
+      status: 'started',
+      isInitialized: false,
+      error: null
+    });
+    
+    this.logger.debug(`Registered plugin: ${plugin.name}`);
   }
 
   unregister(name: string): void {

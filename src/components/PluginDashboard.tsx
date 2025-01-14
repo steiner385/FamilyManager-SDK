@@ -1,7 +1,7 @@
+import { Plugin } from '../types/plugin';
 import { PluginManager } from '../core/plugin/PluginManager';
 import { usePluginUIStore } from '../core/store/PluginUIStore';
 import { PluginContainer } from './PluginContainer';
-import { Plugin } from '../core/types';
 
 export function PluginDashboard() {
   const manager = PluginManager.getInstance();
@@ -19,7 +19,7 @@ export function PluginDashboard() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {plugins.map(plugin => (
         <PluginContainer
-          key={plugin.name}
+          key={plugin.id}
           pluginName={plugin.name}
           className="h-full"
         />
