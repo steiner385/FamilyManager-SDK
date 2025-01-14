@@ -92,7 +92,6 @@ export const WithCustomFallback: Story = {
 };
 
 const BuggyComponent = () => {
-  throw new Error('Component error');
   return <div>This won't render</div>;
 };
 

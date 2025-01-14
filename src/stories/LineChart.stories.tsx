@@ -53,10 +53,10 @@ export const Default: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const chart = canvas.getByTestId('line-chart');
-    const svg = canvas.getByTestId('line-chart-svg');
-    const line = canvas.getByTestId('line-chart-line');
-    const points = canvas.getAllByTestId('line-chart-point');
+    const chart = canvas.getByTestId('default-chart');
+    const svg = canvas.getByTestId('default-chart-svg');
+    const line = canvas.getByTestId('default-chart-line');
+    const points = canvas.getAllByTestId('default-chart-point');
     
     await expect(chart).toBeVisible();
     await expect(svg).toBeVisible();
@@ -73,8 +73,8 @@ export const CustomSize: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const svg = canvas.getByTestId('line-chart-svg');
-    
+    const svg = canvas.getByTestId('custom-size-chart-svg');
+
     await expect(svg).toHaveAttribute('width', '600');
     await expect(svg).toHaveAttribute('height', '400');
   },
@@ -101,9 +101,9 @@ export const CustomStyles: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const line = canvas.getByTestId('line-chart-line');
-    const points = canvas.getAllByTestId('line-chart-point');
-    const axes = canvas.getAllByTestId('line-chart-axis');
+    const line = canvas.getByTestId('custom-styles-chart-line');
+    const points = canvas.getAllByTestId('custom-styles-chart-point');
+    const axes = canvas.getAllByTestId('custom-styles-chart-axis');
     
     await expect(line).toHaveAttribute('stroke', '#10b981');
     await expect(line).toHaveAttribute('stroke-width', '3');
@@ -129,8 +129,8 @@ export const CustomFormatters: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const xLabels = canvas.getAllByTestId('line-chart-x-label');
-    const yLabels = canvas.getAllByTestId('line-chart-y-label');
+    const xLabels = canvas.getAllByTestId('custom-formatters-chart-x-label');
+    const yLabels = canvas.getAllByTestId('custom-formatters-chart-y-label');
     
     await expect(xLabels[0]).toBeVisible();
     await expect(yLabels[0]).toBeVisible();
@@ -145,16 +145,16 @@ export const WithTooltip: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const points = canvas.getAllByTestId('line-chart-point');
-    
+    const points = canvas.getAllByTestId('tooltip-chart-point');
+
     // Hover over a point to show tooltip
     await userEvent.hover(points[0]);
-    const tooltip = canvas.getByTestId('line-chart-tooltip');
+    const tooltip = canvas.getByTestId('tooltip-chart-tooltip');
     await expect(tooltip).toBeVisible();
-    
+
     // Move away to hide tooltip
     await userEvent.unhover(points[0]);
-    await expect(canvas.queryByTestId('line-chart-tooltip')).not.toBeInTheDocument();
+    await expect(canvas.queryByTestId('tooltip-chart-tooltip')).not.toBeInTheDocument();
   },
 };
 
@@ -165,8 +165,8 @@ export const EmptyData: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const emptyMessage = canvas.getByTestId('line-chart-empty');
-    
+    const emptyMessage = canvas.getByTestId('empty-chart-empty');
+
     await expect(emptyMessage).toBeVisible();
     await expect(emptyMessage).toHaveTextContent('No data available');
   },
@@ -179,8 +179,8 @@ export const SingleDataPoint: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const points = canvas.getAllByTestId('line-chart-point');
-    
+    const points = canvas.getAllByTestId('single-point-chart-point');
+
     await expect(points).toHaveLength(1);
   },
 };
@@ -196,9 +196,9 @@ export const LargeDataSet: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const points = canvas.getAllByTestId('line-chart-point');
-    const xLabels = canvas.getAllByTestId('line-chart-x-label');
-    
+    const points = canvas.getAllByTestId('large-dataset-chart-point');
+    const xLabels = canvas.getAllByTestId('large-dataset-chart-x-label');
+
     await expect(points).toHaveLength(20);
     await expect(xLabels).toHaveLength(20);
   },
@@ -212,9 +212,9 @@ export const AccessibleChart: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const chart = canvas.getByTestId('line-chart');
-    const points = canvas.getAllByTestId('line-chart-point');
-    
+    const chart = canvas.getByTestId('accessible-chart');
+    const points = canvas.getAllByTestId('accessible-chart-point');
+
     await expect(chart).toHaveAttribute('role', 'img');
     await expect(chart).toHaveAttribute('aria-label', 'Monthly sales data visualization');
     await expect(points[0]).toHaveAttribute('role', 'button');
