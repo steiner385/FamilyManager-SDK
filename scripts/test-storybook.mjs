@@ -160,7 +160,7 @@ async function runTests() {
       '--url', 'http://localhost:6011',
       '--verbose',
       '--maxWorkers', '1',
-      '--testMatch', testPattern
+      '--includeTags', 'autodocs'
     ], {
       stdio: 'inherit',
       shell: true,
