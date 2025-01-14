@@ -22,6 +22,15 @@ if (!storyFile) {
   console.error('Please provide a story file name as an argument');
   console.error('Example: node test-storybook.js LoadingSpinner.stories.tsx');
   process.exit(1);
+  } catch (error) {
+    console.error('Error during test execution:', error);
+    if (serverInstance) {
+      console.log('Closing static server due to error...');
+      await new Promise((resolve) => serverInstance.close(resolve));
+      console.log('Static server closed');
+    }
+    throw error;
+  }
 }
 
 console.debug('Debug: Script started');
