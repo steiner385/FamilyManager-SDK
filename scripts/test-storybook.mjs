@@ -121,6 +121,9 @@ async function startStaticServer() {
   });
 }
 
+// Keep track of server instance
+let serverInstance;
+
 async function runTests() {
   try {
     console.log('Starting test execution...');
@@ -231,9 +234,9 @@ async function runTests() {
       });
     } finally {
       clearInterval(keepalive);
-      if (server) {
+      if (serverInstance) {
         console.log('Closing static server...');
-        await new Promise((resolve) => server.close(resolve));
+        await new Promise((resolve) => serverInstance.close(resolve));
         console.log('Static server closed');
       }
     }
@@ -264,11 +267,4 @@ runTests()
     console.error(`✗ ${storyFile} tests failed:`, error);
     console.error('Error stack:', error.stack);
     process.exit(1);
-  })
-  .finally(async () => {
-    if (serverInstance) {
-      console.log('Ensuring server is closed...');
-      await new Promise((resolve) => serverInstance.close(resolve));
-      console.log('Server closed');
-    }
   });
