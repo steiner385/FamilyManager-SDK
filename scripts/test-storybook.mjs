@@ -29,55 +29,58 @@ try {
   // Ignore errors from pkill
 }
 
-// Build storybook first
-try {
-  console.log('Building Storybook...');
-  execSync('npm run build-storybook', { stdio: 'inherit' });
-} catch (error) {
-  console.error('Failed to build Storybook:', error);
-  process.exit(1);
-}
-
-console.log('Starting Storybook server...');
-
 // Start storybook in CI mode
+console.log('Starting Storybook server...');
 const storybook = spawn('npx', ['storybook', 'dev', '--ci', '--port', '6011'], {
-  stdio: 'pipe', // Change to pipe to capture all output
-  shell: true
+  stdio: ['pipe', 'pipe', 'pipe'], // Explicitly set all streams to pipe
+  shell: true,
+  env: { ...process.env, FORCE_COLOR: '1' } // Force colored output
 });
+
+let serverStarted = false;
 
 // Handle storybook process output
-storybook.stdout?.on('data', (data) => {
-  console.log(`Storybook: ${data}`);
+storybook.stdout.on('data', (data) => {
+  const output = data.toString();
+  console.log(output);
+  if (output.includes('Storybook') && output.includes('started')) {
+    serverStarted = true;
+  }
 });
 
-storybook.stderr?.on('data', (data) => {
+storybook.stderr.on('data', (data) => {
   console.error(`Storybook error: ${data}`);
 });
 
 storybook.on('error', (error) => {
   console.error('Failed to start Storybook:', error);
+  cleanup();
   process.exit(1);
 });
 
-// Handle storybook process exit
-storybook.on('exit', (code, signal) => {
-  if (code !== null) {
-    console.log(`Storybook process exited with code ${code}`);
+function cleanup() {
+  console.log('Cleaning up...');
+  storybook.kill();
+  try {
+    execSync('pkill -f storybook || true');
+  } catch (error) {
+    // Ignore cleanup errors
   }
-  if (signal !== null) {
-    console.log(`Storybook process was killed with signal ${signal}`);
-  }
-});
+}
+
+// Handle process termination
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
 
 // Wait for storybook to be ready then run tests
 async function runTests() {
   try {
     console.log('Waiting for Storybook server to be ready...');
     
+    // Wait for server to start
     await waitOn({
       resources: ['http://localhost:6011'],
-      timeout: 90000, // Increase timeout to 90 seconds
+      timeout: 90000,
       interval: 1000,
       validateStatus: function(status) {
         return status === 200;
@@ -85,11 +88,11 @@ async function runTests() {
       verbose: true
     });
 
+    if (!serverStarted) {
+      throw new Error('Storybook server failed to start properly');
+    }
+
     console.log('Storybook server is ready!');
-
-    // Add a longer delay to ensure the server is fully initialized
-    await new Promise(resolve => setTimeout(resolve, 10000));
-
     console.log(`Running tests for ${storyFile}...`);
     
     // Run the tests with specific testMatch pattern
@@ -99,11 +102,11 @@ async function runTests() {
       '--url', 'http://localhost:6011',
       '--timeout', '90000',
       '--verbose',
-      '--debug',
       '--testMatch', testPattern
     ], {
       stdio: 'inherit',
-      shell: true
+      shell: true,
+      env: { ...process.env, FORCE_COLOR: '1' }
     });
 
     return new Promise((resolve, reject) => {
@@ -124,13 +127,7 @@ async function runTests() {
     console.error('Error during test execution:', error);
     throw error;
   } finally {
-    // Cleanup
-    storybook.kill();
-    try {
-      execSync('pkill -f storybook || true');
-    } catch (error) {
-      // Ignore cleanup errors
-    }
+    cleanup();
   }
 }
 
