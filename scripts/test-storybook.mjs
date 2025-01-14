@@ -89,35 +89,28 @@ async function buildStorybook() {
   });
 }
 
-async function startStaticServer() {
+async function startStorybookServer() {
   return new Promise((resolve, reject) => {
-    const server = createServer((request, response) => {
-      return handler(request, response, {
-        public: 'storybook-static',
-        cleanUrls: false,
-        trailingSlash: false,
-        headers: [
-          {
-            source: '**',
-            headers: [
-              { key: 'Access-Control-Allow-Origin', value: '*' },
-              { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }
-            ]
-          }
-        ],
-        directoryListing: false
-      });
+    console.log('Starting Storybook dev server...');
+    const storybookProcess = spawn('npm', ['run', 'storybook', '--', '--port', '6011'], {
+      stdio: 'inherit',
+      shell: true,
+      env: { ...process.env, NODE_ENV: 'development' }
     });
 
-    server.on('error', (error) => {
-      console.error('Server error:', error);
+    storybookProcess.on('error', (error) => {
+      console.error('Storybook server error:', error);
       reject(error);
     });
 
-    server.listen(6011, 'localhost', () => {
-      console.log('Static server running at http://localhost:6011');
-      resolve(server);
+    storybookProcess.on('exit', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Storybook server exited with code ${code}`));
+      }
     });
+
+    // Wait a bit to ensure the server starts
+    setTimeout(() => resolve(storybookProcess), 5000);
   });
 }
 
@@ -137,49 +130,20 @@ async function runTests() {
       console.log('Using existing storybook-static directory');
     }
 
-    // Start static file server
-    console.log('Starting static server...');
-    serverInstance = await startStaticServer();
-    console.log('Static server started successfully');
+    // Start Storybook dev server
+    serverInstance = await startStorybookServer();
 
-    // Wait for server to be ready and verify key files
-    console.log('Waiting for server to be ready...');
-    const requiredFiles = [
-      'iframe.html',
-      'index.html',
-      'assets/iframe-0454fe63.js'
-    ];
-    
-    for (const file of requiredFiles) {
-      const url = `http://localhost:6011/${file}`;
-      console.log(`Checking ${url}...`);
-      
-      await waitOn({
-        resources: [url],
-        timeout: 30000,
-        interval: 500,
-        validateStatus: function(status) {
-          return status === 200;
-        },
-        headers: {
-          'Accept': '*/*'
-        }
-      });
-
-      // Verify file content
-      const response = await fetch(url);
-      const content = await response.text();
-      if (!content || content.length === 0) {
-        throw new Error(`Empty response from ${file}`);
-      }
-      console.log(`✓ ${file} verified`);
-    }
-
-    // Additional delay to ensure everything is loaded
-    console.log('All required files verified, waiting for full initialization...');
-    await new Promise(resolve => setTimeout(resolve, 10000));
-
-    console.log('Server is ready, running tests...');
+    // Wait for Storybook server to be ready
+    console.log('Waiting for Storybook server to be ready...');
+    await waitOn({
+      resources: ['http://localhost:6011/iframe.html'],
+      timeout: 60000,
+      interval: 500,
+      validateStatus: function(status) {
+        return status === 200;
+      },
+    });
+    console.log('Storybook server is ready');
 
     // Run the tests
     console.log('Running test-storybook...');
@@ -196,6 +160,7 @@ async function runTests() {
       'test-storybook',
       '--ci',
       '--url', 'http://127.0.0.1:6011',
+      '--stories', testPattern,
       '--verbose',
       '--maxWorkers', '1',
       '--no-cache',
@@ -235,17 +200,17 @@ async function runTests() {
     } finally {
       clearInterval(keepalive);
       if (serverInstance) {
-        console.log('Closing static server...');
-        await new Promise((resolve) => serverInstance.close(resolve));
-        console.log('Static server closed');
+        console.log('Closing Storybook server...');
+        serverInstance.kill();
+        console.log('Storybook server closed');
       }
     }
   } catch (error) {
     console.error('Error during test execution:', error);
     if (serverInstance) {
-      console.log('Closing static server due to error...');
-      await new Promise((resolve) => serverInstance.close(resolve));
-      console.log('Static server closed');
+      console.log('Closing Storybook server due to error...');
+      serverInstance.kill();
+      console.log('Storybook server closed');
     }
     throw error;
   }
