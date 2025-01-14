@@ -2,6 +2,9 @@ import { PrismaClient } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { logger } from '../../logging/Logger';
 import type { Plugin, PluginState } from '../../plugin/types';
+import jwt from 'jsonwebtoken';
+import type { TokenPayload } from '../../utils/auth';
+import { UserRole } from '../../types/user-role';
 
 class MockDatabaseError extends Error {
   constructor(message: string, public operation: string, public details?: any) {
@@ -318,49 +321,163 @@ mockPrisma.$transaction.mockImplementation(async (operations: any[]) => {
   }
 });
 
-// Add a global beforeAll reset for tests
+// Test data generation helpers
+export function generateFutureDate(daysFromNow: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromNow);
+  return date.toISOString();
+}
+
+interface TestUserData {
+  email?: string;
+  password?: string;
+  role?: UserRole;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  familyId?: string;
+}
+
+interface TestUser {
+  email: string;
+  password: string;
+  role: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+}
+
+export function getTestUsers() {
+  const timestamp = Date.now();
+  return {
+    parent: {
+      email: `parent_${timestamp}@test.com`,
+      password: 'TestPass123!',
+      role: UserRole.PARENT,
+      firstName: 'Test',
+      lastName: 'Parent',
+      username: `parent_${timestamp}`
+    },
+    member: {
+      email: `member_${timestamp}@test.com`,
+      password: 'TestPass123!',
+      role: UserRole.MEMBER,
+      firstName: 'Test',
+      lastName: 'Member',
+      username: `member_${timestamp}`
+    }
+  };
+}
+
+// Relationship mocking helpers
+function createRelationshipProxy<T extends Record<string, any>>(
+  data: T,
+  relationships: Record<string, () => any>
+): T & Record<string, () => any> {
+  return new Proxy(data, {
+    get(target, prop) {
+      if (prop in relationships) {
+        return relationships[prop as string];
+      }
+      return target[prop as keyof T];
+    }
+  });
+}
+
+function buildUserRelationships(user: MockUser) {
+  return {
+    family: () => user.familyId ? mockData.families.get(user.familyId) : null,
+    createdTasks: () => [],
+    assignedTasks: () => [],
+    notifications: () => [],
+    preferences: () => ({
+      theme: 'light',
+      language: 'en',
+      notifications: true
+    })
+  };
+}
+
+function buildFamilyRelationships(family: MockFamily) {
+  return {
+    members: () => family.members,
+    events: () => [],
+    tasks: () => [],
+    invites: () => []
+  };
+}
+
+// Test context management
+interface TestContext {
+  users: Map<string, MockUser>;
+  families: Map<string, MockFamily>;
+  transactions: Map<string, MockTransaction>;
+  tokens: Map<string, string>;
+}
+
+class TestContextManager {
+  private static instance: TestContextManager;
+  private context: TestContext;
+
+  private constructor() {
+    this.context = {
+      users: new Map(),
+      families: new Map(),
+      transactions: new Map(),
+      tokens: new Map()
+    };
+  }
+
+  static getInstance(): TestContextManager {
+    if (!TestContextManager.instance) {
+      TestContextManager.instance = new TestContextManager();
+    }
+    return TestContextManager.instance;
+  }
+
+  getContext(): TestContext {
+    return this.context;
+  }
+
+  reset(): void {
+    this.context = {
+      users: new Map(),
+      families: new Map(),
+      transactions: new Map(),
+      tokens: new Map()
+    };
+  }
+
+  trackEntity(type: keyof TestContext, id: string, data: any): void {
+    this.context[type].set(id, data);
+  }
+
+  getEntity<T>(type: keyof TestContext, id: string): T | undefined {
+    return this.context[type].get(id) as T | undefined;
+  }
+}
+
+export const testContext = TestContextManager.getInstance();
+
+// Global test hooks
 beforeAll(() => {
   resetTestData();
-  mockTransactions.clear();
+});
+
+afterEach(async () => {
+  await TestCleanup.cleanup();
+});
+
+afterAll(() => {
+  resetTestData();
+  mockPrisma.$reset();
 });
 
 mockPrisma.user.findUnique.mockImplementation((args) => {
-  console.log('findUnique - looking for user:', args.where.id);
-  console.log('findUnique - available users:', Array.from(mockData.users.keys()));
-  
   const user = mockData.users.get(args.where.id as string);
-  if (!user) {
-    console.log('findUnique - user not found');
-    return mockDeep<any>(undefined);
-  }
+  if (!user) return null;
   
-  console.log('findUnique - found user:', user);
-  const family = user.familyId ? mockData.families.get(user.familyId) : undefined;
-  const response = {
-    ...user,
-    family: family ? {
-      id: family.id,
-      name: family.name,
-      members: family.members.map(m => ({
-        id: m.id,
-        email: m.email,
-        firstName: m.firstName,
-        lastName: m.lastName,
-        role: m.role,
-        username: m.username,
-        familyId: m.familyId,
-        createdAt: m.createdAt,
-        updatedAt: m.updatedAt
-      }))
-    } : null
-  };
-  const mockUser = mockDeep<any>({
-    ...response,
-    family: () => Promise.resolve(response.family),
-    createdTasks: () => Promise.resolve([]),
-    assignedTasks: () => Promise.resolve([])
-  });
-  return mockUser;
+  return createRelationshipProxy(user, buildUserRelationships(user));
 });
 
 // Mock family operations
@@ -418,28 +535,9 @@ mockPrisma.family.create.mockImplementation((args: Prisma.FamilyCreateArgs) => {
 
 mockPrisma.family.findUnique.mockImplementation((args) => {
   const family = mockData.families.get(args.where.id as string);
-  if (!family) return mockDeep<any>(undefined);
-  const response = {
-    ...family,
-    members: family.members.map(m => ({
-      id: m.id,
-      email: m.email,
-      firstName: m.firstName,
-      lastName: m.lastName,
-      role: m.role,
-      username: m.username,
-      familyId: m.familyId,
-      createdAt: m.createdAt,
-      updatedAt: m.updatedAt
-    }))
-  };
-  const mockFamily = mockDeep<any>({
-    ...response,
-    members: () => Promise.resolve(response.members),
-    events: () => Promise.resolve([]),
-    tasks: () => Promise.resolve([])
-  });
-  return mockFamily;
+  if (!family) return null;
+  
+  return createRelationshipProxy(family, buildFamilyRelationships(family));
 });
 
 mockPrisma.family.update.mockImplementation((args: Prisma.FamilyUpdateArgs) => {
