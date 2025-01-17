@@ -1,9 +1,10 @@
 // Import necessary modules
-import { v4 as uuidv4 } from 'uuid';
-import { logger } from '../logging/Logger';
-import { EventDeliveryStatus } from './types';
+const { v4: uuidv4 } = require('uuid');
+const { logger } = require('../logging/Logger');
+const { EventDeliveryStatus } = require('./types');
+
 // EventBus class definition
-export class EventBus {
+class EventBus {
     constructor(config = {}) {
         this.subscriptions = new Map();
         this.channels = new Set();
@@ -139,5 +140,9 @@ export class EventBus {
     }
 }
 // Export a default instance
-export const eventBus = EventBus.getInstance();
-//# sourceMappingURL=EventBus.js.map
+const eventBus = EventBus.getInstance();
+
+module.exports = {
+  EventBus,
+  eventBus
+};

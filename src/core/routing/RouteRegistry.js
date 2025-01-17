@@ -1,5 +1,6 @@
-import { logger } from '../utils/logger';
-export class RouteRegistry {
+const { logger } = require('../utils/logger');
+
+class RouteRegistry {
     constructor() {
         this.routes = new Map();
     }
@@ -38,5 +39,9 @@ export class RouteRegistry {
     }
 }
 RouteRegistry.instance = null;
-export const routeRegistry = RouteRegistry.getInstance();
-//# sourceMappingURL=RouteRegistry.js.map
+const routeRegistry = RouteRegistry.getInstance();
+
+module.exports = {
+  RouteRegistry,
+  routeRegistry
+};

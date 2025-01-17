@@ -1,6 +1,7 @@
-import { logger } from '../utils/logger';
-import { routeRegistry } from '../routing/RouteRegistry';
-export class PluginManager {
+const { logger } = require('../utils/logger');
+const { routeRegistry } = require('../routing/RouteRegistry');
+
+class PluginManager {
     constructor() {
         this.installedPlugins = new Map();
         this.activePlugins = new Set();
@@ -134,5 +135,9 @@ export class PluginManager {
     }
 }
 PluginManager.instance = null;
-export const pluginManager = PluginManager.getInstance();
-//# sourceMappingURL=PluginManager.js.map
+const pluginManager = PluginManager.getInstance();
+
+module.exports = {
+  PluginManager,
+  pluginManager
+};

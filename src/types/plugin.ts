@@ -1,5 +1,5 @@
 import type { BaseConfig, BaseState, BaseRouteConfig } from './base';
-import type { PluginRoute, PluginContext } from '@core/plugin/types';
+import type { PluginRoute, PluginContext } from '../core/plugin/types';
 
 export interface Message {
   id: string;
@@ -83,7 +83,7 @@ export interface Plugin {
   permissions?: string[];
   defaultLayout?: string;
   routes?: PluginRoute[];
-  initialize?: <T = any>(context?: PluginContext<T>) => Promise<void>;
+  initialize?: (context: PluginContext) => Promise<void>;
   onInit?: () => Promise<void>;
   onUnload?: () => Promise<void>;
   teardown?: () => Promise<void>;

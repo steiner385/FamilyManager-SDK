@@ -10,10 +10,10 @@ declare const configSchema: z.ZodObject<{
     logLevel: z.ZodDefault<z.ZodEnum<["debug", "info", "warn", "error"]>>;
 }, "strip", z.ZodTypeAny, {
     greeting: string;
-    logLevel: "error" | "info" | "debug" | "warn";
+    logLevel: "info" | "warn" | "error" | "debug";
 }, {
     greeting: string;
-    logLevel?: "error" | "info" | "debug" | "warn" | undefined;
+    logLevel?: "info" | "warn" | "error" | "debug" | undefined;
 }>;
 type BasicPluginConfig = z.infer<typeof configSchema>;
 /**

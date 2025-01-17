@@ -1,56 +1,51 @@
-import { useEffect, useState } from 'react'
-import { Plugin } from '../core/plugin/types'
-import { PluginManager } from '../core/plugin/PluginManager'
+import { useEffect, useState } from 'react';
+import { Plugin } from '../core/plugin/types';
+import { pluginManager } from '../core/plugin/PluginManager';
 
-interface PluginHookState {
-  plugin: Plugin | null
-  isReady: boolean
-  error: Error | null
-}
-
-export function usePlugin(pluginName: string): PluginHookState {
-  const [state, setState] = useState<PluginHookState>({
-    plugin: null,
-    isReady: false,
-    error: null
-  })
+export function usePlugin(pluginName: string): {
+  plugin: Plugin | null;
+  isLoading: boolean;
+  error: Error | null;
+} {
+  const [plugin, setPlugin] = useState<Plugin | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const manager = PluginManager.getInstance()
-    
-    async function initializePlugin() {
+    let mounted = true;
+
+    const loadPlugin = async () => {
       try {
-        const plugin = manager.getPlugin(pluginName)
-        
-        if (!plugin) {
-          setState({
-            plugin: null,
-            isReady: false,
-            error: new Error(`Plugin ${pluginName} not found`)
-          })
-          return
+        setIsLoading(true);
+        setError(null);
+
+        const existingPlugin = pluginManager.getPlugin(pluginName);
+        if (!existingPlugin) {
+          throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        if (!manager.isInitialized(pluginName)) {
-          await manager.initializePlugin(pluginName)
+        if (!pluginManager.isInitialized(pluginName)) {
+          await pluginManager.registerPlugin(existingPlugin);
         }
 
-        setState({
-          plugin,
-          isReady: true,
-          error: null
-        })
-      } catch (error) {
-        setState({
-          plugin: null,
-          isReady: false,
-          error: error instanceof Error ? error : new Error('Failed to initialize plugin')
-        })
+        if (mounted) {
+          setPlugin(existingPlugin);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err instanceof Error ? err : new Error('Failed to load plugin'));
+          setIsLoading(false);
+        }
       }
-    }
+    };
 
-    initializePlugin()
-  }, [pluginName])
+    loadPlugin();
 
-  return state
+    return () => {
+      mounted = false;
+    };
+  }, [pluginName]);
+
+  return { plugin, isLoading, error };
 }

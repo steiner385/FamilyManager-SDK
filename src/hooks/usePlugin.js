@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
-import { PluginManager } from '../core/plugin/PluginManager';
-export function usePlugin(pluginName) {
+const { useEffect, useState } = require('react');
+const { PluginManager } = require('../core/plugin/PluginManager');
+
+function usePlugin(pluginName) {
     const [state, setState] = useState({
         plugin: null,
         isReady: false,
         error: null
     });
+
     useEffect(() => {
         const manager = PluginManager.getInstance();
+        
         async function initializePlugin() {
             try {
                 const plugin = manager.getPlugin(pluginName);
@@ -19,16 +22,17 @@ export function usePlugin(pluginName) {
                     });
                     return;
                 }
+                
                 if (!manager.isInitialized(pluginName)) {
                     await manager.initializePlugin(pluginName);
                 }
+                
                 setState({
                     plugin,
                     isReady: true,
                     error: null
                 });
-            }
-            catch (error) {
+            } catch (error) {
                 setState({
                     plugin: null,
                     isReady: false,
@@ -36,8 +40,11 @@ export function usePlugin(pluginName) {
                 });
             }
         }
+
         initializePlugin();
     }, [pluginName]);
+
     return state;
 }
-//# sourceMappingURL=usePlugin.js.map
+
+module.exports = usePlugin;

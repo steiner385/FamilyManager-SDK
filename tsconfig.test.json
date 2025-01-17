@@ -1,19 +1,17 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["jest", "@testing-library/jest-dom", "node"]
+    "types": ["node", "jest", "react", "react-dom"],
+    "noEmit": true
   },
   "include": [
-    "src/**/__tests__/**/*",
-    "src/**/*.test.*",
-    "src/**/*.spec.*",
-    "src/**/testing/**/*",
-    "e2e/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "coverage"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/**/*.ts",
+    "test/**/*.tsx",
+    "**/__tests__/**/*",
+    "**/__mocks__/**/*",
+    "**/*.test.*",
+    "**/*.spec.*"
   ]
 }

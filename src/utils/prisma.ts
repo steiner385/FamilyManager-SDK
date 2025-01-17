@@ -16,7 +16,7 @@ export function getPrismaClient(): PrismaClient {
 
     // Log queries in development
     if (process.env.NODE_ENV === 'development') {
-      prisma.$on('query' as never, (e: Prisma.QueryEvent) => {
+      prisma.$on('query', (e: any) => {
         logger.debug('Prisma Query', {
           query: e.query,
           params: e.params,
@@ -26,7 +26,7 @@ export function getPrismaClient(): PrismaClient {
     }
 
     // Log errors
-    prisma.$on('error' as never, (e: Prisma.LogEvent) => {
+    prisma.$on('error', (e: any) => {
       logger.error('Prisma Error', {
         message: e.message,
         target: e.target,

@@ -3,10 +3,39 @@
   "version": "1.0.0",
   "description": "SDK for building FamilyManager plugins and extensions",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./core/events": {
+      "types": "./dist/core/events/index.d.ts",
+      "import": "./dist/core/events/index.mjs",
+      "require": "./dist/core/events/index.cjs"
+    },
+    "./core/events/EventBus": {
+      "types": "./dist/core/events/EventBus.d.ts",
+      "import": "./dist/core/events/EventBus.mjs",
+      "require": "./dist/core/events/EventBus.cjs"
+    },
+    "./core/events/types": {
+      "types": "./dist/core/events/types.d.ts",
+      "import": "./dist/core/events/types.mjs",
+      "require": "./dist/core/events/types.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
   "scripts": {
-    "build": "tsc -p tsconfig.json --noEmitOnError false",
+    "build": "vite build && tsc -p tsconfig.json --emitDeclarationOnly",
     "build:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
@@ -34,7 +63,7 @@
     "@hono/node-server": "^1.13.7",
     "@playwright/experimental-ct-react": "^1.49.1",
     "@playwright/test": "^1.49.1",
-    "@prisma/client": "^6.2.1",
+    "@prisma/client": "^5.22.0",
     "@storybook/addon-a11y": "^7.6.7",
     "@storybook/addon-coverage": "^1.0.0",
     "@storybook/addon-essentials": "^7.6.7",
@@ -55,9 +84,10 @@
     "@types/jest": "^29.5.14",
     "@types/jest-axe": "^3.5.9",
     "@types/jsonwebtoken": "^9.0.0",
-    "@types/node": "^20.10.6",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.3",
+    "@types/node": "^18.19.70",
+    "@types/pako": "^2.0.3",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
     "@types/react-router-dom": "^5.3.3",
     "@types/supertest": "^6.0.0",
     "@types/testing-library__jest-dom": "^6.0.0",
@@ -97,19 +127,19 @@
     "zustand": "^5.0.3"
   },
   "peerDependencies": {
+    "@heroicons/react": "^2.0.0",
+    "@tanstack/react-query": "^5.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.0.0"
   },
   "dependencies": {
-    "@headlessui/react": "^2.2.0",
-    "@heroicons/react": "^2.2.0",
-    "@tanstack/react-query": "^5.0.0",
     "hono": "^4.6.16",
     "jsonwebtoken": "^9.0.0",
-    "react-router-dom": "^6.21.0",
+    "pako": "^2.1.0",
     "tailwind-merge": "^2.6.0",
     "uuid": "^11.0.5",
-    "winston": "^3.11.0",
+    "winston": "^3.17.0",
     "zod": "^3.24.1"
   }
 }

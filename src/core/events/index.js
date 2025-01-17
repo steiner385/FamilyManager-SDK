@@ -1,15 +1,23 @@
 // Core types and interfaces
-export * from './types';
-// Event system implementations
-export { EventBus, eventBus } from './EventBus';
-export * from './router';
-export * from './batch';
-export * from './validator';
-export * from './compression';
-// Error handling
-export * from './errors';
-// Constants and configuration
-export * from './constants';
-// Test utilities
-export * from './utils/test-helpers';
-//# sourceMappingURL=index.js.map
+const { EventBus, eventBus } = require('./EventBus');
+const types = require('./types');
+const router = require('./router');
+const batch = require('./batch');
+const validator = require('./validator');
+const compression = require('./compression');
+const errors = require('./errors');
+const constants = require('./constants');
+const testHelpers = require('./utils/test-helpers');
+
+module.exports = {
+  ...types,
+  EventBus,
+  eventBus,
+  ...router,
+  ...batch,
+  ...validator,
+  ...compression,
+  ...errors,
+  ...constants,
+  ...testHelpers
+};

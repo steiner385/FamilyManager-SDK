@@ -22,7 +22,7 @@ export function createMockPlugin(options) {
         isInitialized: false,
         error: null
     };
-    return {
+    const plugin = {
         id: `mock-${options.name}`,
         name: options.name,
         version: options.version,
@@ -30,6 +30,10 @@ export function createMockPlugin(options) {
         config,
         state,
         metadata: config.metadata,
+        dependencies,
+        async initialize() {
+            return Promise.resolve();
+        },
         async onInit() {
             // Register components if provided
             if (options.components) {
@@ -69,7 +73,31 @@ export function createMockPlugin(options) {
                     }
                 }
             };
-        }
+        },
+        async onUnload() {
+            return Promise.resolve();
+        },
+        async teardown() {
+            return Promise.resolve();
+        },
+        getPluginMetrics: async (pluginName, timeRange) => ({
+            memory: {
+                current: 50,
+                trend: 0,
+                history: []
+            },
+            cpu: {
+                current: 30,
+                trend: 0,
+                history: []
+            },
+            responseTime: {
+                current: 100,
+                trend: 0,
+                history: []
+            }
+        })
     };
+    return plugin;
 }
 //# sourceMappingURL=testHelpers.js.map

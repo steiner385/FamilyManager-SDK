@@ -1,49 +1,35 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "allowJs": true,
-    "incremental": true,
-    "baseUrl": ".",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["src/*"],
-      "@core/*": ["src/core/*"],
-      "@components/*": ["src/components/*"],
-      "@hooks/*": ["src/hooks/*"],
-      "@utils/*": ["src/utils/*"],
-      "@testing/*": ["src/testing/*"],
-      "@types/*": ["src/types/*"],
-      "@contexts/*": ["src/contexts/*"]
-    },
-    "types": []
+      "@/*": ["./*"],
+      "@core/*": ["./core/*"],
+      "@components/*": ["./components/*"],
+      "@hooks/*": ["./hooks/*"],
+      "@utils/*": ["./utils/*"],
+      "@types/*": ["./types/*"],
+      "@contexts/*": ["./contexts/*"]
+    }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.js",
-    "src/**/*.jsx"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
     "node_modules",
     "dist",
     "build",
     "coverage",
-    "src/core/testing/mocks/*.js",
-    "src/examples/**/*.js",
     "**/__tests__/**/*",
+    "**/__mocks__/**/*",
     "**/*.test.*",
     "**/*.spec.*",
-    "**/testing/**/*",
-    "e2e/**/*"
+    "**/*.stories.*",
+    "e2e/**/*",
+    "src/testing/**/*",
+    "src/core/testing/**/*",
+    "src/examples/**/*",
+    "test/**/*",
+    "tests/**/*"
   ]
 }

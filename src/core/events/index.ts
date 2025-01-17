@@ -2,7 +2,7 @@
 export * from './types';
 
 // Event system implementations
-export { EventBus, eventBus } from './EventBus';
+export * from './EventBus';
 export * from './router';
 export * from './batch';
 export * from './validator';

@@ -1,126 +1,140 @@
-import { 
-  PoolConfig, 
-  PoolEvent, 
-  PooledEvent, 
-  EventDeliveryStatus 
-} from './types';
+import { Logger } from '../logging/Logger';
+import { PoolConfig, PoolEvent, PooledEvent, EventDeliveryStatus } from './types';
 
 class ManagedEvent<T = unknown> implements PooledEvent<T> {
-  id: string = '';
-  poolId: string = '';
-  type: string = '';
-  channel: string = '';
-  timestamp: number = 0;
-  data: T = {} as T;
-  source?: string;
-  status: EventDeliveryStatus = EventDeliveryStatus.PENDING;
-  attempts: number = 0;
-  lastAttempt?: number;
-  isInUse: boolean = false;
+  id: string;
+  type: string;
+  channel: string;
+  source: string;
+  timestamp: number;
+  data?: T;
+  version?: string;
+  priority?: number;
+  poolId: string;
+  attempts: number;
+  maxAttempts: number;
+  nextAttempt?: number;
+  status: EventDeliveryStatus;
+  error?: string;
 
-  reset(): void {
-    this.id = '';
-    this.poolId = '';
-    this.type = '';
-    this.channel = '';
-    this.timestamp = 0;
-    this.data = {} as T;
-    this.source = undefined;
+  constructor(event: PoolEvent<T>) {
+    this.id = event.id;
+    this.type = event.type;
+    this.channel = event.channel;
+    this.source = event.source;
+    this.timestamp = event.timestamp;
+    this.data = event.data;
+    this.version = event.version;
+    this.priority = event.priority;
+    this.poolId = event.poolId;
+    this.attempts = event.attempts;
+    this.maxAttempts = event.maxAttempts;
+    this.nextAttempt = event.nextAttempt;
     this.status = EventDeliveryStatus.PENDING;
-    this.attempts = 0;
-    this.lastAttempt = undefined;
-    this.isInUse = false;
   }
 }
 
 export class EventPool {
-  private config: PoolConfig;
-  private pool: ManagedEvent[] = [];
+  private pool: ManagedEvent[];
+  private config: Required<PoolConfig>;
+  private logger: Logger;
 
   constructor(config: PoolConfig) {
-    this.config = config;
+    this.logger = Logger.getInstance();
+    this.pool = [];
+    this.config = {
+      maxAttempts: config.maxAttempts,
+      retryDelay: config.retryDelay,
+      maxConcurrent: config.maxConcurrent,
+      initialSize: config.initialSize ?? 100,
+      maxSize: config.maxSize ?? 1000,
+      expandSteps: config.expandSteps ?? 100
+    };
+
     this.initialize();
   }
 
   private initialize(): void {
     for (let i = 0; i < this.config.initialSize; i++) {
-      this.pool.push(new ManagedEvent());
+      this.pool.push(this.createEmptyEvent());
     }
   }
 
-  acquire(): PooledEvent | null {
-    // Try to find an available event
-    const event = this.pool.find(e => !e.isInUse);
-    
-    if (event) {
-      event.isInUse = true;
-      return event;
-    }
+  private createEmptyEvent<T>(): ManagedEvent<T> {
+    return new ManagedEvent({
+      id: '',
+      type: '',
+      channel: '',
+      source: '',
+      timestamp: 0,
+      poolId: '',
+      attempts: 0,
+      maxAttempts: this.config.maxAttempts
+    });
+  }
 
-    // If no events available, try to expand pool
+  private expandPool(): void {
     if (this.pool.length < this.config.maxSize) {
-      const expandSize = Math.min(
+      const expandBy = Math.min(
         this.config.expandSteps,
         this.config.maxSize - this.pool.length
       );
-      
-      for (let i = 0; i < expandSize; i++) {
-        const newEvent = new ManagedEvent();
-        this.pool.push(newEvent);
-        if (i === 0) {
-          newEvent.isInUse = true;
-          return newEvent;
-        }
+
+      for (let i = 0; i < expandBy; i++) {
+        this.pool.push(this.createEmptyEvent());
       }
+
+      this.logger.info(`Pool expanded by ${expandBy} events`);
+    }
+  }
+
+  private findAvailableEvent<T>(event: PoolEvent<T>): ManagedEvent<T> | null {
+    const pooledEvent = this.pool.find(e => e === event);
+    if (pooledEvent) {
+      return pooledEvent as ManagedEvent<T>;
+    }
+
+    const emptyEvent = this.pool.find(e => !e.id);
+    if (emptyEvent) {
+      return emptyEvent as ManagedEvent<T>;
     }
 
     return null;
   }
 
-  release(event: PooledEvent): void {
-    const pooledEvent = this.pool.find(e => e === event);
-    if (pooledEvent) {
-      pooledEvent.reset();
-    }
-  }
-
   createEvent<T>(data: PoolEvent<T>): PooledEvent<T> | null {
-    const event = this.acquire() as ManagedEvent<T> | null;
-    if (!event) return null;
+    let event = this.findAvailableEvent(data);
 
-    event.id = data.id;
-    event.poolId = data.poolId;
-    event.type = data.type;
-    event.channel = data.channel;
-    event.timestamp = data.timestamp;
-    event.data = data.data;
-    event.source = data.source;
+    if (!event) {
+      this.expandPool();
+      event = this.findAvailableEvent(data);
+    }
 
-    return event;
+    if (event) {
+      Object.assign(event, data);
+      event.status = EventDeliveryStatus.PENDING;
+      return event;
+    }
+
+    this.logger.error('Failed to create event: pool is full');
+    return null;
   }
 
   acquireFromEvent<T>(baseEvent: PoolEvent<T>): PooledEvent<T> | null {
     return this.createEvent(baseEvent);
   }
 
-  clear(): void {
-    this.pool.forEach(event => event.reset());
+  release(event: PooledEvent): void {
+    const pooledEvent = this.pool.find(e => e.id === event.id);
+    if (pooledEvent) {
+      Object.assign(pooledEvent, this.createEmptyEvent());
+    }
   }
 
-  destroy(): void {
-    this.pool = [];
-  }
-
-  updateConfig(config: Partial<PoolConfig>): void {
-    this.config = { ...this.config, ...config };
-  }
-
-  getStats(): { size: number; available: number; inUse: number; total: number } {
-    const inUseCount = this.pool.filter(e => e.isInUse).length;
+  getStats(): { available: number; total: number } {
+    const available = this.pool.filter(e => !e.id).length;
     return {
-      size: this.pool.length,
-      available: this.pool.length - inUseCount,
-      inUse: inUseCount,
+      available,
       total: this.config.maxSize
     };
   }

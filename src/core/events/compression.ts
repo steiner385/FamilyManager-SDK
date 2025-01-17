@@ -1,19 +1,22 @@
-import { gzip, gunzip } from 'node:zlib';
-import { promisify } from 'node:util';
+import * as pako from 'pako';
 
-const gzipAsync = promisify(gzip);
-const gunzipAsync = promisify(gunzip);
-
-interface CompressionConfig {
-  compressionLevel: number;  // 1-9, where 1 is fastest and 9 is best compression
-  threshold: number;         // Minimum size in bytes before compression is applied
+export interface CompressionConfig {
+  threshold: number;
+  compressionLevel?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 }
 
 export class EventCompressor {
   private config: CompressionConfig;
+  private encoder: TextEncoder;
+  private decoder: TextDecoder;
 
   constructor(config: CompressionConfig) {
-    this.config = config;
+    this.config = {
+      compressionLevel: 6,
+      ...config
+    };
+    this.encoder = new TextEncoder();
+    this.decoder = new TextDecoder();
   }
 
   private shouldCompress(data: unknown): boolean {
@@ -21,28 +24,39 @@ export class EventCompressor {
     return size > this.config.threshold;
   }
 
-  async compress<T>(data: T): Promise<string | T> {
+  async compress(data: unknown): Promise<unknown> {
     if (!data || !this.shouldCompress(data)) {
       return data;
     }
 
     try {
       const jsonString = JSON.stringify(data);
-      const compressed = await gzipAsync(jsonString, {
+      const uint8Array = this.encoder.encode(jsonString);
+      
+      const compressed = pako.deflate(uint8Array, {
         level: this.config.compressionLevel
       });
-      return compressed.toString('base64');
+      
+      // Convert to base64 for safe transmission
+      return btoa(String.fromCharCode.apply(null, compressed as unknown as number[]));
     } catch (error) {
       console.error('Compression failed:', error);
       return data;
     }
   }
 
-  async decompress<T>(data: string): Promise<T> {
+  async decompress(data: string): Promise<unknown> {
     try {
-      const buffer = Buffer.from(data, 'base64');
-      const decompressed = await gunzipAsync(buffer);
-      return JSON.parse(decompressed.toString());
+      // Convert from base64 to Uint8Array
+      const binaryString = atob(data);
+      const uint8Array = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        uint8Array[i] = binaryString.charCodeAt(i);
+      }
+
+      const decompressed = pako.inflate(uint8Array);
+      const jsonString = this.decoder.decode(decompressed);
+      return JSON.parse(jsonString);
     } catch (error) {
       console.error('Decompression failed:', error);
       throw error;

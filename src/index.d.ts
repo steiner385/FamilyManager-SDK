@@ -2,6 +2,7 @@ export * from './types/base';
 export * from './types/layout';
 export type { Message, PluginMetadata, PluginConfig, PluginState, PluginHealthCheck, PluginLayout, PluginPreference, PluginMetrics } from './types/plugin';
 export * from './core/BasePlugin';
+export * from './core/events';
 export type { RouteConfig, RouteProps, RouterState, RouterContext, NavigateOptions, RouteMatch } from './core/routing/types';
 export * from './core/plugin/PluginManager';
 export * from './core/plugin/PluginMessageBus';

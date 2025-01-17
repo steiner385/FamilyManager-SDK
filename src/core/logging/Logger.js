@@ -1,7 +1,8 @@
-import winston from 'winston';
-export class Logger {
+const winston = require('winston');
+
+class Logger {
     constructor() {
-        const format = winston.format.combine(winston.format.timestamp(), winston.format.json());
+        const logFormat = format.combine(format.timestamp(), format.json());
         this.logger = winston.createLogger({
             level: process.env.LOG_LEVEL || 'info',
             format,
@@ -66,5 +67,7 @@ export class Logger {
     }
 }
 // Export a default instance
-export const logger = Logger.getInstance();
-//# sourceMappingURL=Logger.js.map
+module.exports = {
+  Logger,
+  logger: Logger.getInstance()
+};

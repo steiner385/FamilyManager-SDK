@@ -1,118 +1,115 @@
+import { Logger } from '../logging/Logger';
 import { BaseEvent, ValidationResult, ValidationError } from './types';
 
-export interface ValidationRule<T = unknown> {
-  name: string;
+export interface EventValidator<T = unknown> {
   validate: (event: BaseEvent<T>) => boolean | Promise<boolean>;
-  errorMessage: string;
-  errorCode: string;
-  errorPath: string[];
+  errorMessage?: string;
+  errorCode?: string;
 }
 
-export interface ValidatorConfig {
-  validateTimestamp?: boolean;
-  validateSchema?: boolean;
-  validatePayload?: boolean;
-  rules?: ValidationRule[];
-}
+export class EventValidationService {
+  private static instance: EventValidationService;
+  private logger: Logger;
+  private validators: Map<string, Array<EventValidator<any>>>;
 
-export class AsyncValidator {
-  private config: Required<ValidatorConfig>;
-  private rules: ValidationRule<unknown>[] = [];
-  private isRunning: boolean = false;
-
-  constructor(config: ValidatorConfig = {}) {
-    this.config = {
-      validateTimestamp: config.validateTimestamp ?? true,
-      validateSchema: config.validateSchema ?? true,
-      validatePayload: config.validatePayload ?? true,
-      rules: config.rules ?? []
-    };
-    this.rules = this.config.rules;
-    this.start();
+  private constructor() {
+    this.logger = Logger.getInstance();
+    this.validators = new Map();
   }
 
-  async start(): Promise<void> {
-    if (this.isRunning) return;
-    this.isRunning = true;
+  public static getInstance(): EventValidationService {
+    if (!EventValidationService.instance) {
+      EventValidationService.instance = new EventValidationService();
+    }
+    return EventValidationService.instance;
   }
 
-  async stop(): Promise<void> {
-    if (!this.isRunning) return;
-    this.isRunning = false;
+  registerValidator<T>(type: string, validator: EventValidator<T>): void {
+    let validators = this.validators.get(type);
+    if (!validators) {
+      validators = [];
+      this.validators.set(type, validators);
+    }
+    validators.push(validator as EventValidator<any>);
+    this.logger.info(`Validator registered for event type: ${type}`);
+  }
+
+  unregisterValidator<T>(type: string, validator: EventValidator<T>): void {
+    const validators = this.validators.get(type);
+    if (validators) {
+      const index = validators.indexOf(validator as EventValidator<any>);
+      if (index !== -1) {
+        validators.splice(index, 1);
+        this.logger.info(`Validator unregistered for event type: ${type}`);
+      }
+    }
   }
 
   async validate<T>(event: BaseEvent<T>): Promise<ValidationResult> {
-    if (!this.isRunning) {
-      return {
-        isValid: false,
-        errors: [{
-          path: ['validator'],
-          code: 'VALIDATOR_NOT_RUNNING',
-          message: 'Validator is not running'
-        }]
-      };
-    }
-
     const errors: ValidationError[] = [];
 
-    // Schema validation
-    if (this.config.validateSchema) {
-      if (!event.id) {
-        errors.push({
-          path: ['id'],
-          code: 'MISSING_FIELD',
-          message: 'Missing required field: id'
-        });
-      }
-      if (!event.type || event.type.trim() === '') {
-        errors.push({
-          path: ['type'],
-          code: 'INVALID_TYPE',
-          message: 'Invalid event type'
-        });
-      }
-      if (!event.channel) {
-        errors.push({
-          path: ['channel'],
-          code: 'MISSING_FIELD',
-          message: 'Missing required field: channel'
-        });
-      }
-      if (event.data === undefined || event.data === null) {
-        errors.push({
-          path: ['data'],
-          code: 'MISSING_FIELD',
-          message: 'Missing required field: data'
-        });
-      }
-    }
-
-    // Timestamp validation
-    if (this.config.validateTimestamp && (typeof event.timestamp !== 'number' || event.timestamp < 0)) {
+    // Basic validation
+    if (!event.id) {
       errors.push({
-        path: ['timestamp'],
-        code: 'INVALID_TIMESTAMP',
-        message: 'Invalid timestamp'
+        field: 'id',
+        message: 'Event ID is required',
+        code: 'MISSING_ID'
       });
     }
 
-    // Run custom validation rules
-    for (const rule of this.rules) {
-      try {
-        const isValid = await Promise.resolve(rule.validate(event));
-        if (!isValid) {
+    if (!event.type) {
+      errors.push({
+        field: 'type',
+        message: 'Event type is required',
+        code: 'MISSING_TYPE'
+      });
+    }
+
+    if (!event.channel) {
+      errors.push({
+        field: 'channel',
+        message: 'Event channel is required',
+        code: 'MISSING_CHANNEL'
+      });
+    }
+
+    if (!event.source) {
+      errors.push({
+        field: 'source',
+        message: 'Event source is required',
+        code: 'MISSING_SOURCE'
+      });
+    }
+
+    if (!event.timestamp) {
+      errors.push({
+        field: 'timestamp',
+        message: 'Event timestamp is required',
+        code: 'MISSING_TIMESTAMP'
+      });
+    }
+
+    // Custom validators
+    const validators = this.validators.get(event.type);
+    if (validators) {
+      for (const validator of validators) {
+        try {
+          const isValid = await validator.validate(event);
+          if (!isValid) {
+            errors.push({
+              field: 'custom',
+              message: validator.errorMessage || 'Custom validation failed',
+              code: validator.errorCode || 'CUSTOM_VALIDATION_FAILED'
+            });
+          }
+        } catch (error) {
+          this.logger.error('Error in custom validator', { error, event });
           errors.push({
-            path: rule.errorPath,
-            code: rule.errorCode,
-            message: rule.errorMessage
+            field: 'custom',
+            message: 'Custom validator error',
+            code: 'VALIDATOR_ERROR'
           });
         }
-      } catch (error) {
-        errors.push({
-          path: rule.errorPath,
-          code: 'VALIDATION_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown validation error'
-        });
       }
     }
 
@@ -123,29 +120,8 @@ export class AsyncValidator {
   }
 
   async validateBatch<T>(events: BaseEvent<T>[]): Promise<ValidationResult[]> {
-    return Promise.all(events.map(event => this.validate<T>(event)));
-  }
-
-  addRule<T>(rule: ValidationRule<T>): void {
-    this.rules.push(rule as ValidationRule<unknown>);
-  }
-
-  clearRules(): void {
-    this.rules = [];
-  }
-
-  updateConfig<T>(config: Partial<ValidatorConfig> & { rules?: ValidationRule<T>[] }): void {
-    this.config = {
-      ...this.config,
-      ...config,
-      rules: config.rules ?? this.config.rules
-    };
-    if (config.rules) {
-      this.rules = config.rules;
-    }
-  }
-
-  getRunningState(): boolean {
-    return this.isRunning;
+    return Promise.all(events.map(event => this.validate(event)));
   }
 }
+
+export const eventValidationService = EventValidationService.getInstance();

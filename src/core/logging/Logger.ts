@@ -1,14 +1,5 @@
 import winston from 'winston';
 
-export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
-
-export interface LogMetadata {
-  userId?: string;
-  familyId?: string;
-  requestId?: string;
-  [key: string]: any;
-}
-
 export class Logger {
   private static instance: Logger;
   private logger: winston.Logger;
@@ -40,59 +31,21 @@ export class Logger {
     return Logger.instance;
   }
 
-  public static resetInstance(): void {
-    Logger.instance = new Logger();
+  public info(message: string, meta?: Record<string, unknown>): void {
+    this.logger.info(message, meta);
   }
 
-  public log(level: LogLevel, message: string, metadata?: LogMetadata): void {
-    // Validate log level
-    if (!['error', 'warn', 'info', 'debug'].includes(level)) {
-      return;
-    }
-
-    // Validate metadata to prevent circular references
-    let safeMetadata = metadata;
-    try {
-      JSON.stringify(metadata);
-    } catch (e) {
-      safeMetadata = { metadataError: 'Invalid metadata structure' };
-    }
-
-    try {
-      this.logger.log(level, message, safeMetadata);
-    } catch (error) {
-      // Fallback to console.error if logging fails
-      if (process.env.NODE_ENV !== 'test') {
-        console.error(`Failed to log message: ${message}`, {
-          level,
-          error,
-          metadata: safeMetadata
-        });
-      }
-    }
+  public error(message: string, meta?: Record<string, unknown>): void {
+    this.logger.error(message, meta);
   }
 
-  public error(message: string, metadata?: LogMetadata): void {
-    this.log('error', message, metadata);
+  public warn(message: string, meta?: Record<string, unknown>): void {
+    this.logger.warn(message, meta);
   }
 
-  public warn(message: string, metadata?: LogMetadata): void {
-    this.log('warn', message, metadata);
-  }
-
-  public info(message: string, metadata?: LogMetadata): void {
-    this.log('info', message, metadata);
-  }
-
-  public debug(message: string, metadata?: LogMetadata): void {
-    this.log('debug', message, metadata);
-  }
-
-  // For testing purposes
-  public setLogger(logger: winston.Logger): void {
-    this.logger = logger;
+  public debug(message: string, meta?: Record<string, unknown>): void {
+    this.logger.debug(message, meta);
   }
 }
 
-// Export a default instance
 export const logger = Logger.getInstance();

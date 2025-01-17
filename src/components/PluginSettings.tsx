@@ -1,103 +1,128 @@
-import { usePlugin } from '../hooks/usePlugin';
-import { usePluginUIStore } from '../core/store/PluginUIStore';
-import { Card } from './common/Card';
+import React, { useState, useCallback } from 'react';
+import { Plugin, PluginLayout, PluginPreference } from '../core/plugin/types';
 import { Switch } from './common/Switch';
+import { Input } from './common/Input';
 import { Select } from './common/Select';
-import { PluginLayout, PluginPreference } from '../core/plugin/types';
-import { ChangeEvent } from 'react';
 
 interface PluginSettingsProps {
-  pluginName: string;
+  plugin: Plugin;
+  onLayoutChange?: (layoutId: string) => void;
+  onPreferenceChange?: (key: string, value: unknown) => void;
 }
 
-export function PluginSettings({ pluginName }: PluginSettingsProps) {
-  const { plugin } = usePlugin(pluginName);
-  const { 
-    visiblePlugins, 
-    pluginLayouts,
-    pluginPreferences,
-    setPluginVisibility,
-    setPluginLayout,
-    setPluginPreference
-  } = usePluginUIStore();
+interface SelectOption {
+  value: string;
+  label: string;
+}
 
-  if (!plugin) return null;
+type PreferenceValue = string | number | boolean;
 
-  const isVisible = visiblePlugins.has(pluginName);
-  const currentLayout = pluginLayouts[pluginName];
-  const preferences = pluginPreferences[pluginName] || {};
+export function PluginSettings({ plugin, onLayoutChange, onPreferenceChange }: PluginSettingsProps) {
+  const [preferences, setPreferences] = useState<Record<string, PreferenceValue>>({});
   const layouts = plugin.metadata.layouts || [];
   const pluginPrefs = plugin.metadata.preferences || [];
 
-  const handleSwitchChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setPluginVisibility(pluginName, e.target.checked);
+  const handleLayoutChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const layoutId = event.target.value;
+      onLayoutChange?.(layoutId);
+    },
+    [onLayoutChange]
+  );
+
+  const handlePreferenceSwitchChange = useCallback(
+    (key: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = event.target.checked;
+      setPreferences(prev => ({ ...prev, [key]: newValue }));
+      onPreferenceChange?.(key, newValue);
+    },
+    [onPreferenceChange]
+  );
+
+  const handlePreferenceInputChange = useCallback(
+    (key: string, type: 'string' | 'number') => (event: React.ChangeEvent<HTMLInputElement>) => {
+      let value: string | number = event.target.value;
+      if (type === 'number') {
+        value = parseFloat(value);
+        if (isNaN(value)) return;
+      }
+      setPreferences(prev => ({ ...prev, [key]: value }));
+      onPreferenceChange?.(key, value);
+    },
+    [onPreferenceChange]
+  );
+
+  const handlePreferenceSelectChange = useCallback(
+    (key: string) => (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const value = event.target.value;
+      setPreferences(prev => ({ ...prev, [key]: value }));
+      onPreferenceChange?.(key, value);
+    },
+    [onPreferenceChange]
+  );
+
+  const getPreferenceValue = (pref: PluginPreference): PreferenceValue => {
+    const value = preferences[pref.key];
+    if (value !== undefined) return value;
+    return (pref.default as PreferenceValue) ?? getDefaultValue(pref.type);
   };
 
-  const handleLayoutChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    setPluginLayout(pluginName, e.target.value);
-  };
-
-  const handlePreferenceChange = (key: string, value: boolean | string | number) => {
-    setPluginPreference(pluginName, key, value);
-  };
-
-  const handlePreferenceSwitchChange = (key: string) => (e: ChangeEvent<HTMLInputElement>) => {
-    handlePreferenceChange(key, e.target.checked);
-  };
-
-  const handlePreferenceInputChange = (key: string, type: 'number' | 'string') => (e: ChangeEvent<HTMLInputElement>) => {
-    const value = type === 'number' ? Number(e.target.value) : e.target.value;
-    handlePreferenceChange(key, value);
+  const getDefaultValue = (type: string): PreferenceValue => {
+    switch (type) {
+      case 'boolean':
+        return false;
+      case 'number':
+        return 0;
+      default:
+        return '';
+    }
   };
 
   return (
-    <Card title={`${plugin.name} Settings`}>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-700">Enable Plugin</span>
-          <Switch
-            checked={isVisible}
-            onChange={handleSwitchChange}
+    <div className="space-y-4">
+      {layouts.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Layout</label>
+          <Select
+            className="mt-1"
+            value={plugin.defaultLayout || ''}
+            onChange={handleLayoutChange}
+            options={layouts.map((layout: PluginLayout) => ({
+              value: layout.id,
+              label: layout.name
+            }))}
           />
         </div>
+      )}
 
-        {layouts.length > 0 && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Layout
-            </label>
+      {pluginPrefs.map((pref: PluginPreference) => (
+        <div key={pref.id} className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">{pref.label}</label>
+          {pref.type === 'boolean' && (
+            <Switch
+              checked={getPreferenceValue(pref) as boolean}
+              onChange={handlePreferenceSwitchChange(pref.key)}
+            />
+          )}
+          {(pref.type === 'string' || pref.type === 'number') && (
+            <Input
+              type={pref.type === 'number' ? 'number' : 'text'}
+              value={String(getPreferenceValue(pref))}
+              onChange={handlePreferenceInputChange(pref.key, pref.type)}
+            />
+          )}
+          {pref.type === 'select' && pref.options && (
             <Select
-              value={currentLayout || ''}
-              onChange={handleLayoutChange}
-              options={layouts.map((layout: PluginLayout) => ({
-                value: layout.id,
-                label: layout.name
+              value={String(getPreferenceValue(pref))}
+              onChange={handlePreferenceSelectChange(pref.key)}
+              options={pref.options.map(opt => ({
+                value: String(opt.value),
+                label: opt.label
               }))}
             />
-          </div>
-        )}
-
-        {pluginPrefs.map((pref: PluginPreference) => (
-          <div key={pref.key}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {pref.label}
-            </label>
-            {pref.type === 'boolean' ? (
-              <Switch
-                checked={preferences[pref.key] ?? pref.defaultValue ?? false}
-                onChange={handlePreferenceSwitchChange(pref.key)}
-              />
-            ) : (
-              <input
-                type={pref.type === 'number' ? 'number' : 'text'}
-                value={preferences[pref.key] ?? pref.defaultValue ?? ''}
-                onChange={handlePreferenceInputChange(pref.key, pref.type)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    </Card>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

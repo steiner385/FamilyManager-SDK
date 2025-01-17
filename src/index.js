@@ -3,6 +3,7 @@ export * from './types/base';
 export * from './types/layout';
 // Export core functionality
 export * from './core/BasePlugin';
+export * from './core/events';
 export * from './core/plugin/PluginManager';
 export * from './core/plugin/PluginMessageBus';
 export * from './core/layout/LayoutManager';
