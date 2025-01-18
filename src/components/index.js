@@ -10,4 +10,5 @@ export * from './metrics/MetricsCard';
 // Calendar components
 export * from './calendar/CalendarView';
 export * from './calendar/CalendarModal';
+export * from './calendar/CalendarContainer';
 //# sourceMappingURL=index.js.map
