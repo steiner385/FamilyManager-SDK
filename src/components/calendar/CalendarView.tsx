@@ -3,6 +3,7 @@ import CalendarHeader from './CalendarHeader';
 import CalendarGrid from './CalendarGrid';
 import CalendarModal from './CalendarModal';
 import { Calendar, Event } from '../../contexts/CalendarContext';
+import './Calendar.css';
 
 interface CalendarViewProps {
   calendars: Calendar[];
