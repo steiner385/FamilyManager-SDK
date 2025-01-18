@@ -2,10 +2,21 @@ import React, { useState } from 'react';
 import CalendarHeader from './CalendarHeader';
 import CalendarGrid from './CalendarGrid';
 import CalendarModal from './CalendarModal';
-import { CalendarProvider } from '../../contexts/CalendarContext';
-import { Event } from '../../contexts/CalendarContext';
+import { Calendar, Event } from '../../contexts/CalendarContext';
 
-const CalendarView = () => {
+interface CalendarViewProps {
+  calendars: Calendar[];
+  events: Event[];
+  onSaveEvent: (event: Event) => void;
+  onDeleteEvent: (eventId: string) => void;
+}
+
+const CalendarView: React.FC<CalendarViewProps> = ({
+  calendars,
+  events,
+  onSaveEvent,
+  onDeleteEvent,
+}) => {
   const [view, setView] = useState<'day' | 'week' | 'month'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -16,18 +27,17 @@ const CalendarView = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveEvent = (event: Event) => {
-    // Logic to save the event (add or update)
+  const handleSave = (event: Event) => {
+    onSaveEvent(event);
     setIsModalOpen(false);
   };
 
-  const handleDeleteEvent = (eventId: string) => {
-    // Logic to delete the event
+  const handleDelete = (eventId: string) => {
+    onDeleteEvent(eventId);
     setIsModalOpen(false);
   };
 
   return (
-    <CalendarProvider>
       <div className="calendar-view">
         <CalendarHeader
           view={view}
@@ -35,7 +45,12 @@ const CalendarView = () => {
           currentDate={currentDate}
           onDateChange={setCurrentDate}
         />
-        <CalendarGrid view={view} currentDate={currentDate} onEventClick={handleEventClick} />
+        <CalendarGrid
+          view={view}
+          currentDate={currentDate}
+          events={events}
+          onEventClick={handleEventClick}
+        />
         {isModalOpen && (
           <CalendarModal
             event={selectedEvent}
@@ -45,7 +60,6 @@ const CalendarView = () => {
           />
         )}
       </div>
-    </CalendarProvider>
   );
 };
 
