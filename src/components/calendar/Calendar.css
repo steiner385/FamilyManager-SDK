@@ -2,9 +2,19 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 600px;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .calendar-view {
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
+  }
 }
 
 .calendar-header {
@@ -13,12 +23,30 @@
   align-items: center;
   padding: 16px;
   border-bottom: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+  .calendar-header {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
 }
 
 .calendar-grid {
   flex: 1;
   display: flex;
   overflow: auto;
+  position: relative;
+  background-color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+  .calendar-grid {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 }
 
 .day-view,
@@ -97,6 +125,13 @@
   color: #fff;
   cursor: grab;
   user-select: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .event.dragging {
@@ -123,4 +158,30 @@
   justify-content: flex-end;
   gap: 8px;
   margin-top: 16px;
+}
+
+.modal-actions button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.modal-actions button:first-child {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.modal-actions button:first-child:hover {
+  background-color: #2563eb;
+}
+
+.modal-actions button:last-child {
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+}
+
+.modal-actions button:last-child:hover {
+  background-color: #e9ecef;
 }
