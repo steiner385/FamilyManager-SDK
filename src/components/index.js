@@ -7,4 +7,6 @@ export * from './common/ErrorBoundary';
 export * from './charts/LineChart';
 // Metric components
 export * from './metrics/MetricsCard';
+// Calendar components
+export * from './calendar/CalendarView';
 //# sourceMappingURL=index.js.map
