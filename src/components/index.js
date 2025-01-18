@@ -9,4 +9,5 @@ export * from './charts/LineChart';
 export * from './metrics/MetricsCard';
 // Calendar components
 export * from './calendar/CalendarView';
+export * from './calendar/CalendarModal';
 //# sourceMappingURL=index.js.map
