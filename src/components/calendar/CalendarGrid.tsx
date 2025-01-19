@@ -96,6 +96,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         onEventClick(event);
                       }}
                       onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         const startY = e.clientY;
                         const originalEnd = new Date(event.end);
 

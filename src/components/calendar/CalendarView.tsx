@@ -4,6 +4,7 @@ import CalendarGrid from './CalendarGrid';
 import CalendarModal from './CalendarModal';
 import { Calendar, Event } from '../../contexts/CalendarContext';
 import './Calendar.css';
+import { RRule } from 'rrule';
 
 interface CalendarViewProps {
   calendars: Calendar[];
