@@ -96,10 +96,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           <button onClick={() => setView('week')}>Week</button>
           <button onClick={() => setView('month')}>Month</button>
         </div>
-          <option value="day">Day</option>
-          <option value="week">Week</option>
-          <option value="month">Month</option>
-        </select>
         <div className="calendar-filters">
           {calendars.map(calendar => (
             <label key={calendar.id}>
