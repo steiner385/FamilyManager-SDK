@@ -136,23 +136,23 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     return eventStart >= dayStart && eventStart <= dayEnd;
                   })
                   .map(event => (
-                  <div
-                    key={event.id}
-                    className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
-                    style={{ backgroundColor: event.color }}
-                    draggable
-                    onDragStart={() => onDragStart(event)}
-                    onDragEnd={onDragEnd}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEventClick(event);
-                    }}
-                  >
-                    {event.title}
-                  </div>
-                ))}
+                    <div
+                      key={event.id}
+                      className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
+                      style={{ backgroundColor: event.color }}
+                      draggable
+                      onDragStart={() => onDragStart(event)}
+                      onDragEnd={onDragEnd}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventClick(event);
+                      }}
+                    >
+                      {event.title}
+                    </div>
+                  ))}
+              </div>
             </div>
-          </div>
         ))}
       </div>
     );
@@ -205,23 +205,23 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                            (event.allDay && eventStart <= dayEnd && eventEnd >= dayStart);
                   })
                   .map(event => (
-                  <div
-                    key={event.id}
-                    className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
-                    style={{ backgroundColor: event.color }}
-                    draggable
-                    onDragStart={() => onDragStart(event)}
-                    onDragEnd={onDragEnd}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEventClick(event);
-                    }}
-                  >
-                    {event.title}
-                  </div>
-                ))}
+                    <div
+                      key={event.id}
+                      className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
+                      style={{ backgroundColor: event.color }}
+                      draggable
+                      onDragStart={() => onDragStart(event)}
+                      onDragEnd={onDragEnd}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventClick(event);
+                      }}
+                    >
+                      {event.title}
+                    </div>
+                  ))}
+              </div>
             </div>
-          </div>
         ))}
       </div>
     );
