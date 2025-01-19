@@ -88,6 +88,50 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       key={event.id}
                       className={`calendar-event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
                       style={{ backgroundColor: event.color }}
+                    >
+                      <div className="event-content">
+                        {event.title}
+                      </div>
+                      <div 
+                        className="resize-handle"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const startY = e.clientY;
+                          const originalEnd = new Date(event.end);
+
+                          const handleMouseMove = (moveEvent: MouseEvent) => {
+                            const deltaY = moveEvent.clientY - startY;
+                            const minutesDelta = Math.round(deltaY / 30) * 30;
+                            const newEnd = new Date(originalEnd);
+                            newEnd.setMinutes(newEnd.getMinutes() + minutesDelta);
+                            
+                            // Preview the resize
+                            const eventEl = e.currentTarget.parentElement;
+                            if (eventEl) {
+                              const heightDelta = Math.max(deltaY, -eventEl.clientHeight + 30);
+                              eventEl.style.height = `${eventEl.clientHeight + heightDelta}px`;
+                            }
+                          };
+
+                          const handleMouseUp = (upEvent: MouseEvent) => {
+                            const deltaY = upEvent.clientY - startY;
+                            const minutesDelta = Math.round(deltaY / 30) * 30;
+                            const newEnd = new Date(originalEnd);
+                            newEnd.setMinutes(newEnd.getMinutes() + minutesDelta);
+
+                            onSaveEvent({
+                              ...event,
+                              end: newEnd
+                            });
+
+                            window.removeEventListener('mousemove', handleMouseMove);
+                            window.removeEventListener('mouseup', handleMouseUp);
+                          };
+
+                          window.addEventListener('mousemove', handleMouseMove);
+                          window.addEventListener('mouseup', handleMouseUp);
+                        }}
                       draggable
                       onDragStart={() => onDragStart(event)}
                       onDragEnd={onDragEnd}
@@ -272,10 +316,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         dtstart: new Date(event.start),
                         until: event.recurring.until,
                         interval: event.recurring.interval || 1,
-                        byweekday: event.recurring.byDay?.map(day => {
-                          const dayMapping = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-                          return RRule[dayMapping[day]];
-                        }),
+                        byweekday: event.recurring.byDay?.map(day => RRule[['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][day]])
                       });
 
                       const occurrences = rule.between(dayStart, dayEnd, true);

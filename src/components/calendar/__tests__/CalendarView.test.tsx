@@ -45,14 +45,14 @@ test('handles recurring events correctly', () => {
   const recurringEvent: Event = {
     id: '3',
     title: 'Weekly Meeting',
-    start: new Date('2025-01-01T10:00:00.000Z'), // Earlier start date
+    start: new Date('2025-01-01T10:00:00.000Z'),
     end: new Date('2025-01-01T11:00:00.000Z'),
     calendarId: '1',
     recurring: {
       frequency: 'weekly',
       interval: 1,
-      byDay: [testDate.getDay()], // Use current test date's day to ensure visibility
-      until: new Date('2025-12-31T10:00:00.000Z') // Longer duration
+      byDay: [0], // Sunday (same as test date)
+      until: new Date('2025-12-31T10:00:00.000Z')
     }
   };
 
