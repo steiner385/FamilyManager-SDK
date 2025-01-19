@@ -9,11 +9,7 @@ export default defineConfig({
   },
   server: {
     port: 6010,
-    strictPort: true,
-    hmr: {
-      port: 6016,
-      clientPort: 6016
-    }
+    strictPort: true
   },
   build: {
     lib: {
