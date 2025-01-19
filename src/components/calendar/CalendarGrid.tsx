@@ -98,26 +98,32 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       onMouseDown={(e) => {
                         const startY = e.clientY;
                         const originalEnd = new Date(event.end);
-                        let lastDelta = 0;
                         
                         const handleMouseMove = (moveEvent: MouseEvent) => {
                           const deltaY = moveEvent.clientY - startY;
-                          const hoursDelta = Math.floor(deltaY / 30); // More granular resize
+                          const hoursDelta = Math.floor(deltaY / 30);
+                          const newEnd = new Date(originalEnd);
+                          newEnd.setMinutes(newEnd.getMinutes() + (hoursDelta * 30));
                           
-                          if (hoursDelta !== lastDelta) {
-                            lastDelta = hoursDelta;
-                            const newEnd = new Date(originalEnd);
-                            newEnd.setMinutes(newEnd.getMinutes() + (hoursDelta * 30));
-                            
-                            const updatedEvent = {
-                              ...event,
-                              end: newEnd
-                            };
-                            onSaveEvent(updatedEvent);
-                          }
+                          const updatedEvent = {
+                            ...event,
+                            end: newEnd
+                          };
+                          onSaveEvent(updatedEvent);
                         };
                         
                         const handleMouseUp = () => {
+                          const deltaY = e.clientY - startY;
+                          const hoursDelta = Math.floor(deltaY / 30);
+                          const finalEnd = new Date(originalEnd);
+                          finalEnd.setMinutes(finalEnd.getMinutes() + (hoursDelta * 30));
+                          
+                          const finalEvent = {
+                            ...event,
+                            end: finalEnd
+                          };
+                          onSaveEvent(finalEvent);
+                          
                           document.removeEventListener('mousemove', handleMouseMove);
                           document.removeEventListener('mouseup', handleMouseUp);
                         };
@@ -299,13 +305,42 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         currentInstance = newInstance;
                       }
                       // Return true if we have instances in this period
-                      return instances.length > 0 && instances.some(instance => {
+                      // Generate recurring instances for the entire visible month
+                      const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                      const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                      
+                      let currentInstance = new Date(eventStart);
+                      const instances = [];
+                      
+                      while (currentInstance <= monthEnd && (!event.recurring.until || currentInstance <= event.recurring.until)) {
+                        if (currentInstance >= monthStart) {
+                          instances.push(new Date(currentInstance));
+                        }
+                        
+                        // Move to next instance based on frequency
+                        const interval = event.recurring.interval || 1;
+                        switch (event.recurring.frequency) {
+                          case 'daily':
+                            currentInstance.setDate(currentInstance.getDate() + interval);
+                            break;
+                          case 'weekly':
+                            currentInstance.setDate(currentInstance.getDate() + (7 * interval));
+                            break;
+                          case 'monthly':
+                            currentInstance.setMonth(currentInstance.getMonth() + interval);
+                            break;
+                          case 'yearly':
+                            currentInstance.setFullYear(currentInstance.getFullYear() + interval);
+                            break;
+                        }
+                      }
+                      
+                      // Check if any instance falls within this day
+                      return instances.some(instance => {
                         const instanceStart = new Date(instance);
                         const instanceEnd = new Date(instanceStart);
                         instanceEnd.setHours(eventEnd.getHours(), eventEnd.getMinutes());
-                        
-                        return (instanceStart >= dayStart && instanceStart <= dayEnd) ||
-                               (instanceEnd >= dayStart && instanceEnd <= dayEnd);
+                        return instanceStart.getDate() === day.getDate();
                       });
                     }
                     return isInDay;
