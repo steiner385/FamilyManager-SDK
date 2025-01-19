@@ -117,12 +117,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           };
                           onSaveEvent(updatedEvent);
 
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
+                          window.removeEventListener('mousemove', handleMouseMove);
+                          window.removeEventListener('mouseup', handleMouseUp);
                         };
 
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
+                        window.addEventListener('mousemove', handleMouseMove);
+                        window.addEventListener('mouseup', handleMouseUp);
                       }}
                     >
                       {event.title}
@@ -272,7 +272,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         dtstart: new Date(event.start),
                         until: event.recurring.until,
                         interval: event.recurring.interval || 1,
-                        byweekday: event.recurring.byDay?.map(day => RRule.weekdays[day]),
+                        const dayMapping = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+                        byweekday: event.recurring.byDay?.map(day => RRule[dayMapping[day]]),
                       });
 
                       const occurrences = rule.between(dayStart, dayEnd, true);

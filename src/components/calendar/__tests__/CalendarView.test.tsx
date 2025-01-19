@@ -318,11 +318,11 @@ test('handles drag and drop event resizing', () => {
     target: eventElement
   });
   
-  fireEvent.mouseMove(document, { 
+  fireEvent.mouseMove(window, { 
     clientY: 200 
   });
   
-  fireEvent.mouseUp(document, { 
+  fireEvent.mouseUp(window, { 
     clientY: 200 
   });
 
