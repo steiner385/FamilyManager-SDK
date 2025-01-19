@@ -46,50 +46,51 @@ const CalendarContainer = () => {
 
   // Fetch calendars and events from plugins
   useEffect(() => {
-    const fetchData = async () => {
-      const pluginCalendars: Calendar[] = [];
-      const pluginEvents: Event[] = [];
-
-      for (const plugin of plugins) {
-        if (plugin.getCalendars) {
-          const calendars = await plugin.getCalendars();
-          pluginCalendars.push(...calendars);
-        }
-        if (plugin.getEvents) {
-          const events = await plugin.getEvents();
-          pluginEvents.push(...events);
-        }
-      }
-
-      setCalendars(pluginCalendars);
-      setEvents(pluginEvents);
-    };
-
     fetchData();
-  }, [plugins]);
+  }, [fetchData]);
 
   const handleSaveEvent = async (event: Event) => {
-    // Delegate event saving to the appropriate plugin
-    const plugin = plugins.find((p) => p.id === event.calendarId);
-    if (plugin?.saveEvent) {
-      await plugin.saveEvent(event);
-      // Refresh events after saving
-      const updatedEvents = await plugin.getEvents();
-      setEvents(updatedEvents);
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Delegate event saving to the appropriate plugin
+      const plugin = plugins.find((p) => p.id === event.calendarId);
+      if (plugin?.saveEvent) {
+        await plugin.saveEvent(event);
+        // Refresh events after saving
+        const updatedEvents = await plugin.getEvents();
+        setEvents(updatedEvents);
+      }
+    } catch (err) {
+      console.error('Error saving event:', err);
+      setError('Failed to save event');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    // Delegate event deletion to the appropriate plugin
-    const event = events.find((e) => e.id === eventId);
-    if (event) {
-      const plugin = plugins.find((p) => p.id === event.calendarId);
-      if (plugin?.deleteEvent) {
-        await plugin.deleteEvent(eventId);
-        // Refresh events after deletion
-        const updatedEvents = await plugin.getEvents();
-        setEvents(updatedEvents);
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Delegate event deletion to the appropriate plugin
+      const event = events.find((e) => e.id === eventId);
+      if (event) {
+        const plugin = plugins.find((p) => p.id === event.calendarId);
+        if (plugin?.deleteEvent) {
+          await plugin.deleteEvent(eventId);
+          // Refresh events after deletion
+          const updatedEvents = await plugin.getEvents();
+          setEvents(updatedEvents);
+        }
       }
+    } catch (err) {
+      console.error('Error deleting event:', err);
+      setError('Failed to delete event');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,6 +98,8 @@ const CalendarContainer = () => {
     <CalendarView
       calendars={calendars}
       events={events}
+      loading={loading}
+      error={error}
       onSaveEvent={handleSaveEvent}
       onDeleteEvent={handleDeleteEvent}
     />

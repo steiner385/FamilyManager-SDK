@@ -8,6 +8,8 @@ import './Calendar.css';
 interface CalendarViewProps {
   calendars: Calendar[];
   events: Event[];
+  loading: boolean;
+  error: string | null;
   onSaveEvent: (event: Event) => void;
   onDeleteEvent: (eventId: string) => void;
 }
