@@ -88,6 +88,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       key={event.id}
                       className={`calendar-event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
                       style={{ backgroundColor: event.color }}
+                      draggable
+                      onDragStart={() => onDragStart(event)}
+                      onDragEnd={onDragEnd}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventClick(event);
+                      }}
                     >
                       <div className="event-content">
                         {event.title}
@@ -132,44 +139,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           window.addEventListener('mousemove', handleMouseMove);
                           window.addEventListener('mouseup', handleMouseUp);
                         }}
-                      draggable
-                      onDragStart={() => onDragStart(event)}
-                      onDragEnd={onDragEnd}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(event);
-                      }}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const startY = e.clientY;
-                        const originalEnd = new Date(event.end);
-
-                        const handleMouseMove = (moveEvent: MouseEvent) => {
-                          // Optional: Update event preview during resize
-                        };
-
-                        const handleMouseUp = (upEvent: MouseEvent) => {
-                          const deltaY = upEvent.clientY - startY;
-                          const minutesDelta = Math.round(deltaY / 30) * 30; // Round to nearest 30 minutes
-                          const newEnd = new Date(originalEnd);
-                          newEnd.setMinutes(newEnd.getMinutes() + minutesDelta);
-
-                          const updatedEvent = {
-                            ...event,
-                            end: newEnd
-                          };
-                          onSaveEvent(updatedEvent);
-
-                          window.removeEventListener('mousemove', handleMouseMove);
-                          window.removeEventListener('mouseup', handleMouseUp);
-                        };
-
-                        window.addEventListener('mousemove', handleMouseMove);
-                        window.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    >
-                      {event.title}
+                      />
                     </div>
                   ))}
               </div>
