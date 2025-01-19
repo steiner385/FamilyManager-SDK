@@ -142,6 +142,40 @@
   user-select: none;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   border: 1px solid rgba(0, 0, 0, 0.1);
+  touch-action: none;
+}
+
+.event.dragging {
+  opacity: 0.7;
+  transform: scale(0.95);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+}
+
+.droppable-area {
+  position: relative;
+  min-height: 60px;
+  transition: background-color 0.2s ease;
+}
+
+.droppable-area.dragging-over {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.droppable-area::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  border: 2px dashed transparent;
+  transition: border-color 0.2s ease;
+}
+
+.droppable-area.dragging-over::after {
+  border-color: #3b82f6;
 }
 
 .event:hover {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import CalendarHeader from './CalendarHeader';
 import CalendarGrid from './CalendarGrid';
 import CalendarModal from './CalendarModal';
@@ -12,6 +12,10 @@ interface CalendarViewProps {
   error: string | null;
   onSaveEvent: (event: Event) => void;
   onDeleteEvent: (eventId: string) => void;
+  onDragStart: (event: Event) => void;
+  onDragEnd: () => void;
+  onDrop: (date: Date) => void;
+  draggingEvent: Event | null;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({
@@ -39,6 +43,28 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     onDeleteEvent(eventId);
     setIsModalOpen(false);
   };
+
+  const [draggingEvent, setDraggingEvent] = useState<Event | null>(null);
+
+  const handleDragStart = useCallback((event: Event) => {
+    setDraggingEvent(event);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggingEvent(null);
+  }, []);
+
+  const handleDrop = useCallback((date: Date) => {
+    if (draggingEvent) {
+      const duration = draggingEvent.end.getTime() - draggingEvent.start.getTime();
+      const updatedEvent = {
+        ...draggingEvent,
+        start: date,
+        end: new Date(date.getTime() + duration)
+      };
+      onSaveEvent(updatedEvent);
+    }
+  }, [draggingEvent, onSaveEvent]);
 
   const handleCreateEvent = (date: Date) => {
     setSelectedEvent({
@@ -82,6 +108,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             events={events}
             onEventClick={handleEventClick}
             onCreateEvent={handleCreateEvent}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDrop={handleDrop}
+            draggingEvent={draggingEvent}
           />
           {isModalOpen && (
             <CalendarModal
