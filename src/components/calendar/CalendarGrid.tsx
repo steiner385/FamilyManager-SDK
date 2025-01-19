@@ -276,38 +276,26 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     if (event.recurring) {
                       // Generate recurring instances
                       const instances = [];
-                      const startOfView = new Date(Math.min(dayStart.getTime(), currentDate.getTime()));
-                      const endOfView = new Date(Math.max(dayEnd.getTime(), new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000)));
+                      const startOfView = new Date(dayStart);
+                      const endOfView = new Date(dayEnd);
                       let currentInstance = new Date(eventStart);
-                      
+
+                      const interval = event.recurring.interval || 1;
+                      const daysOfWeek = event.recurring.byDay || [];
+
                       while (currentInstance <= endOfView && (!event.recurring.until || currentInstance <= event.recurring.until)) {
-                        if (currentInstance >= startOfView) {
+                        if (
+                          currentInstance >= startOfView &&
+                          (daysOfWeek.length === 0 || daysOfWeek.includes(currentInstance.getDay()))
+                        ) {
                           instances.push(new Date(currentInstance.getTime()));
                         }
-                        
-                        const interval = event.recurring.interval || 1;
-                        const newInstance = new Date(currentInstance);
-                        
-                        switch (event.recurring.frequency) {
-                          case 'daily':
-                            newInstance.setDate(newInstance.getDate() + interval);
-                            break;
-                          case 'weekly':
-                            newInstance.setDate(newInstance.getDate() + (7 * interval));
-                            break;
-                          case 'monthly':
-                            newInstance.setMonth(newInstance.getMonth() + interval);
-                            break;
-                          case 'yearly':
-                            newInstance.setFullYear(newInstance.getFullYear() + interval);
-                            break;
-                        }
-                        currentInstance = newInstance;
+
+                        // Move to next day
+                        currentInstance.setDate(currentInstance.getDate() + 1);
                       }
                       return instances.some(instance => {
                         const instanceStart = new Date(instance);
-                        const instanceEnd = new Date(instanceStart);
-                        instanceEnd.setHours(eventEnd.getHours(), eventEnd.getMinutes());
                         return instanceStart.getDate() === day.getDate() && 
                                instanceStart.getMonth() === day.getMonth();
                       });
