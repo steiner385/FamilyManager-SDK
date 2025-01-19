@@ -50,6 +50,24 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     setIsModalOpen(false);
   };
 
+  const handleDragStart = (event: Event) => {
+    if (onDragStart) {
+      onDragStart(event);
+    }
+  };
+
+  const handleDragEnd = () => {
+    if (onDragEnd) {
+      onDragEnd();
+    }
+  };
+
+  const handleDrop = (date: Date) => {
+    if (onDrop) {
+      onDrop(date);
+    }
+  };
+
 
   const handleCreateEvent = (date: Date) => {
     setSelectedEvent({
