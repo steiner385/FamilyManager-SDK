@@ -45,14 +45,14 @@ test('handles recurring events correctly', () => {
   const recurringEvent: Event = {
     id: '3',
     title: 'Weekly Meeting',
-    start: new Date('2025-01-19T10:00:00.000Z'),
-    end: new Date('2025-01-19T11:00:00.000Z'),
+    start: new Date('2025-01-01T10:00:00.000Z'), // Earlier start date
+    end: new Date('2025-01-01T11:00:00.000Z'),
     calendarId: '1',
     recurring: {
       frequency: 'weekly',
       interval: 1,
-      byDay: [0, 1, 2, 3, 4], // Add multiple days of the week
-      until: new Date('2025-02-19T10:00:00.000Z') // Set end date further in future
+      byDay: [testDate.getDay()], // Use current test date's day to ensure visibility
+      until: new Date('2025-12-31T10:00:00.000Z') // Longer duration
     }
   };
 
@@ -313,17 +313,23 @@ test('handles drag and drop event resizing', () => {
   expect(eventElement).toBeInTheDocument();
 
   // Simulate resize drag
-  fireEvent.mouseDown(eventElement, { 
+  const resizeHandle = eventElement.querySelector('.resize-handle') || eventElement;
+  
+  fireEvent.mouseDown(resizeHandle, {
     clientY: 100,
-    target: eventElement
+    target: resizeHandle,
+    buttons: 1
   });
   
-  fireEvent.mouseMove(window, { 
-    clientY: 200 
+  // Move mouse significantly to trigger resize
+  fireEvent.mouseMove(window, {
+    clientY: 300,
+    buttons: 1
   });
   
-  fireEvent.mouseUp(window, { 
-    clientY: 200 
+  // Release mouse to complete resize
+  fireEvent.mouseUp(window, {
+    clientY: 300
   });
 
   expect(onSaveEvent).toHaveBeenCalledWith(expect.objectContaining({
