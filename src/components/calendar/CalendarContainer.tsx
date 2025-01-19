@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { RRule } from 'rrule';
 import CalendarView from './CalendarView';
 import { Calendar, Event } from '../../contexts/CalendarContext';
 import { usePlugins } from '../../hooks/usePlugins';
@@ -9,6 +10,33 @@ const CalendarContainer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { plugins } = usePlugins();
+
+  const generateRecurringInstances = (event: Event): Event[] => {
+    if (!event.recurring) return [event];
+    
+    const rule = new RRule({
+      freq: RRule[event.recurring.frequency.toUpperCase()],
+      interval: event.recurring.interval,
+      dtstart: event.start,
+      until: event.recurring.until,
+      count: event.recurring.count,
+      byweekday: event.recurring.byDay,
+      bymonth: event.recurring.byMonth,
+      bymonthday: event.recurring.byMonthDay
+    });
+
+    const dates = rule.all();
+    return dates.map((date, index) => ({
+      ...event,
+      id: `${event.id}-${index}`,
+      start: date,
+      end: new Date(date.getTime() + (event.end.getTime() - event.start.getTime()))
+    }));
+  };
+
+  const expandedEvents = useMemo(() => {
+    return events.flatMap(event => generateRecurringInstances(event));
+  }, [events]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -97,7 +125,7 @@ const CalendarContainer = () => {
   return (
     <CalendarView
       calendars={calendars}
-      events={events}
+      events={expandedEvents}
       loading={loading}
       error={error}
       onSaveEvent={handleSaveEvent}

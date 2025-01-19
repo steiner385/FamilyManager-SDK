@@ -47,7 +47,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       start: date,
       end: new Date(date.getTime() + 60 * 60 * 1000), // Default 1 hour event
       calendarId: calendars[0]?.id || '',
-      color: '#3b82f6'
+      color: '#3b82f6',
+      recurring: {
+        frequency: 'none',
+        interval: 1,
+        count: undefined,
+        until: undefined,
+        byDay: [],
+        byMonth: [],
+        byMonthDay: []
+      }
     });
     setIsModalOpen(true);
   };
