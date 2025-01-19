@@ -235,6 +235,10 @@ test('filters events by calendar selection', () => {
       onDeleteEvent={jest.fn()}
       loading={false}
       error={null}
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
     />
   );
 
