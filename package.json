@@ -40,12 +40,12 @@
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "storybook": "storybook dev -p 6010 --ci",
+    "storybook": "node scripts/check-ports.js && storybook dev -p 6010 --ci",
     "build-storybook": "storybook build --quiet",
-    "test-storybook": "test-storybook --maxWorkers=2 --ci",
-    "test-storybook:ci": "start-server-and-test 'serve storybook-static -p 6013 --no-request-logging' http://localhost:6013 'test-storybook --url http://localhost:6013'",
-    "test-storybook:coverage": "test-storybook --coverage && serve-coverage",
-    "test-storybook:watch": "concurrently \"serve storybook-static -p 6013 --no-request-logging\" \"test-storybook --watch --url http://localhost:6013\""
+    "test-storybook": "node scripts/check-ports.js && test-storybook --maxWorkers=2 --ci",
+    "test-storybook:ci": "node scripts/check-ports.js && start-server-and-test 'serve storybook-static -p 6013 --no-request-logging' http://localhost:6013 'test-storybook --url http://localhost:6013'",
+    "test-storybook:coverage": "node scripts/check-ports.js && test-storybook --coverage && serve-coverage",
+    "test-storybook:watch": "node scripts/check-ports.js && concurrently \"serve storybook-static -p 6013 --no-request-logging\" \"test-storybook --watch --url http://localhost:6013\""
   },
   "keywords": [
     "familymanager",
