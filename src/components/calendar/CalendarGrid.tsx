@@ -96,6 +96,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         onEventClick(event);
                       }}
                       onMouseDown={(e) => {
+                        if (!e.target.classList.contains('calendar-event')) return;
+                        
                         const startY = e.clientY;
                         const originalEnd = new Date(event.end);
                         
@@ -110,6 +112,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         };
                         
                         const handleMouseUp = () => {
+                          const deltaY = e.clientY - startY;
+                          const hoursDelta = Math.round(deltaY / 60);
+                          const finalEnd = new Date(originalEnd);
+                          finalEnd.setHours(finalEnd.getHours() + hoursDelta);
+                          
+                          const finalEvent = {...event, end: finalEnd};
+                          onSaveEvent(finalEvent);
+                          
                           document.removeEventListener('mousemove', handleMouseMove);
                           document.removeEventListener('mouseup', handleMouseUp);
                         };
@@ -291,12 +301,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         currentInstance = newInstance;
                       }
                       // Return true if we have instances in this period
-                      return instances.some(instance => {
+                      return instances.length > 0 && instances.some(instance => {
                         const instanceStart = new Date(instance);
                         const instanceEnd = new Date(instanceStart);
                         instanceEnd.setHours(eventEnd.getHours(), eventEnd.getMinutes());
                         
-                        return true; // Return true to show all instances in the current view
+                        return (instanceStart >= dayStart && instanceStart <= dayEnd) ||
+                               (instanceEnd >= dayStart && instanceEnd <= dayEnd);
                       });
                     }
                     return isInDay;
