@@ -26,6 +26,12 @@ test('renders CalendarView with events', () => {
       events={mockEvents}
       onSaveEvent={jest.fn()}
       onDeleteEvent={jest.fn()}
+      loading={false}
+      error={null}
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
     />
   );
 
@@ -52,6 +58,12 @@ test('handles recurring events correctly', () => {
       events={[...mockEvents, recurringEvent]}
       onSaveEvent={jest.fn()}
       onDeleteEvent={jest.fn()}
+      loading={false}
+      error={null}
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
     />
   );
 
@@ -128,6 +140,44 @@ test('handles timezone conversions correctly', () => {
   // Event should be displayed in local timezone
   const eventElement = screen.getByText('International Call');
   expect(eventElement).toBeInTheDocument();
+});
+
+test('displays loading state', () => {
+  render(
+    <CalendarView
+      calendars={mockCalendars}
+      events={mockEvents}
+      onSaveEvent={jest.fn()}
+      onDeleteEvent={jest.fn()}
+      loading={true}
+      error={null}
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
+    />
+  );
+
+  expect(screen.getByText('Loading calendar...')).toBeInTheDocument();
+});
+
+test('displays error state', () => {
+  render(
+    <CalendarView
+      calendars={mockCalendars}
+      events={mockEvents}
+      onSaveEvent={jest.fn()}
+      onDeleteEvent={jest.fn()}
+      loading={false}
+      error="Failed to load calendar"
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
+    />
+  );
+
+  expect(screen.getByText('Failed to load calendar')).toBeInTheDocument();
 });
 
 test('opens modal when event is clicked', () => {
