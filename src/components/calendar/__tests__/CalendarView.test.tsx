@@ -308,13 +308,11 @@ test('handles drag and drop event resizing', () => {
     />
   );
 
-  // Find the event element
-  const eventElement = screen.getByText('Meeting');
-  expect(eventElement).toBeInTheDocument();
+  // Find the resize handle
+  const resizeHandle = screen.getByTestId('resize-handle');
+  expect(resizeHandle).toBeInTheDocument();
 
   // Simulate resize drag
-  const resizeHandle = eventElement.querySelector('.resize-handle') || eventElement;
-  
   fireEvent.mouseDown(resizeHandle, {
     clientY: 100,
     target: resizeHandle,

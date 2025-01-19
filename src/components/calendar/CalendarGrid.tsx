@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Calendar, Event } from '../../contexts/CalendarContext';
+import { RRule } from 'rrule';
 
 interface CalendarGridProps {
   view: 'day' | 'week' | 'month';
@@ -98,10 +99,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     >
                       <div className="event-content">
                         {event.title}
-                      </div>
-                      <div 
-                        className="resize-handle"
-                        onMouseDown={(e) => {
+                        <div 
+                          className="resize-handle"
+                          data-testid="resize-handle"
+                          onMouseDown={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           const startY = e.clientY;
