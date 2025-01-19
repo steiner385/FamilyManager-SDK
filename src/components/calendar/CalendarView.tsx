@@ -134,6 +134,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDrop={handleDrop}
+            onSaveEvent={onSaveEvent}
             draggingEvent={draggingEvent}
           />
           {isModalOpen && (

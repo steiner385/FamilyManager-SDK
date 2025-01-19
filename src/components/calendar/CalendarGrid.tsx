@@ -10,6 +10,7 @@ interface CalendarGridProps {
   onDragStart: (event: Event) => void;
   onDragEnd: () => void;
   onDrop: (date: Date) => void;
+  onSaveEvent: (event: Event) => void;
   draggingEvent: Event | null;
 }
 
@@ -310,13 +311,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         const instanceEnd = new Date(instanceStart);
                         instanceEnd.setHours(eventEnd.getHours(), eventEnd.getMinutes());
                         
-                        // Check if this instance falls within the current month
-                        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-                        const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-                        
-                        return (instanceStart >= monthStart && instanceStart <= monthEnd) &&
-                               ((instanceStart >= dayStart && instanceStart <= dayEnd) ||
-                                (instanceEnd >= dayStart && instanceEnd <= dayEnd));
+                        return (instanceStart >= dayStart && instanceStart <= dayEnd) ||
+                               (instanceEnd >= dayStart && instanceEnd <= dayEnd);
                       });
                     }
                     return isInDay;
