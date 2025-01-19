@@ -1,8 +1,8 @@
-const net = require('net');
+import { createServer } from 'net';
 
 function checkPort(port) {
   return new Promise((resolve) => {
-    const server = net.createServer();
+    const server = createServer();
     
     server.once('error', (err) => {
       if (err.code === 'EADDRINUSE') {
