@@ -11,7 +11,13 @@ const config: StorybookConfig = {
   ],
   framework: {
     name: '@storybook/react-vite',
-    options: {},
+    options: {
+      builder: {
+        viteConfigPath: 'vite.config.ts',
+        port: 6010,
+        previewPort: 6011
+      }
+    },
   },
   docs: {
     autodocs: 'tag',
