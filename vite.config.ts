@@ -7,6 +7,13 @@ export default defineConfig({
   optimizeDeps: {
     include: ['winston']
   },
+  server: {
+    port: 6010,
+    strictPort: true,
+    hmr: {
+      port: 6011
+    }
+  },
   build: {
     lib: {
       entry: {
