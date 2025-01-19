@@ -101,6 +101,18 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           <option value="week">Week</option>
           <option value="month">Month</option>
         </select>
+        <div className="calendar-filters">
+          {calendars.map(calendar => (
+            <label key={calendar.id}>
+              <input
+                type="checkbox"
+                checked={true}
+                onChange={() => {/* TODO: Implement filtering */}}
+              />
+              {calendar.name}
+            </label>
+          ))}
+        </div>
       </div>
       {loading ? (
         <div className="loading">Loading calendar...</div>

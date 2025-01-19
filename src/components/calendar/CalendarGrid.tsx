@@ -231,60 +231,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   return (
     <div className="calendar-grid">
-      {view === 'day' && (
-        <div className="day-view rbc-time-view">
-          <div className="rbc-time-slot">
-            {Array.from({ length: 24 }, (_, i) => (
-              <div key={i} className="rbc-time-slot" onClick={() => onCreateEvent(new Date(currentDate.setHours(i)))}>
-                {`${i}:00`}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {view === 'week' && (
-        <div className="week-view rbc-time-view">
-          {Array.from({ length: 7 }, (_, i) => {
-            const date = new Date(currentDate);
-            date.setDate(date.getDate() - date.getDay() + i);
-            return (
-              <div key={i} className="day-column">
-                <div className="day-header">
-                  {date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}
-                </div>
-                <div className="droppable-area">
-                  {events
-                    .filter(event => {
-                      const eventDate = new Date(event.start);
-                      return eventDate.toDateString() === date.toDateString();
-                    })
-                    .map(event => (
-                      <div
-                        key={event.id}
-                        className={`event rbc-event ${event.allDay ? 'rbc-event-allday' : ''} ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
-                        style={{ backgroundColor: event.color }}
-                        draggable
-                        onDragStart={() => onDragStart(event)}
-                        onDragEnd={onDragEnd}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEventClick(event);
-                        }}
-                      >
-                        {event.title}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {view === 'month' && (
-        <div className="month-view rbc-month-view">
-          {renderMonthView()}
-        </div>
-      )}
+      {view === 'day' && renderDayView()}
+      {view === 'week' && renderWeekView()}
+      {view === 'month' && renderMonthView()}
     </div>
   );
 };
