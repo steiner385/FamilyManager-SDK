@@ -90,6 +90,10 @@ test('handles all-day events correctly', () => {
       onDeleteEvent={jest.fn()}
       loading={false}
       error={null}
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
     />
   );
 
@@ -106,6 +110,10 @@ test('switches between different calendar views', () => {
       onDeleteEvent={jest.fn()}
       loading={false}
       error={null}
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
     />
   );
 
@@ -140,6 +148,10 @@ test('handles timezone conversions correctly', () => {
       onDeleteEvent={jest.fn()}
       loading={false}
       error={null}
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
     />
   );
 
@@ -195,6 +207,10 @@ test('opens modal when event is clicked', () => {
       onDeleteEvent={jest.fn()}
       loading={false}
       error={null}
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
     />
   );
 
