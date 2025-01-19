@@ -11,8 +11,8 @@ export default defineConfig({
     port: 6010,
     strictPort: true,
     hmr: {
-      port: 6014,
-      clientPort: 6014
+      port: 6016,
+      clientPort: 6016
     }
   },
   build: {

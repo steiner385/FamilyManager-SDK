@@ -20,7 +20,7 @@ function checkPort(port) {
 }
 
 async function checkPorts() {
-  const portsToCheck = [6010, 6012, 6013, 6014];
+  const portsToCheck = [6010, 6013, 6016];
   const results = await Promise.all(
     portsToCheck.map(async (port) => {
       const isAvailable = await checkPort(port);
