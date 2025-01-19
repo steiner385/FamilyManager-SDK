@@ -304,43 +304,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         }
                         currentInstance = newInstance;
                       }
-                      // Return true if we have instances in this period
-                      // Generate recurring instances for the entire visible month
-                      const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-                      const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-                      
-                      let currentInstance = new Date(eventStart);
-                      const instances = [];
-                      
-                      while (currentInstance <= monthEnd && (!event.recurring.until || currentInstance <= event.recurring.until)) {
-                        if (currentInstance >= monthStart) {
-                          instances.push(new Date(currentInstance));
-                        }
-                        
-                        // Move to next instance based on frequency
-                        const interval = event.recurring.interval || 1;
-                        switch (event.recurring.frequency) {
-                          case 'daily':
-                            currentInstance.setDate(currentInstance.getDate() + interval);
-                            break;
-                          case 'weekly':
-                            currentInstance.setDate(currentInstance.getDate() + (7 * interval));
-                            break;
-                          case 'monthly':
-                            currentInstance.setMonth(currentInstance.getMonth() + interval);
-                            break;
-                          case 'yearly':
-                            currentInstance.setFullYear(currentInstance.getFullYear() + interval);
-                            break;
-                        }
-                      }
-                      
-                      // Check if any instance falls within this day
                       return instances.some(instance => {
                         const instanceStart = new Date(instance);
                         const instanceEnd = new Date(instanceStart);
                         instanceEnd.setHours(eventEnd.getHours(), eventEnd.getMinutes());
-                        return instanceStart.getDate() === day.getDate();
+                        return instanceStart.getDate() === day.getDate() && 
+                               instanceStart.getMonth() === day.getMonth();
                       });
                     }
                     return isInDay;
