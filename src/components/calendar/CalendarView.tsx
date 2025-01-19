@@ -23,6 +23,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   events,
   onSaveEvent,
   onDeleteEvent,
+  onDragStart,
+  onDragEnd,
+  onDrop,
+  draggingEvent,
 }) => {
   const [view, setView] = useState<'day' | 'week' | 'month'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
