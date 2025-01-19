@@ -272,8 +272,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         dtstart: new Date(event.start),
                         until: event.recurring.until,
                         interval: event.recurring.interval || 1,
-                        const dayMapping = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-                        byweekday: event.recurring.byDay?.map(day => RRule[dayMapping[day]]),
+                        byweekday: event.recurring.byDay?.map(day => {
+                          const dayMapping = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+                          return RRule[dayMapping[day]];
+                        }),
                       });
 
                       const occurrences = rule.between(dayStart, dayEnd, true);
