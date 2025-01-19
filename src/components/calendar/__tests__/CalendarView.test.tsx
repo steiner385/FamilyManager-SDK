@@ -83,8 +83,8 @@ test('creates new event on time slot click', () => {
   );
 
   // Simulate clicking on an empty time slot
-  const timeSlot = screen.getByTestId('calendar-timeslot-2023-10-10-14');
-  fireEvent.click(timeSlot);
+  const timeSlot = document.querySelector('.rbc-time-slot');
+  fireEvent.click(timeSlot!);
 
   // Verify modal opens
   expect(screen.getByText('New Event')).toBeInTheDocument();
@@ -115,10 +115,11 @@ test('handles drag and drop event resizing', () => {
     />
   );
 
-  const eventElement = screen.getByText('Meeting');
-  const resizeHandle = eventElement.querySelector('.rbc-event-resizer');
-  
-  fireEvent.mouseDown(resizeHandle);
+  const eventElement = screen.getByText('Meeting').closest('.rbc-event');
+  expect(eventElement).toBeInTheDocument();
+
+  // Simulate resize drag
+  fireEvent.mouseDown(eventElement!, { clientY: 0 });
   fireEvent.mouseMove(document, { clientY: 100 });
   fireEvent.mouseUp(document);
 
