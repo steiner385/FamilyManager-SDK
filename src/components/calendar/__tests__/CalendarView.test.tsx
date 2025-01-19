@@ -8,12 +8,14 @@ const mockCalendars: Calendar[] = [
   { id: '2', name: 'Personal', color: '#10b981' },
 ];
 
+const testDate = new Date('2025-01-19T10:00:00.000Z'); // Use current date from your system
+
 const mockEvents: Event[] = [
   {
     id: '1',
     title: 'Meeting',
-    start: new Date(2023, 9, 10, 10, 0),
-    end: new Date(2023, 9, 10, 11, 0),
+    start: testDate,
+    end: new Date(testDate.getTime() + 60 * 60 * 1000), // 1 hour later
     calendarId: '1',
     color: '#3b82f6',
   },

@@ -112,8 +112,10 @@
 .time-slots {
   display: flex;
   flex-direction: column;
-  height: calc(100% - 30px); /* Subtract header height */
+  height: calc(100% - 30px);
   overflow-y: auto;
+  position: relative;
+  min-height: 1440px; /* 24 hours * 60px per hour */
 }
 
 .time-slots .droppable-area {
@@ -167,6 +169,11 @@
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   border: 1px solid rgba(0, 0, 0, 0.1);
   touch-action: none;
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  min-height: 24px;
+  z-index: 1;
 }
 
 .event.dragging {

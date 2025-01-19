@@ -75,9 +75,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 {events
                   .filter(event => {
                     const eventStart = new Date(event.start);
-                    return eventStart >= dayStart && 
-                           eventStart <= dayEnd &&
-                           eventStart.getHours() === hour;
+                    const eventEnd = new Date(event.end);
+                    return (
+                      (eventStart >= slotStart && eventStart < slotEnd) ||
+                      (eventEnd > slotStart && eventEnd <= slotEnd) ||
+                      (eventStart <= slotStart && eventEnd >= slotEnd)
+                    );
                   })
                   .map(event => (
                     <div
@@ -111,7 +114,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     });
 
     return (
-      <div className="week-view">
+      <div className="week-view" data-testid="week-view">
         {days.map(day => {
           const dayStart = new Date(day);
           dayStart.setHours(0, 0, 0, 0);
@@ -124,7 +127,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             return (
               (eventStart >= dayStart && eventStart < dayEnd) ||
               (eventEnd > dayStart && eventEnd <= dayEnd) ||
-              (eventStart <= dayStart && eventEnd >= dayEnd)
+              (eventStart <= dayStart && eventEnd >= dayEnd) ||
+              (event.allDay && eventStart <= dayEnd && eventEnd >= dayStart)
             );
           });
 
