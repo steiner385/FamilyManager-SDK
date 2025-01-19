@@ -96,11 +96,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         onEventClick(event);
                       }}
                       onMouseDown={(e) => {
-                        if (e.target === e.currentTarget) return; // Only handle resize from bottom edge
-                        
                         const startY = e.clientY;
                         const originalEnd = new Date(event.end);
-                        let lastEnd = originalEnd;
                         
                         const handleMouseMove = (moveEvent: MouseEvent) => {
                           const deltaY = moveEvent.clientY - startY;
@@ -108,23 +105,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           const newEnd = new Date(originalEnd);
                           newEnd.setHours(newEnd.getHours() + hoursDelta);
                           
-                          if (newEnd.getTime() !== lastEnd.getTime()) {
-                            lastEnd = newEnd;
-                            const updatedEvent = {...event, end: newEnd};
-                            onEventClick(updatedEvent); // Update preview
-                            onSaveEvent(updatedEvent); // Also save the change
-                          }
+                          const updatedEvent = {...event, end: newEnd};
+                          onSaveEvent(updatedEvent);
                         };
                         
                         const handleMouseUp = () => {
-                          const deltaY = document.documentElement.scrollTop + window.innerHeight - startY;
-                          const hoursDelta = Math.round(deltaY / 60);
-                          const finalEnd = new Date(originalEnd);
-                          finalEnd.setHours(finalEnd.getHours() + hoursDelta);
-                          
-                          const finalEvent = {...event, end: finalEnd};
-                          onSaveEvent(finalEvent); // Save the final change
-                          
                           document.removeEventListener('mousemove', handleMouseMove);
                           document.removeEventListener('mouseup', handleMouseUp);
                         };
@@ -311,8 +296,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         const instanceEnd = new Date(instanceStart);
                         instanceEnd.setHours(eventEnd.getHours(), eventEnd.getMinutes());
                         
-                        return (instanceStart >= dayStart && instanceStart <= dayEnd) ||
-                               (instanceEnd >= dayStart && instanceEnd <= dayEnd);
+                        return true; // Return true to show all instances in the current view
                       });
                     }
                     return isInDay;
