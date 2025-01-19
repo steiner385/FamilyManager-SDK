@@ -100,8 +100,8 @@ test('handles all-day events correctly', () => {
     />
   );
 
-  const allDayEventElement = screen.getByText('Conference');
-  expect(allDayEventElement.closest('.event')).toBeInTheDocument();
+  const allDayEventElements = screen.getAllByText('Conference');
+  expect(allDayEventElements[0].closest('.calendar-event')).toBeInTheDocument();
 });
 
 test('switches between different calendar views', () => {
@@ -307,7 +307,7 @@ test('handles drag and drop event resizing', () => {
     />
   );
 
-  const eventElement = screen.getByText('Meeting').closest('.rbc-event');
+  const eventElement = screen.getByText('Meeting').closest('.calendar-event');
   expect(eventElement).toBeInTheDocument();
 
   // Simulate resize drag

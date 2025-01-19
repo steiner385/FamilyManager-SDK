@@ -85,7 +85,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   .map(event => (
                     <div
                       key={event.id}
-                      className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
+                      className={`calendar-event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
                       style={{ backgroundColor: event.color }}
                       draggable
                       onDragStart={() => onDragStart(event)}
