@@ -259,6 +259,10 @@ test('creates new event on time slot click', () => {
       onDeleteEvent={jest.fn()}
       loading={false}
       error={null}
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
     />
   );
 
@@ -294,6 +298,10 @@ test('handles drag and drop event resizing', () => {
       onDeleteEvent={jest.fn()}
       loading={false}
       error={null}
+      onDragStart={jest.fn()}
+      onDragEnd={jest.fn()}
+      onDrop={jest.fn()}
+      draggingEvent={null}
     />
   );
 
