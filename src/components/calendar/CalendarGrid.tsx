@@ -95,18 +95,34 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         onEventClick(event);
                       }}
                       onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) return; // Only handle resize from bottom edge
+                        
                         const startY = e.clientY;
                         const originalEnd = new Date(event.end);
+                        let lastEnd = originalEnd;
                         
                         const handleMouseMove = (moveEvent: MouseEvent) => {
                           const deltaY = moveEvent.clientY - startY;
                           const hoursDelta = Math.round(deltaY / 60);
                           const newEnd = new Date(originalEnd);
                           newEnd.setHours(newEnd.getHours() + hoursDelta);
-                          onEventClick({...event, end: newEnd});
+                          
+                          if (newEnd.getTime() !== lastEnd.getTime()) {
+                            lastEnd = newEnd;
+                            const updatedEvent = {...event, end: newEnd};
+                            onEventClick(updatedEvent); // Update preview
+                          }
                         };
                         
                         const handleMouseUp = () => {
+                          const deltaY = document.documentElement.scrollTop + window.innerHeight - startY;
+                          const hoursDelta = Math.round(deltaY / 60);
+                          const finalEnd = new Date(originalEnd);
+                          finalEnd.setHours(finalEnd.getHours() + hoursDelta);
+                          
+                          const updatedEvent = {...event, end: finalEnd};
+                          onEventClick(updatedEvent); // Save the final change
+                          
                           document.removeEventListener('mousemove', handleMouseMove);
                           document.removeEventListener('mouseup', handleMouseUp);
                         };
@@ -257,25 +273,35 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                                   (event.allDay && eventStart <= dayEnd && eventEnd >= dayStart);
                     
                     if (event.recurring) {
-                      // Generate recurring instances for the current week/month
+                      // Generate recurring instances
                       const instances = [];
-                      let currentDate = new Date(eventStart);
-                      const until = event.recurring.until || new Date(dayEnd);
+                      const startOfView = new Date(Math.min(dayStart.getTime(), currentDate.getTime()));
+                      const endOfView = new Date(Math.max(dayEnd.getTime(), new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000)));
+                      let currentInstance = new Date(eventStart);
                       
-                      while (currentDate <= until) {
-                        if (currentDate >= dayStart && currentDate <= dayEnd) {
-                          instances.push(new Date(currentDate));
+                      while (currentInstance <= endOfView && (!event.recurring.until || currentInstance <= event.recurring.until)) {
+                        if (currentInstance >= startOfView) {
+                          instances.push(new Date(currentInstance.getTime()));
                         }
-                        // Add interval based on frequency
-                        if (event.recurring.frequency === 'daily') {
-                          currentDate.setDate(currentDate.getDate() + (event.recurring.interval || 1));
-                        } else if (event.recurring.frequency === 'weekly') {
-                          currentDate.setDate(currentDate.getDate() + 7 * (event.recurring.interval || 1));
-                        } else if (event.recurring.frequency === 'monthly') {
-                          currentDate.setMonth(currentDate.getMonth() + (event.recurring.interval || 1));
-                        } else if (event.recurring.frequency === 'yearly') {
-                          currentDate.setFullYear(currentDate.getFullYear() + (event.recurring.interval || 1));
+                        
+                        const interval = event.recurring.interval || 1;
+                        const newInstance = new Date(currentInstance);
+                        
+                        switch (event.recurring.frequency) {
+                          case 'daily':
+                            newInstance.setDate(newInstance.getDate() + interval);
+                            break;
+                          case 'weekly':
+                            newInstance.setDate(newInstance.getDate() + (7 * interval));
+                            break;
+                          case 'monthly':
+                            newInstance.setMonth(newInstance.getMonth() + interval);
+                            break;
+                          case 'yearly':
+                            newInstance.setFullYear(newInstance.getFullYear() + interval);
+                            break;
                         }
+                        currentInstance = newInstance;
                       }
                       return instances.length > 0;
                     }
