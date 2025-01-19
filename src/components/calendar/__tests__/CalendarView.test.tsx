@@ -88,6 +88,8 @@ test('handles all-day events correctly', () => {
       events={[...mockEvents, allDayEvent]}
       onSaveEvent={jest.fn()}
       onDeleteEvent={jest.fn()}
+      loading={false}
+      error={null}
     />
   );
 
@@ -102,6 +104,8 @@ test('switches between different calendar views', () => {
       events={mockEvents}
       onSaveEvent={jest.fn()}
       onDeleteEvent={jest.fn()}
+      loading={false}
+      error={null}
     />
   );
 
@@ -134,6 +138,8 @@ test('handles timezone conversions correctly', () => {
       events={[eventInDifferentTZ]}
       onSaveEvent={jest.fn()}
       onDeleteEvent={jest.fn()}
+      loading={false}
+      error={null}
     />
   );
 
@@ -187,6 +193,8 @@ test('opens modal when event is clicked', () => {
       events={mockEvents}
       onSaveEvent={jest.fn()}
       onDeleteEvent={jest.fn()}
+      loading={false}
+      error={null}
     />
   );
 
@@ -209,6 +217,8 @@ test('filters events by calendar selection', () => {
       events={[workEvent, personalEvent]}
       onSaveEvent={jest.fn()}
       onDeleteEvent={jest.fn()}
+      loading={false}
+      error={null}
     />
   );
 
@@ -227,6 +237,8 @@ test('creates new event on time slot click', () => {
       events={mockEvents}
       onSaveEvent={onSaveEvent}
       onDeleteEvent={jest.fn()}
+      loading={false}
+      error={null}
     />
   );
 
@@ -260,6 +272,8 @@ test('handles drag and drop event resizing', () => {
       events={mockEvents}
       onSaveEvent={onSaveEvent}
       onDeleteEvent={jest.fn()}
+      loading={false}
+      error={null}
     />
   );
 

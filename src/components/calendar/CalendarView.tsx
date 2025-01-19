@@ -8,14 +8,14 @@ import './Calendar.css';
 interface CalendarViewProps {
   calendars: Calendar[];
   events: Event[];
-  loading: boolean;
-  error: string | null;
+  loading?: boolean;
+  error?: string | null;
   onSaveEvent: (event: Event) => void;
   onDeleteEvent: (eventId: string) => void;
-  onDragStart: (event: Event) => void;
-  onDragEnd: () => void;
-  onDrop: (date: Date) => void;
-  draggingEvent: Event | null;
+  onDragStart?: (event: Event) => void;
+  onDragEnd?: () => void;
+  onDrop?: (date: Date) => void;
+  draggingEvent?: Event | null;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({
