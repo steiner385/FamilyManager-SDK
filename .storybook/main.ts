@@ -53,9 +53,6 @@ const config: StorybookConfig = {
         fs: {
           strict: false,
         },
-        hmr: {
-          port: 6010,
-        },
       },
     };
   },
