@@ -40,7 +40,7 @@
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "storybook": "storybook dev -p 6010",
+    "storybook": "storybook dev -p 6010 --ci",
     "build-storybook": "storybook build --quiet",
     "test-storybook": "test-storybook --maxWorkers=2 --ci",
     "test-storybook:ci": "start-server-and-test 'serve storybook-static -p 6011 --no-request-logging' http://localhost:6011 'test-storybook --url http://localhost:6011'",
