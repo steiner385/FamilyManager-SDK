@@ -54,7 +54,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
     <Modal 
       isOpen={true}
       onClose={onClose} 
-      title={event?.id ? 'Edit Event' : 'New Event'}
+      title={event?.id && event.id.startsWith('new-') ? 'New Event' : 'Edit Event'}
       data-testid="event-modal"
     >
       <form>

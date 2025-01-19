@@ -103,7 +103,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           const hoursDelta = Math.round(deltaY / 60);
                           const newEnd = new Date(originalEnd);
                           newEnd.setHours(newEnd.getHours() + hoursDelta);
-                          onSaveEvent({...event, end: newEnd});
+                          onEventClick({...event, end: newEnd});
                         };
                         
                         const handleMouseUp = () => {
@@ -260,16 +260,21 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       // Generate recurring instances for the current week/month
                       const instances = [];
                       let currentDate = new Date(eventStart);
-                      while (currentDate <= dayEnd) {
-                        if (currentDate >= dayStart) {
-                          instances.push(currentDate);
+                      const until = event.recurring.until || new Date(dayEnd);
+                      
+                      while (currentDate <= until) {
+                        if (currentDate >= dayStart && currentDate <= dayEnd) {
+                          instances.push(new Date(currentDate));
                         }
                         // Add interval based on frequency
-                        currentDate = new Date(currentDate);
                         if (event.recurring.frequency === 'daily') {
                           currentDate.setDate(currentDate.getDate() + (event.recurring.interval || 1));
                         } else if (event.recurring.frequency === 'weekly') {
                           currentDate.setDate(currentDate.getDate() + 7 * (event.recurring.interval || 1));
+                        } else if (event.recurring.frequency === 'monthly') {
+                          currentDate.setMonth(currentDate.getMonth() + (event.recurring.interval || 1));
+                        } else if (event.recurring.frequency === 'yearly') {
+                          currentDate.setFullYear(currentDate.getFullYear() + (event.recurring.interval || 1));
                         }
                       }
                       return instances.length > 0;
