@@ -38,29 +38,52 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     setIsModalOpen(false);
   };
 
+  const handleCreateEvent = (date: Date) => {
+    setSelectedEvent({
+      id: '',
+      title: '',
+      start: date,
+      end: new Date(date.getTime() + 60 * 60 * 1000), // Default 1 hour event
+      calendarId: calendars[0]?.id || '',
+      color: '#3b82f6'
+    });
+    setIsModalOpen(true);
+  };
+
   return (
-      <div className="calendar-view">
-        <CalendarHeader
-          view={view}
-          onViewChange={setView}
-          currentDate={currentDate}
-          onDateChange={setCurrentDate}
-        />
-        <CalendarGrid
-          view={view}
-          currentDate={currentDate}
-          events={events}
-          onEventClick={handleEventClick}
-        />
-        {isModalOpen && (
-          <CalendarModal
-            event={selectedEvent}
-            onSave={handleSaveEvent}
-            onDelete={handleDeleteEvent}
-            onClose={() => setIsModalOpen(false)}
+    <div className="calendar-view">
+      <CalendarHeader
+        view={view}
+        onViewChange={setView}
+        currentDate={currentDate}
+        onDateChange={setCurrentDate}
+        onCreateEvent={() => handleCreateEvent(currentDate)}
+      />
+      {loading ? (
+        <div className="loading">Loading calendar...</div>
+      ) : error ? (
+        <div className="error">{error}</div>
+      ) : (
+        <>
+          <CalendarGrid
+            view={view}
+            currentDate={currentDate}
+            events={events}
+            onEventClick={handleEventClick}
+            onCreateEvent={handleCreateEvent}
           />
-        )}
-      </div>
+          {isModalOpen && (
+            <CalendarModal
+              event={selectedEvent}
+              calendars={calendars}
+              onSave={handleSave}
+              onDelete={selectedEvent ? handleDelete : undefined}
+              onClose={() => setIsModalOpen(false)}
+            />
+          )}
+        </>
+      )}
+    </div>
   );
 };
 

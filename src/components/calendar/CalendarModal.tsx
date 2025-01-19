@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '../common/Modal';
-import { Event, RecurrenceRule } from '../../contexts/CalendarContext';
+import { Calendar, Event, RecurrenceRule } from '../../contexts/CalendarContext';
 
 interface CalendarModalProps {
   event?: Event;

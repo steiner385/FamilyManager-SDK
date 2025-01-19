@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import CalendarView from './CalendarView';
 import { Calendar, Event } from '../../contexts/CalendarContext';
 import { usePlugins } from '../../hooks/usePlugins';
@@ -6,7 +6,43 @@ import { usePlugins } from '../../hooks/usePlugins';
 const CalendarContainer = () => {
   const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { plugins } = usePlugins();
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const pluginCalendars: Calendar[] = [];
+      const pluginEvents: Event[] = [];
+
+      for (const plugin of plugins) {
+        try {
+          if (plugin.getCalendars) {
+            const calendars = await plugin.getCalendars();
+            pluginCalendars.push(...calendars);
+          }
+          if (plugin.getEvents) {
+            const events = await plugin.getEvents();
+            pluginEvents.push(...events);
+          }
+        } catch (err) {
+          console.error(`Error loading data from plugin ${plugin.id}:`, err);
+          setError(`Failed to load data from ${plugin.name}`);
+        }
+      }
+
+      setCalendars(pluginCalendars);
+      setEvents(pluginEvents);
+    } catch (err) {
+      console.error('Error loading calendar data:', err);
+      setError('Failed to load calendar data');
+    } finally {
+      setLoading(false);
+    }
+  }, [plugins]);
 
   // Fetch calendars and events from plugins
   useEffect(() => {
