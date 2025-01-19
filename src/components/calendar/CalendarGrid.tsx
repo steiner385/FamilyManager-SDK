@@ -153,7 +153,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   ))}
               </div>
             </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -222,7 +223,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   ))}
               </div>
             </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
