@@ -51,7 +51,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   };
 
   return (
-    <Modal onClose={onClose} title={event ? 'Edit Event' : 'Create Event'}>
+    <Modal onClose={onClose} title={event?.id ? 'Edit Event' : 'New Event'}>
       <form>
         <label>
           Title:

@@ -48,7 +48,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     dayEnd.setHours(23, 59, 59, 999);
     
     return (
-      <div className="day-view">
+      <div className="day-view" data-testid="day-view">
         <div className="time-column">
           {hours.map(hour => (
             <div key={hour} className="time-slot">
@@ -207,7 +207,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
 
     return (
-      <div className="month-view">
+      <div className="month-view" data-testid="month-view">
         {days.map(day => {
           const dayStart = new Date(day);
           dayStart.setHours(0, 0, 0, 0);
@@ -239,7 +239,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   .map(event => (
                     <div
                       key={event.id}
-                      className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
+                      className={`calendar-event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
                       style={{ backgroundColor: event.color }}
                       draggable
                       onDragStart={() => onDragStart(event)}

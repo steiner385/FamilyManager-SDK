@@ -72,9 +72,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   };
 
 
-  const handleCreateEvent = (date: Date) => {
+  const handleCreateEvent = useCallback((date: Date) => {
     setSelectedEvent({
-      id: '',
+      id: `new-${Date.now()}`,
       title: '',
       start: date,
       end: new Date(date.getTime() + 60 * 60 * 1000), // Default 1 hour event
@@ -122,6 +122,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     newEnabled.delete(calendar.id);
                   }
                   setEnabledCalendars(newEnabled);
+                  // Force re-render when calendars change
+                  setCurrentDate(new Date(currentDate.getTime())); 
                 }}
               />
               {calendar.name}
