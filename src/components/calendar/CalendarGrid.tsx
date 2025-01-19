@@ -42,6 +42,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const renderDayView = () => {
     const hours = Array.from({ length: 24 }, (_, i) => i);
+    const dayStart = new Date(currentDate);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(currentDate);
+    dayEnd.setHours(23, 59, 59, 999);
     
     return (
       <div className="day-view">
@@ -54,8 +58,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         </div>
         <div className="events-column">
           {hours.map(hour => {
-            const date = new Date(currentDate);
-            date.setHours(hour, 0, 0, 0);
+            const slotStart = new Date(currentDate);
+            slotStart.setHours(hour, 0, 0, 0);
+            const slotEnd = new Date(slotStart);
+            slotEnd.setHours(hour + 1, 0, 0, 0);
             
             return (
               <div
@@ -63,11 +69,16 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 className="droppable-area"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, date)}
-                onClick={() => onCreateEvent(date)}
+                onDrop={(e) => handleDrop(e, slotStart)}
+                onClick={() => onCreateEvent(slotStart)}
               >
                 {events
-                  .filter(event => event.start.getHours() === hour)
+                  .filter(event => {
+                    const eventStart = new Date(event.start);
+                    return eventStart >= dayStart && 
+                           eventStart <= dayEnd &&
+                           eventStart.getHours() === hour;
+                  })
                   .map(event => (
                     <div
                       key={event.id}
@@ -101,23 +112,30 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
     return (
       <div className="week-view">
-        {days.map(day => (
-          <div key={day.toISOString()} className="day-column">
-            <div className="day-header">
-              {day.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}
-            </div>
-            <div
-              className="droppable-area"
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, day)}
-              onClick={() => onCreateEvent(day)}
-            >
-              {events
-                .filter(event => 
-                  event.start.toDateString() === day.toDateString()
-                )
-                .map(event => (
+        {days.map(day => {
+          const dayStart = new Date(day);
+          dayStart.setHours(0, 0, 0, 0);
+          const dayEnd = new Date(day);
+          dayEnd.setHours(23, 59, 59, 999);
+
+          return (
+            <div key={day.toISOString()} className="day-column">
+              <div className="day-header">
+                {day.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}
+              </div>
+              <div
+                className="droppable-area"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, day)}
+                onClick={() => onCreateEvent(day)}
+              >
+                {events
+                  .filter(event => {
+                    const eventStart = new Date(event.start);
+                    return eventStart >= dayStart && eventStart <= dayEnd;
+                  })
+                  .map(event => (
                   <div
                     key={event.id}
                     className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
@@ -158,26 +176,35 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
     return (
       <div className="month-view">
-        {days.map(day => (
-          <div
-            key={day.toISOString()}
-            className={`day-cell ${day.getMonth() === currentMonth ? '' : 'other-month'}`}
-          >
-            <div className="day-header">
-              {day.getDate()}
-            </div>
+        {days.map(day => {
+          const dayStart = new Date(day);
+          dayStart.setHours(0, 0, 0, 0);
+          const dayEnd = new Date(day);
+          dayEnd.setHours(23, 59, 59, 999);
+
+          return (
             <div
-              className="droppable-area"
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, day)}
-              onClick={() => onCreateEvent(day)}
+              key={day.toISOString()}
+              className={`day-cell ${day.getMonth() === currentMonth ? '' : 'other-month'}`}
             >
-              {events
-                .filter(event => 
-                  event.start.toDateString() === day.toDateString()
-                )
-                .map(event => (
+              <div className="day-header">
+                {day.getDate()}
+              </div>
+              <div
+                className="droppable-area"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, day)}
+                onClick={() => onCreateEvent(day)}
+              >
+                {events
+                  .filter(event => {
+                    const eventStart = new Date(event.start);
+                    const eventEnd = new Date(event.end);
+                    return (eventStart >= dayStart && eventStart <= dayEnd) ||
+                           (event.allDay && eventStart <= dayEnd && eventEnd >= dayStart);
+                  })
+                  .map(event => (
                   <div
                     key={event.id}
                     className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
