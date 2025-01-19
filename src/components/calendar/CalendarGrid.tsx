@@ -94,6 +94,26 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         e.stopPropagation();
                         onEventClick(event);
                       }}
+                      onMouseDown={(e) => {
+                        const startY = e.clientY;
+                        const originalEnd = new Date(event.end);
+                        
+                        const handleMouseMove = (moveEvent: MouseEvent) => {
+                          const deltaY = moveEvent.clientY - startY;
+                          const hoursDelta = Math.round(deltaY / 60);
+                          const newEnd = new Date(originalEnd);
+                          newEnd.setHours(newEnd.getHours() + hoursDelta);
+                          onSaveEvent({...event, end: newEnd});
+                        };
+                        
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
                     >
                       {event.title}
                     </div>
@@ -236,9 +256,23 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     const isInDay = (eventStart >= dayStart && eventStart <= dayEnd) ||
                                   (event.allDay && eventStart <= dayEnd && eventEnd >= dayStart);
                     
-                    // Handle recurring events
-                    if (event.recurring && isInDay) {
-                      return true;
+                    if (event.recurring) {
+                      // Generate recurring instances for the current week/month
+                      const instances = [];
+                      let currentDate = new Date(eventStart);
+                      while (currentDate <= dayEnd) {
+                        if (currentDate >= dayStart) {
+                          instances.push(currentDate);
+                        }
+                        // Add interval based on frequency
+                        currentDate = new Date(currentDate);
+                        if (event.recurring.frequency === 'daily') {
+                          currentDate.setDate(currentDate.getDate() + (event.recurring.interval || 1));
+                        } else if (event.recurring.frequency === 'weekly') {
+                          currentDate.setDate(currentDate.getDate() + 7 * (event.recurring.interval || 1));
+                        }
+                      }
+                      return instances.length > 0;
                     }
                     return isInDay;
                   })

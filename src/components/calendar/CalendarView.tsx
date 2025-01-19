@@ -91,11 +91,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         <button onClick={() => setCurrentDate(new Date(currentDate.getTime() - 86400000))}>Previous</button>
         <button onClick={() => setCurrentDate(new Date())}>Today</button>
         <button onClick={() => setCurrentDate(new Date(currentDate.getTime() + 86400000))}>Next</button>
-        <select 
-          value={view} 
-          onChange={(e) => setView(e.target.value as 'day' | 'week' | 'month')}
-          data-testid="view-selector"
-        >
+        <div className="view-buttons">
+          <button onClick={() => setView('day')}>Day</button>
+          <button onClick={() => setView('week')}>Week</button>
+          <button onClick={() => setView('month')}>Month</button>
+        </div>
           <option value="day">Day</option>
           <option value="week">Week</option>
           <option value="month">Month</option>
