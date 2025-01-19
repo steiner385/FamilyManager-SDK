@@ -10,15 +10,14 @@
 - [x] Responsive design
 
 ## In Progress
-- [ ] Recurring event display logic
 - [ ] Drag-and-drop event rescheduling
 
 ## Upcoming Features
 1. Recurring Event Support
-   - [ ] Implement recurrence rule parsing
-   - [ ] Generate recurring event instances
+   - [x] Implement recurrence rule parsing
+   - [x] Generate recurring event instances
    - [ ] Handle exceptions to recurring events
-   - [ ] Add recurrence editing UI
+   - [x] Add recurrence editing UI
 
 2. Drag-and-Drop Functionality
    - [ ] Implement drag handlers
