@@ -51,11 +51,21 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   };
 
   return (
-    <Modal onClose={onClose} title={event?.id ? 'Edit Event' : 'New Event'}>
+    <Modal 
+      isOpen={true}
+      onClose={onClose} 
+      title={event?.id ? 'Edit Event' : 'New Event'}
+    >
       <form>
         <label>
           Title:
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <input 
+            type="text" 
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Event Title"
+            data-testid="event-title-input"
+          />
         </label>
         <label>
           Start:

@@ -166,7 +166,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       {slotEvents.map(event => (
                         <div
                           key={event.id}
-                          className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
+                          className={`calendar-event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
                           style={{ backgroundColor: event.color }}
                           draggable
                           onDragStart={() => onDragStart(event)}
@@ -233,8 +233,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   .filter(event => {
                     const eventStart = new Date(event.start);
                     const eventEnd = new Date(event.end);
-                    return (eventStart >= dayStart && eventStart <= dayEnd) ||
-                           (event.allDay && eventStart <= dayEnd && eventEnd >= dayStart);
+                    const isInDay = (eventStart >= dayStart && eventStart <= dayEnd) ||
+                                  (event.allDay && eventStart <= dayEnd && eventEnd >= dayStart);
+                    
+                    // Handle recurring events
+                    if (event.recurring && isInDay) {
+                      return true;
+                    }
+                    return isInDay;
                   })
                   .map(event => (
                     <div
@@ -261,7 +267,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   };
 
   return (
-    <div className="calendar-grid">
+    <div className="calendar-grid" data-testid="calendar-grid">
       {view === 'day' && renderDayView()}
       {view === 'week' && renderWeekView()}
       {view === 'month' && renderMonthView()}
