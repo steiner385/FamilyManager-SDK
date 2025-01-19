@@ -46,3 +46,61 @@ test('calls onSave when Save button is clicked', () => {
   fireEvent.click(screen.getByText('Save'));
   expect(onSave).toHaveBeenCalled();
 });
+
+test('calls onDelete when Delete button is clicked', () => {
+  const onDelete = jest.fn();
+  render(
+    <CalendarModal
+      event={mockEvent}
+      calendars={mockCalendars}
+      onSave={jest.fn()}
+      onDelete={onDelete}
+      onClose={jest.fn()}
+    />
+  );
+
+  fireEvent.click(screen.getByText('Delete'));
+  expect(onDelete).toHaveBeenCalled();
+});
+
+test('updates event title when input changes', () => {
+  const onSave = jest.fn();
+  render(
+    <CalendarModal
+      event={mockEvent}
+      calendars={mockCalendars}
+      onSave={onSave}
+      onDelete={jest.fn()}
+      onClose={jest.fn()}
+    />
+  );
+
+  const titleInput = screen.getByDisplayValue('Meeting');
+  fireEvent.change(titleInput, { target: { value: 'Updated Meeting' } });
+  fireEvent.click(screen.getByText('Save'));
+  
+  expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+    ...mockEvent,
+    title: 'Updated Meeting'
+  }));
+});
+
+test('validates required fields before saving', () => {
+  const onSave = jest.fn();
+  render(
+    <CalendarModal
+      event={mockEvent}
+      calendars={mockCalendars}
+      onSave={onSave}
+      onDelete={jest.fn()}
+      onClose={jest.fn()}
+    />
+  );
+
+  const titleInput = screen.getByDisplayValue('Meeting');
+  fireEvent.change(titleInput, { target: { value: '' } });
+  fireEvent.click(screen.getByText('Save'));
+  
+  expect(onSave).not.toHaveBeenCalled();
+  expect(screen.getByText('Title is required')).toBeInTheDocument();
+});
