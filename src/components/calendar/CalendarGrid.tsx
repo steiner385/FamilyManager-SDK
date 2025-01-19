@@ -267,30 +267,18 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                                   (event.allDay && eventStart <= dayEnd && eventEnd >= dayStart);
                     
                     if (event.recurring) {
-                      // Generate recurring instances
-                      const instances = [];
-                      const startOfView = new Date(dayStart);
-                      const endOfView = new Date(dayEnd);
-                      let currentInstance = new Date(eventStart);
+                      const rule = new RRule({
+                        freq: RRule[event.recurring.frequency.toUpperCase()],
+                        dtstart: new Date(event.start),
+                        until: event.recurring.until,
+                        interval: event.recurring.interval || 1,
+                        byweekday: event.recurring.byDay?.map(day => RRule.weekdays[day]),
+                      });
 
-                      const interval = event.recurring.interval || 1;
-                      const daysOfWeek = event.recurring.byDay || [];
+                      const occurrences = rule.between(dayStart, dayEnd, true);
 
-                      while (currentInstance <= endOfView && (!event.recurring.until || currentInstance <= event.recurring.until)) {
-                        if (
-                          currentInstance >= startOfView &&
-                          (daysOfWeek.length === 0 || daysOfWeek.includes(currentInstance.getDay()))
-                        ) {
-                          instances.push(new Date(currentInstance.getTime()));
-                        }
-
-                        // Move to next day
-                        currentInstance.setDate(currentInstance.getDate() + 1);
-                      }
-                      return instances.some(instance => {
-                        const instanceStart = new Date(instance);
-                        return instanceStart.getDate() === day.getDate() && 
-                               instanceStart.getMonth() === day.getMonth();
+                      return occurrences.some(occurrence => {
+                        return occurrence.getDate() === day.getDate() && occurrence.getMonth() === day.getMonth();
                       });
                     }
                     return isInDay;
