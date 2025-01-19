@@ -96,33 +96,35 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         onEventClick(event);
                       }}
                       onMouseDown={(e) => {
-                        if (!e.target.classList.contains('calendar-event')) return;
-                        
                         const startY = e.clientY;
                         const originalEnd = new Date(event.end);
+                        let lastDelta = 0;
                         
                         const handleMouseMove = (moveEvent: MouseEvent) => {
                           const deltaY = moveEvent.clientY - startY;
-                          const hoursDelta = Math.round(deltaY / 60);
-                          const newEnd = new Date(originalEnd);
-                          newEnd.setHours(newEnd.getHours() + hoursDelta);
+                          const hoursDelta = Math.floor(deltaY / 30); // More granular resize
                           
-                          const updatedEvent = {...event, end: newEnd};
-                          onSaveEvent(updatedEvent);
+                          if (hoursDelta !== lastDelta) {
+                            lastDelta = hoursDelta;
+                            const newEnd = new Date(originalEnd);
+                            newEnd.setMinutes(newEnd.getMinutes() + (hoursDelta * 30));
+                            
+                            const updatedEvent = {
+                              ...event,
+                              end: newEnd
+                            };
+                            onSaveEvent(updatedEvent);
+                          }
                         };
                         
                         const handleMouseUp = () => {
-                          const deltaY = e.clientY - startY;
-                          const hoursDelta = Math.round(deltaY / 60);
-                          const finalEnd = new Date(originalEnd);
-                          finalEnd.setHours(finalEnd.getHours() + hoursDelta);
-                          
-                          const finalEvent = {...event, end: finalEnd};
-                          onSaveEvent(finalEvent);
-                          
                           document.removeEventListener('mousemove', handleMouseMove);
                           document.removeEventListener('mouseup', handleMouseUp);
                         };
+                        
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
                         
                         document.addEventListener('mousemove', handleMouseMove);
                         document.addEventListener('mouseup', handleMouseUp);
