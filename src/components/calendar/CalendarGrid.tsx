@@ -121,7 +121,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           finalEnd.setHours(finalEnd.getHours() + hoursDelta);
                           
                           const updatedEvent = {...event, end: finalEnd};
-                          onEventClick(updatedEvent); // Save the final change
+                          onEventClick(updatedEvent);
+                          const saveEvent = {...event, end: finalEnd};
+                          onEventClick(saveEvent); // Save the final change
                           
                           document.removeEventListener('mousemove', handleMouseMove);
                           document.removeEventListener('mouseup', handleMouseUp);
@@ -303,7 +305,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         }
                         currentInstance = newInstance;
                       }
-                      return instances.length > 0;
+                      // Check if any instance falls within this day
+                      return instances.some(instance => {
+                        const instanceEnd = new Date(instance);
+                        instanceEnd.setHours(eventEnd.getHours(), eventEnd.getMinutes());
+                        return instance >= dayStart && instance <= dayEnd;
+                      });
                     }
                     return isInDay;
                   })
