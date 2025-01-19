@@ -133,7 +133,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 {events
                   .filter(event => {
                     const eventStart = new Date(event.start);
-                    return eventStart >= dayStart && eventStart <= dayEnd;
+                    const eventEnd = new Date(event.end);
+                    return (eventStart >= dayStart && eventStart <= dayEnd) ||
+                           (eventEnd >= dayStart && eventEnd <= dayEnd) ||
+                           (eventStart <= dayStart && eventEnd >= dayEnd);
                   })
                   .map(event => (
                     <div

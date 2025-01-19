@@ -34,6 +34,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [enabledCalendars, setEnabledCalendars] = useState<Set<string>>(
+    new Set(calendars.map(cal => cal.id))
+  );
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
@@ -96,7 +99,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         <button onClick={() => setCurrentDate(new Date(currentDate.getTime() - 86400000))}>Previous</button>
         <button onClick={() => setCurrentDate(new Date())}>Today</button>
         <button onClick={() => setCurrentDate(new Date(currentDate.getTime() + 86400000))}>Next</button>
-        <select value={view} onChange={(e) => setView(e.target.value as 'day' | 'week' | 'month')}>
+        <select 
+          value={view} 
+          onChange={(e) => {
+            const newView = e.target.value as 'day' | 'week' | 'month';
+            setView(newView);
+          }}
+          data-testid="view-selector"
+        >
           <option value="day">Day</option>
           <option value="week">Week</option>
           <option value="month">Month</option>
@@ -106,8 +116,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             <label key={calendar.id}>
               <input
                 type="checkbox"
-                checked={true}
-                onChange={() => {/* TODO: Implement filtering */}}
+                checked={enabledCalendars.has(calendar.id)}
+                onChange={(e) => {
+                  const newEnabled = new Set(enabledCalendars);
+                  if (e.target.checked) {
+                    newEnabled.add(calendar.id);
+                  } else {
+                    newEnabled.delete(calendar.id);
+                  }
+                  setEnabledCalendars(newEnabled);
+                }}
               />
               {calendar.name}
             </label>
@@ -123,7 +141,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           <CalendarGrid
             view={view}
             currentDate={currentDate}
-            events={events}
+            events={events.filter(event => enabledCalendars.has(event.calendarId))}
             onEventClick={handleEventClick}
             onCreateEvent={handleCreateEvent}
             onDragStart={handleDragStart}
