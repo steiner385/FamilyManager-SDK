@@ -83,7 +83,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       recurring: undefined
     });
     setIsModalOpen(true);
-  };
+  }, [calendars]);
 
   return (
     <div className="calendar-view">
