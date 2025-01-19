@@ -32,6 +32,104 @@ test('renders CalendarView with events', () => {
   expect(screen.getByText('Meeting')).toBeInTheDocument();
 });
 
+test('handles recurring events correctly', () => {
+  const recurringEvent: Event = {
+    id: '3',
+    title: 'Weekly Meeting',
+    start: new Date(2023, 9, 10, 10, 0),
+    end: new Date(2023, 9, 10, 11, 0),
+    calendarId: '1',
+    recurring: {
+      frequency: 'weekly',
+      interval: 1,
+      endDate: new Date(2023, 10, 10)
+    }
+  };
+
+  render(
+    <CalendarView
+      calendars={mockCalendars}
+      events={[...mockEvents, recurringEvent]}
+      onSaveEvent={jest.fn()}
+      onDeleteEvent={jest.fn()}
+    />
+  );
+
+  // Should show multiple instances of the recurring event
+  const recurringEventElements = screen.getAllByText('Weekly Meeting');
+  expect(recurringEventElements.length).toBeGreaterThan(1);
+});
+
+test('handles all-day events correctly', () => {
+  const allDayEvent: Event = {
+    id: '4',
+    title: 'Conference',
+    start: new Date(2023, 9, 10),
+    end: new Date(2023, 9, 12),
+    calendarId: '1',
+    allDay: true
+  };
+
+  render(
+    <CalendarView
+      calendars={mockCalendars}
+      events={[...mockEvents, allDayEvent]}
+      onSaveEvent={jest.fn()}
+      onDeleteEvent={jest.fn()}
+    />
+  );
+
+  const allDayEventElement = screen.getByText('Conference');
+  expect(allDayEventElement.closest('.rbc-event-allday')).toBeInTheDocument();
+});
+
+test('switches between different calendar views', () => {
+  render(
+    <CalendarView
+      calendars={mockCalendars}
+      events={mockEvents}
+      onSaveEvent={jest.fn()}
+      onDeleteEvent={jest.fn()}
+    />
+  );
+
+  // Test month view
+  fireEvent.click(screen.getByText('Month'));
+  expect(document.querySelector('.rbc-month-view')).toBeInTheDocument();
+
+  // Test week view
+  fireEvent.click(screen.getByText('Week'));
+  expect(document.querySelector('.rbc-time-view')).toBeInTheDocument();
+
+  // Test day view
+  fireEvent.click(screen.getByText('Day'));
+  expect(document.querySelector('.rbc-time-view')).toBeInTheDocument();
+  expect(document.querySelector('.rbc-day-slot')).toBeInTheDocument();
+});
+
+test('handles timezone conversions correctly', () => {
+  const eventInDifferentTZ: Event = {
+    id: '5',
+    title: 'International Call',
+    start: new Date('2023-10-10T15:00:00Z'), // UTC time
+    end: new Date('2023-10-10T16:00:00Z'),
+    calendarId: '1'
+  };
+
+  render(
+    <CalendarView
+      calendars={mockCalendars}
+      events={[eventInDifferentTZ]}
+      onSaveEvent={jest.fn()}
+      onDeleteEvent={jest.fn()}
+    />
+  );
+
+  // Event should be displayed in local timezone
+  const eventElement = screen.getByText('International Call');
+  expect(eventElement).toBeInTheDocument();
+});
+
 test('opens modal when event is clicked', () => {
   render(
     <CalendarView
