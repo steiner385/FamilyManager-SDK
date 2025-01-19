@@ -92,13 +92,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   return (
     <div className="calendar-view">
-      <CalendarHeader
-        view={view}
-        onViewChange={setView}
-        currentDate={currentDate}
-        onDateChange={setCurrentDate}
-        onCreateEvent={() => handleCreateEvent(currentDate)}
-      />
+      <div className="calendar-header">
+        <button onClick={() => setCurrentDate(new Date(currentDate.getTime() - 86400000))}>Previous</button>
+        <button onClick={() => setCurrentDate(new Date())}>Today</button>
+        <button onClick={() => setCurrentDate(new Date(currentDate.getTime() + 86400000))}>Next</button>
+        <select value={view} onChange={(e) => setView(e.target.value as 'day' | 'week' | 'month')}>
+          <option value="day">Day</option>
+          <option value="week">Week</option>
+          <option value="month">Month</option>
+        </select>
+      </div>
       {loading ? (
         <div className="loading">Loading calendar...</div>
       ) : error ? (
