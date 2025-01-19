@@ -118,42 +118,66 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           const dayEnd = new Date(day);
           dayEnd.setHours(23, 59, 59, 999);
 
+          const dayEvents = events.filter(event => {
+            const eventStart = new Date(event.start);
+            const eventEnd = new Date(event.end);
+            return (
+              (eventStart >= dayStart && eventStart < dayEnd) ||
+              (eventEnd > dayStart && eventEnd <= dayEnd) ||
+              (eventStart <= dayStart && eventEnd >= dayEnd)
+            );
+          });
+
           return (
             <div key={day.toISOString()} className="day-column">
               <div className="day-header">
                 {day.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}
               </div>
-              <div
-                className="droppable-area"
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, day)}
-                onClick={() => onCreateEvent(day)}
-              >
-                {events
-                  .filter(event => {
+              <div className="time-slots">
+                {Array.from({ length: 24 }, (_, hour) => {
+                  const slotStart = new Date(day);
+                  slotStart.setHours(hour, 0, 0, 0);
+                  const slotEnd = new Date(slotStart);
+                  slotEnd.setHours(hour + 1, 0, 0, 0);
+
+                  const slotEvents = dayEvents.filter(event => {
                     const eventStart = new Date(event.start);
                     const eventEnd = new Date(event.end);
-                    return (eventStart >= dayStart && eventStart <= dayEnd) ||
-                           (eventEnd >= dayStart && eventEnd <= dayEnd) ||
-                           (eventStart <= dayStart && eventEnd >= dayEnd);
-                  })
-                  .map(event => (
+                    return (
+                      (eventStart >= slotStart && eventStart < slotEnd) ||
+                      (eventEnd > slotStart && eventEnd <= slotEnd) ||
+                      (eventStart <= slotStart && eventEnd >= slotEnd)
+                    );
+                  });
+
+                  return (
                     <div
-                      key={event.id}
-                      className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
-                      style={{ backgroundColor: event.color }}
-                      draggable
-                      onDragStart={() => onDragStart(event)}
-                      onDragEnd={onDragEnd}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(event);
-                      }}
+                      key={hour}
+                      className="droppable-area"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, slotStart)}
+                      onClick={() => onCreateEvent(slotStart)}
                     >
-                      {event.title}
+                      {slotEvents.map(event => (
+                        <div
+                          key={event.id}
+                          className={`event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
+                          style={{ backgroundColor: event.color }}
+                          draggable
+                          onDragStart={() => onDragStart(event)}
+                          onDragEnd={onDragEnd}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEventClick(event);
+                          }}
+                        >
+                          {event.title}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  );
+                })}
               </div>
             </div>
           );
