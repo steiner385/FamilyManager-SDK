@@ -41,16 +41,17 @@ test('renders CalendarView with events', () => {
 });
 
 test('handles recurring events correctly', () => {
+  const testDate = new Date('2025-01-19T10:00:00.000Z');
   const recurringEvent: Event = {
     id: '3',
     title: 'Weekly Meeting',
-    start: new Date(2023, 9, 10, 10, 0),
-    end: new Date(2023, 9, 10, 11, 0),
+    start: testDate,
+    end: new Date(testDate.getTime() + 60 * 60 * 1000),
     calendarId: '1',
     recurring: {
       frequency: 'weekly',
       interval: 1,
-      endDate: new Date(2023, 10, 10)
+      until: new Date(testDate.getTime() + 7 * 24 * 60 * 60 * 1000)
     }
   };
 
@@ -78,8 +79,8 @@ test('handles all-day events correctly', () => {
   const allDayEvent: Event = {
     id: '4',
     title: 'Conference',
-    start: new Date(2023, 9, 10),
-    end: new Date(2023, 9, 12),
+    start: testDate,
+    end: new Date(testDate.getTime() + 2 * 24 * 60 * 60 * 1000),
     calendarId: '1',
     allDay: true
   };
@@ -100,7 +101,7 @@ test('handles all-day events correctly', () => {
   );
 
   const allDayEventElement = screen.getByText('Conference');
-  expect(allDayEventElement.closest('.rbc-event-allday')).toBeInTheDocument();
+  expect(allDayEventElement.closest('.event')).toBeInTheDocument();
 });
 
 test('switches between different calendar views', () => {
@@ -121,24 +122,23 @@ test('switches between different calendar views', () => {
 
   // Test month view
   fireEvent.click(screen.getByText('Month'));
-  expect(document.querySelector('.rbc-month-view')).toBeInTheDocument();
+  expect(document.querySelector('.month-view')).toBeInTheDocument();
 
   // Test week view
   fireEvent.click(screen.getByText('Week'));
-  expect(document.querySelector('.rbc-time-view')).toBeInTheDocument();
+  expect(document.querySelector('.week-view')).toBeInTheDocument();
 
   // Test day view
   fireEvent.click(screen.getByText('Day'));
-  expect(document.querySelector('.rbc-time-view')).toBeInTheDocument();
-  expect(document.querySelector('.rbc-day-slot')).toBeInTheDocument();
+  expect(document.querySelector('.day-view')).toBeInTheDocument();
 });
 
 test('handles timezone conversions correctly', () => {
   const eventInDifferentTZ: Event = {
     id: '5',
     title: 'International Call',
-    start: new Date('2023-10-10T15:00:00Z'), // UTC time
-    end: new Date('2023-10-10T16:00:00Z'),
+    start: new Date(testDate.getTime()), // Use same test date
+    end: new Date(testDate.getTime() + 60 * 60 * 1000),
     calendarId: '1'
   };
 
@@ -269,7 +269,7 @@ test('creates new event on time slot click', () => {
   );
 
   // Simulate clicking on an empty time slot
-  const timeSlot = document.querySelector('.rbc-time-slot');
+  const timeSlot = document.querySelector('.droppable-area');
   fireEvent.click(timeSlot!);
 
   // Verify modal opens
