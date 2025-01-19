@@ -111,6 +111,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                             lastEnd = newEnd;
                             const updatedEvent = {...event, end: newEnd};
                             onEventClick(updatedEvent); // Update preview
+                            onSaveEvent(updatedEvent); // Also save the change
                           }
                         };
                         
@@ -120,9 +121,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           const finalEnd = new Date(originalEnd);
                           finalEnd.setHours(finalEnd.getHours() + hoursDelta);
                           
-                          const updatedEvent = {...event, end: finalEnd};
                           const finalEvent = {...event, end: finalEnd};
-                          onEventClick(finalEvent); // Save the final change
+                          onSaveEvent(finalEvent); // Save the final change
                           
                           document.removeEventListener('mousemove', handleMouseMove);
                           document.removeEventListener('mouseup', handleMouseUp);
@@ -309,8 +309,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         const instanceStart = new Date(instance);
                         const instanceEnd = new Date(instanceStart);
                         instanceEnd.setHours(eventEnd.getHours(), eventEnd.getMinutes());
-                        return (instanceStart >= dayStart && instanceStart <= dayEnd) ||
-                               (instanceEnd >= dayStart && instanceEnd <= dayEnd);
+                        
+                        // Check if this instance falls within the current month
+                        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                        const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                        
+                        return (instanceStart >= monthStart && instanceStart <= monthEnd) &&
+                               ((instanceStart >= dayStart && instanceStart <= dayEnd) ||
+                                (instanceEnd >= dayStart && instanceEnd <= dayEnd));
                       });
                     }
                     return isInDay;
