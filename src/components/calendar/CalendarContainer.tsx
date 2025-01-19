@@ -122,6 +122,29 @@ const CalendarContainer = () => {
     }
   };
 
+  const [draggingEvent, setDraggingEvent] = useState<Event | null>(null);
+
+  const handleDragStart = useCallback((event: Event) => {
+    setDraggingEvent(event);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggingEvent(null);
+  }, []);
+
+  const handleDrop = useCallback((date: Date) => {
+    if (draggingEvent) {
+      const duration = draggingEvent.end.getTime() - draggingEvent.start.getTime();
+      const updatedEvent = {
+        ...draggingEvent,
+        start: date,
+        end: new Date(date.getTime() + duration)
+      };
+      handleSaveEvent(updatedEvent);
+      setDraggingEvent(null);
+    }
+  }, [draggingEvent, handleSaveEvent]);
+
   return (
     <CalendarView
       calendars={calendars}
@@ -130,6 +153,10 @@ const CalendarContainer = () => {
       error={error}
       onSaveEvent={handleSaveEvent}
       onDeleteEvent={handleDeleteEvent}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDrop={handleDrop}
+      draggingEvent={draggingEvent}
     />
   );
 };
