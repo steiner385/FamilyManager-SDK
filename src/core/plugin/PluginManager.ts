@@ -58,7 +58,7 @@ export class PluginManager {
     this.plugins.clear();
     this.pluginStates.clear();
     this.initializedPlugins.clear();
-    this.logger.debug('Cleared all plugins');
+    logger.debug('Cleared all plugins');
   }
 
   async registerPlugin(plugin: Plugin): Promise<void> {
@@ -68,11 +68,15 @@ export class PluginManager {
       throw new Error(`Plugin ${plugin.id} is already registered`);
     }
 
+    logger.info(`Registered plugin: ${plugin.name} (${plugin.id})`);
+
     // Check dependencies
     if (plugin.dependencies?.required) {
       for (const [depId, version] of Object.entries(plugin.dependencies.required)) {
         if (!this.plugins.has(depId)) {
-          throw new Error(`Missing required dependency: ${depId}`);
+          const error = `Missing required dependency: ${depId}`;
+          logger.error(error);
+          throw new Error(error);
         }
       }
     }
@@ -85,7 +89,9 @@ export class PluginManager {
   async uninstallPlugin(pluginId: string): Promise<void> {
     const plugin = this.plugins.get(pluginId);
     if (!plugin) {
-      throw new Error(`Plugin ${pluginId} is not registered`);
+      const error = `Plugin ${pluginId} is not registered`;
+      logger.error(error);
+      throw new Error(error);
     }
 
     // Check for dependent plugins
@@ -103,7 +109,7 @@ export class PluginManager {
     this.plugins.delete(pluginId);
     this.pluginStates.delete(pluginId);
     this.initializedPlugins.delete(pluginId);
-    this.logger.info(`Unregistered plugin: ${pluginId}`);
+    logger.info(`Unregistered plugin: ${pluginId}`);
   }
 
   async startPlugin(pluginId: string): Promise<void> {
