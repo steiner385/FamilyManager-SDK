@@ -1,6 +1,7 @@
 import { Logger } from '../logging/Logger';
 import { Plugin, PluginMetrics, PluginStatus } from './types';
 import { eventBus } from '../events/EventBus';
+import { logger } from '../utils/logger';
 
 export class PluginManager {
   private static instance: PluginManager;

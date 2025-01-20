@@ -9,16 +9,17 @@ import { describe, it, expect, jest, beforeAll, beforeEach, afterEach } from '@j
 
 type HasPluginFn = (id: string) => boolean;
 
-const mockLogger = {
-  info: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-  error: jest.fn(),
-};
+let mockLogger: any;
 
-jest.mock('../../utils/logger', () => ({
-  logger: mockLogger
-}), { virtual: true });
+jest.mock('../../utils/logger', () => {
+  mockLogger = {
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
+  };
+  return { logger: mockLogger };
+}, { virtual: true });
 jest.mock('../../events/EventBus', () => ({
   EventBus: {
     getInstance: jest.fn(),

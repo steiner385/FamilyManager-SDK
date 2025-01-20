@@ -100,10 +100,9 @@ describe('ConfigManager', () => {
     };
 
     await configManager.setConfig('test-plugin', config);
-
-    expect(mockEncryption.encrypt).toHaveBeenCalledWith('secret');
     
     const savedConfig = await configManager.getConfig('test-plugin');
+    expect(mockEncryption.encrypt).toHaveBeenCalledWith('secret');
     expect(savedConfig.username).toBe('test');
     expect(savedConfig.password).toContain('encrypted:');
   });
