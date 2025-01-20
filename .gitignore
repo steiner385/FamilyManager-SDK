@@ -8,6 +8,12 @@ dist/
 build/
 lib/
 *.tsbuildinfo
+*.js
+!*.config.js
+!jest.setup.js
+!.eslintrc.js
+!.prettierrc.js
+!vite.config.js
 
 # Testing
 coverage/
