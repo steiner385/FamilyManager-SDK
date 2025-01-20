@@ -23,6 +23,10 @@ export class PluginManager {
     return PluginManager.instance;
   }
 
+  public static resetInstance(): void {
+    PluginManager.instance = new PluginManager();
+  }
+
   async registerPlugin(plugin: Plugin): Promise<void> {
     if (this.plugins.has(plugin.id)) {
       throw new Error(`Plugin ${plugin.id} is already registered`);

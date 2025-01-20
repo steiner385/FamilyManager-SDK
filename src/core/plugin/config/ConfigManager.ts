@@ -10,11 +10,14 @@ export class ConfigManager {
   private storage: ConfigStorage;
   private middleware: ValidationMiddleware;
   private readonly source = 'config-manager';
+  private schemas: Map<string, any>;
+  private encryption?: ConfigEncryption;
 
   private constructor() {
     this.eventBus = EventBus.getInstance();
     this.storage = new FileConfigStorage();
     this.middleware = new ValidationMiddleware();
+    this.schemas = new Map();
   }
 
   public static getInstance(): ConfigManager {
@@ -22,6 +25,14 @@ export class ConfigManager {
       ConfigManager.instance = new ConfigManager();
     }
     return ConfigManager.instance;
+  }
+
+  public registerSchema(pluginName: string, schema: any): void {
+    this.schemas.set(pluginName, schema);
+  }
+
+  public setEncryption(encryption: ConfigEncryption): void {
+    this.encryption = encryption;
   }
 
   public async init(): Promise<void> {
