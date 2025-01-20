@@ -66,7 +66,9 @@ export class EventPool {
 
   private initialize(): void {
     for (let i = 0; i < this.config.initialSize; i++) {
-      this.pool.push(this.createEmptyEvent());
+      const event = this.createEmptyEvent();
+      event.setInUse(false); // Explicitly mark as not in use
+      this.pool.push(event);
     }
   }
 
@@ -91,10 +93,12 @@ export class EventPool {
       return;
     }
 
-    const expansionSize = Math.min(
-      this.config.expandSteps,
-      this.config.maxSize - currentSize
+    // Only expand by the minimum needed amount
+    const neededSize = Math.min(
+      currentSize + this.config.expandSteps,
+      this.config.maxSize
     );
+    const expansionSize = neededSize - currentSize;
 
     for (let i = 0; i < expansionSize; i++) {
       const event = this.createEmptyEvent();
@@ -108,9 +112,27 @@ export class EventPool {
   }
 
   clear(): void {
-    this.pool = [];
-    this.initialize();
-    this.logger.info('Pool cleared and reinitialized');
+    // Reset all existing events instead of recreating
+    this.pool.forEach(event => {
+      Object.assign(event, {
+        id: '',
+        type: '',
+        channel: '',
+        source: '',
+        timestamp: 0,
+        data: undefined,
+        version: undefined,
+        priority: undefined,
+        poolId: '',
+        attempts: 0,
+        maxAttempts: this.config.maxAttempts,
+        nextAttempt: undefined,
+        status: EventDeliveryStatus.PENDING,
+        error: undefined
+      });
+      event.setInUse(false);
+    });
+    this.logger.info('Pool cleared and reset');
   }
 
   private findAvailableEvent<T>(event: PoolEvent<T>): ManagedEvent<T> | null {
@@ -185,7 +207,7 @@ export class EventPool {
   }
 
   acquire(): ManagedEvent | null {
-    const event = this.createEvent({
+    const event = this.findAvailableEvent({
       id: '',
       type: '',
       channel: '',
@@ -198,9 +220,10 @@ export class EventPool {
     
     if (event) {
       event.setInUse(true);
+      return event;
     }
     
-    return event;
+    return null;
   }
 
   destroy(): void {
