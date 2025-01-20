@@ -32,7 +32,7 @@ class ManagedEvent<T = unknown> implements PooledEvent<T> {
     this.maxAttempts = event.maxAttempts;
     this.nextAttempt = event.nextAttempt;
     this.status = EventDeliveryStatus.PENDING;
-    this._inUse = event.id !== ''; // Only mark as in use if it has an ID
+    this._inUse = true; // Always mark as in use when constructing from an event
   }
 
   isInUse(): boolean {
@@ -94,9 +94,8 @@ export class EventPool {
     }
 
     const expansionSize = targetSize - currentSize;
-    for (let i = 0; i < expansionSize; i++) {
-      this.pool.push(this.createEmptyEvent());
-    }
+    const newEvents = Array.from({ length: expansionSize }, () => this.createEmptyEvent());
+    this.pool.push(...newEvents);
 
     this.logger.info(
       `Pool expanded by ${expansionSize} events (${currentSize} -> ${this.pool.length})`
@@ -111,18 +110,15 @@ export class EventPool {
 
   private findAvailableEvent<T>(event: PoolEvent<T>): ManagedEvent<T> | null {
     // First try to find an unused event slot
-    const emptyEvent = this.pool.find(e => !e.isInUse());
-    if (emptyEvent) {
-      return emptyEvent as ManagedEvent<T>;
-    }
-
-    // If pool is full but we can expand, do so
-    if (this.pool.length < this.config.maxSize) {
+    let emptyEvent = this.pool.find(e => !e.isInUse());
+    
+    // If no empty event and we can expand, do so
+    if (!emptyEvent && this.pool.length < this.config.maxSize) {
       this.expandPool();
-      return this.pool.find(e => !e.isInUse()) as ManagedEvent<T>;
+      emptyEvent = this.pool.find(e => !e.isInUse());
     }
 
-    return null;
+    return emptyEvent as ManagedEvent<T> || null;
   }
 
   createEvent<T>(data: PoolEvent<T>): PooledEvent<T> | null {

@@ -182,7 +182,7 @@ describe('EventBus', () => {
     it('should handle events with no subscribers', async () => {
       const event = createTestEvent('test-channel');
       const status = await eventBus.emit(event);
-      expect(status).toBe(EventDeliveryStatus.SUCCESS);
+      expect(status).toBe(EventDeliveryStatus.DELIVERED);
       expect(logger.debug).toHaveBeenCalledWith('No subscribers for event test-channel');
     });
 
