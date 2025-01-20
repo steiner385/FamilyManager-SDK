@@ -86,18 +86,18 @@ export class EventPool {
     }
 
     const currentSize = this.pool.length;
-    const remainingCapacity = this.config.maxSize - currentSize;
-    const targetExpansion = Math.min(
-      this.config.expandSteps,
-      remainingCapacity
+    const targetSize = Math.min(
+      currentSize + this.config.expandSteps,
+      this.config.maxSize
     );
+    const expansionSize = targetSize - currentSize;
 
-    for (let i = 0; i < targetExpansion; i++) {
+    for (let i = 0; i < expansionSize; i++) {
       this.pool.push(this.createEmptyEvent());
     }
 
     this.logger.info(
-      `Pool expanded by ${targetExpansion} events (${currentSize} -> ${this.pool.length})`
+      `Pool expanded by ${expansionSize} events (${currentSize} -> ${this.pool.length})`
     );
   }
 
