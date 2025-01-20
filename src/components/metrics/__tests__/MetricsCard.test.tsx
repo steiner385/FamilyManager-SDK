@@ -38,7 +38,7 @@ describe('MetricsCard', () => {
 
     const changeText = screen.getByText('-8.5%');
     expect(changeText).toBeInTheDocument();
-    expect(changeText).toHaveClass('text-red-500');
+    expect(changeText).toHaveClass('text-red-800');
   });
 
   it('handles custom formatters', () => {
@@ -175,6 +175,6 @@ describe('MetricsCard', () => {
 
     const changeText = screen.getByText('0%');
     expect(changeText).toBeInTheDocument();
-    expect(changeText).toHaveClass('text-gray-500');
+    expect(changeText).toHaveClass('text-gray-800');
   });
 });
