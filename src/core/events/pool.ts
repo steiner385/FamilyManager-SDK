@@ -86,8 +86,11 @@ export class EventPool {
     }
 
     const currentSize = this.pool.length;
-    const remainingCapacity = this.config.maxSize - currentSize;
-    const expansionSize = Math.min(this.config.expandSteps, remainingCapacity);
+    const targetSize = Math.min(
+      currentSize + this.config.expandSteps,
+      this.config.maxSize
+    );
+    const expansionSize = targetSize - currentSize;
 
     if (expansionSize <= 0) {
       return;
