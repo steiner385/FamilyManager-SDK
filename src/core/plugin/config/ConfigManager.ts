@@ -62,14 +62,16 @@ export class ConfigManager {
         if (schema.properties?.[key]?.sensitive && typeof value === 'string') {
           try {
             currentConfig[key] = await this.encryption.encrypt(value);
-            logger.debug(`Encrypted sensitive field: ${key}`);
+            this.logger?.debug(`Encrypted sensitive field: ${key}`);
           } catch (error) {
-            logger.error(`Failed to encrypt field ${key}:`, error);
+            this.logger?.error(`Failed to encrypt field ${key}:`, error);
             throw error;
           }
         }
       }
     }
+    
+    this.configs.set(pluginName, currentConfig);
     
     // Chain middlewares
     const executeMiddleware = async (index: number, currentConfig: any = config): Promise<void> => {

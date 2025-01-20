@@ -78,6 +78,7 @@ export class PluginManager {
           throw new Error(error);
         }
       }
+      return; // Stop registration if dependencies missing
     }
 
     // Register routes if present

@@ -18,16 +18,16 @@ jest.mock('../../utils/logger', () => ({
   }
 }), { virtual: true });
 
-const mockLogger = {
-  info: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-  error: jest.fn()
-};
-
 jest.mock('../../utils/logger', () => ({
-  logger: mockLogger
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn()
+  }
 }));
+
+const mockLogger = jest.mocked(logger);
 jest.mock('../../events/EventBus', () => ({
   EventBus: {
     getInstance: jest.fn(),
