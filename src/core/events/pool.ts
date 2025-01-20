@@ -2,6 +2,7 @@ import { Logger } from '../logging/Logger';
 import { PoolConfig, PoolEvent, PooledEvent, EventDeliveryStatus } from './types';
 
 class ManagedEvent<T = unknown> implements PooledEvent<T> {
+  private _inUse: boolean = false;
   id: string;
   type: string;
   channel: string;
@@ -31,6 +32,11 @@ class ManagedEvent<T = unknown> implements PooledEvent<T> {
     this.maxAttempts = event.maxAttempts;
     this.nextAttempt = event.nextAttempt;
     this.status = EventDeliveryStatus.PENDING;
+    this._inUse = true;
+  }
+
+  isInUse(): boolean {
+    return this._inUse;
   }
 }
 
@@ -131,11 +137,40 @@ export class EventPool {
     }
   }
 
-  getStats(): { available: number; total: number } {
+  getStats(): { size: number; available: number; inUse: number; total: number } {
     const available = this.pool.filter(e => !e.id).length;
+    const inUse = this.pool.length - available;
     return {
+      size: this.pool.length,
       available,
+      inUse,
       total: this.config.maxSize
     };
+  }
+
+  acquire(): ManagedEvent | null {
+    return this.createEvent({
+      id: '',
+      type: '',
+      channel: '',
+      source: '',
+      timestamp: Date.now(),
+      poolId: '',
+      attempts: 0,
+      maxAttempts: this.config.maxAttempts
+    });
+  }
+
+  destroy(): void {
+    this.pool = [];
+    this.logger.info('Event pool destroyed');
+  }
+
+  updateConfig(config: Partial<PoolConfig>): void {
+    this.config = {
+      ...this.config,
+      ...config
+    };
+    this.logger.info('Pool configuration updated', { config: this.config });
   }
 }

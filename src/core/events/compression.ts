@@ -15,8 +15,13 @@ export class EventCompressor {
       compressionLevel: 6,
       ...config
     };
-    this.encoder = new TextEncoder();
-    this.decoder = new TextDecoder();
+    // Node.js environment - use Buffer instead of TextEncoder/TextDecoder
+    this.encoder = {
+      encode: (str: string) => Buffer.from(str)
+    };
+    this.decoder = {
+      decode: (buf: Uint8Array) => Buffer.from(buf).toString()
+    };
   }
 
   private shouldCompress(data: unknown): boolean {
