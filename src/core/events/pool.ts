@@ -81,10 +81,12 @@ export class EventPool {
 
   private expandPool(): void {
     if (this.pool.length < this.config.maxSize) {
-      const expandBy = Math.min(
-        this.config.expandSteps,
-        this.config.maxSize - this.pool.length
+      const currentSize = this.pool.length;
+      const targetSize = Math.min(
+        currentSize + this.config.expandSteps,
+        this.config.maxSize
       );
+      const expandBy = targetSize - currentSize;
 
       for (let i = 0; i < expandBy; i++) {
         this.pool.push(this.createEmptyEvent());

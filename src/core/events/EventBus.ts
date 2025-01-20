@@ -1,9 +1,11 @@
 import { Event, EventHandler } from './types';
 
 export enum EventDeliveryStatus {
-  SUCCESS = 'SUCCESS',
-  PARTIAL = 'PARTIAL',
-  FAILED = 'FAILED'
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING', 
+  DELIVERED = 'DELIVERED',
+  FAILED = 'FAILED',
+  RETRYING = 'RETRYING'
 }
 
 export class EventBus {
@@ -13,12 +15,7 @@ export class EventBus {
   private isRunning: boolean;
   private subscriptionCounter: number;
 
-  private logger = {
-    info: console.log,
-    debug: console.debug,
-    warn: console.warn,
-    error: console.error
-  };
+  private logger = Logger.getInstance();
 
   private constructor() {
     this.channels = new Set();
@@ -167,10 +164,10 @@ export class EventBus {
     if (successCount === 0) {
       return EventDeliveryStatus.FAILED;
     } else if (successCount < handlers.size) {
-      return EventDeliveryStatus.PARTIAL;
+      return EventDeliveryStatus.RETRYING;
     }
 
-    return EventDeliveryStatus.SUCCESS;
+    return EventDeliveryStatus.DELIVERED;
   }
 }
 
