@@ -16,11 +16,7 @@ const mockPluginManager = {
 // Mock the PluginManager
 jest.mock('../../core/plugin/PluginManager', () => ({
     PluginManager: {
-        getInstance: () => ({
-            registerPlugin: mockPluginManager.registerPlugin,
-            getPlugin: mockPluginManager.getPlugin,
-            isInitialized: mockPluginManager.isInitialized
-        })
+        getInstance: () => mockPluginManager
     }
 }));
 // Mock ErrorBoundary
@@ -84,13 +80,20 @@ describe('PluginProvider', () => {
         
         // Reset mock implementations
         mockPluginManager.registerPlugin.mockImplementation(async (plugin) => {
+            if (mockPluginManager.plugins.has(plugin.id)) {
+                mockPluginManager.plugins.delete(plugin.id);
+            }
             mockPluginManager.plugins.set(plugin.id, plugin);
             return plugin;
         });
+        
         mockPluginManager.getPlugin.mockImplementation((id) => 
             mockPluginManager.plugins.get(id)
         );
-        mockPluginManager.isInitialized.mockReturnValue(true);
+        
+        mockPluginManager.isInitialized.mockImplementation((id) => 
+            mockPluginManager.plugins.has(id)
+        );
     });
     afterEach(() => {
         jest.useRealTimers();
@@ -151,10 +154,13 @@ describe('PluginProvider', () => {
         expect(mockPluginManager.isInitialized).toHaveBeenCalledWith('test-plugin');
     });
     it('should handle plugin installation errors', async () => {
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation((...args) => { });
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        
+        // Override just for this test
         mockPluginManager.registerPlugin.mockImplementationOnce(async () => {
             throw new Error('Installation failed');
         });
+        mockPluginManager.plugins.clear(); // Ensure clean state
         const { getByTestId } = render(_jsx(PluginProvider, { children: _jsx(TestComponent, {}) }));
         // Wait for initialization
         await act(async () => {
