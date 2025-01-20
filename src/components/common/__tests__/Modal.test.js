@@ -37,7 +37,8 @@ describe('Modal', () => {
     });
     it('renders when isOpen is true', () => {
         render(_jsx(Modal, { ...defaultProps }));
-        expect(screen.getByTestId('modal')).toBeInTheDocument();
+        const dialog = screen.getByRole('dialog');
+        expect(dialog).toBeInTheDocument();
         expect(screen.getByTestId('modal-content')).toHaveTextContent('Modal content');
     });
     it('does not render when isOpen is false', () => {
