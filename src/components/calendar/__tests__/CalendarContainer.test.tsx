@@ -10,8 +10,8 @@ test('renders CalendarContainer with plugin data', async () => {
   const mockEvents = [{
     id: '1',
     title: 'Meeting',
-    start: new Date(2023, 9, 10, 10, 0),
-    end: new Date(2023, 9, 10, 11, 0),
+    start: new Date(2025, 0, 20, 10, 0), // January 20, 2025 10:00 AM
+    end: new Date(2025, 0, 20, 11, 0),   // January 20, 2025 11:00 AM
     calendarId: '1',
     color: '#3b82f6',
   }];
