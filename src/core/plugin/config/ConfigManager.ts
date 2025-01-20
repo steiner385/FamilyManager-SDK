@@ -74,7 +74,24 @@ export class ConfigManager {
         return;
       }
 
-      await this.middlewares[index](currentConfig, () => executeMiddleware(index + 1));
+      try {
+        await this.middlewares[index](currentConfig, async () => {
+          await executeMiddleware(index + 1);
+        });
+      } catch (error) {
+        await this.eventBus.emit({
+          id: `config-validation-failed-${Date.now()}`,
+          type: 'CONFIG_VALIDATION_FAILED',
+          channel: 'config',
+          source: this.source,
+          timestamp: Date.now(),
+          data: {
+            pluginName,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          }
+        });
+        throw error;
+      }
     };
 
     await executeMiddleware(0);

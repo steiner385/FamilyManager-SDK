@@ -17,13 +17,21 @@ export class PluginManager {
     this.initialized = false;
   }
 
+  private initialized = false;
+
   public initialize(): void {
     if (this.initialized) {
       this.logger.warn('PluginManager already initialized');
       return;
     }
     this.initialized = true;
-    this.logger.info('PluginManager initialized');
+    this.logger.debug('PluginManager initialized');
+  }
+
+  private checkInitialized(): void {
+    if (!this.initialized) {
+      throw new Error('PluginManager must be initialized before registering plugins');
+    }
   }
 
   public static getInstance(): PluginManager {
@@ -53,15 +61,31 @@ export class PluginManager {
   }
 
   async registerPlugin(plugin: Plugin): Promise<void> {
+    this.checkInitialized();
+
     if (this.plugins.has(plugin.id)) {
       throw new Error(`Plugin ${plugin.id} is already registered`);
     }
 
+    // Check dependencies
+    if (plugin.dependencies?.required) {
+      for (const [depId, version] of Object.entries(plugin.dependencies.required)) {
+        if (!this.plugins.has(depId)) {
+          throw new Error(`Missing required dependency: ${depId}`);
+        }
+      }
+    }
+
     this.plugins.set(plugin.id, plugin);
     this.pluginStates.set(plugin.id, PluginStatus.INACTIVE);
-    this.logger.info(`Plugin registered: ${plugin.id}`);
+    this.logger.info(`Registered plugin: ${plugin.name} (${plugin.id})`);
 
-    await this.initializePlugin(plugin);
+    // Register routes if present
+    if (plugin.routes) {
+      for (const route of plugin.routes) {
+        routeRegistry.registerRoute(plugin.id, route);
+      }
+    }
   }
 
   async uninstallPlugin(pluginId: string): Promise<void> {
