@@ -45,6 +45,6 @@ export function createValidationMiddleware(validator: any, schema: any) {
       );
     }
 
-    await next(config);
+    await next();
   };
 }

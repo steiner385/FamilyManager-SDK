@@ -56,10 +56,10 @@ export class ConfigManager {
     let currentConfig = config;
     
     // Chain middlewares
-    const executeMiddleware = async (index: number, currentConfig: any = config): Promise<void> => {
+    const executeMiddleware = async (index: number): Promise<void> => {
       if (index >= this.middlewares.length) {
         // All middleware executed, save config
-        this.configs.set(pluginName, currentConfig);
+        this.configs.set(pluginName, config);
         await this.eventBus.emit({
           id: `config-changed-${Date.now()}`,
           type: 'CONFIG_CHANGED',
