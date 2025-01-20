@@ -16,9 +16,10 @@ export class EventBus {
   private isRunning: boolean;
   private subscriptionCounter: number;
 
-  private logger = Logger.getInstance();
+  private logger: Logger;
 
   private constructor() {
+    this.logger = Logger.getInstance();
     this.channels = new Set();
     this.handlers = new Map();
     this.isRunning = false;
