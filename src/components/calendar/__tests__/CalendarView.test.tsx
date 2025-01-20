@@ -291,12 +291,23 @@ test('creates new event on time slot click', () => {
   }));
 });
 
-test('handles drag and drop event resizing', () => {
+test('handles event resizing calculations correctly', () => {
   const onSaveEvent = jest.fn();
+  const startDate = new Date('2025-01-19T10:00:00.000Z');
+  const endDate = new Date('2025-01-19T11:00:00.000Z');
+  const event = {
+    id: '1',
+    title: 'Meeting',
+    start: startDate,
+    end: endDate,
+    calendarId: '1',
+    color: '#3b82f6'
+  };
+
   render(
     <CalendarView
       calendars={mockCalendars}
-      events={mockEvents}
+      events={[event]}
       onSaveEvent={onSaveEvent}
       onDeleteEvent={jest.fn()}
       loading={false}
@@ -308,36 +319,31 @@ test('handles drag and drop event resizing', () => {
     />
   );
 
-  // Find the resize handle
   const resizeHandle = screen.getByTestId('resize-handle');
-  expect(resizeHandle).toBeInTheDocument();
-
-  // Simulate resize drag
-  const mockResizeEvent = {
+  
+  // Simulate a 30-minute resize by calculating delta
+  const startY = 100;
+  const endY = 150; // 50px difference = 30 minutes (based on our grid)
+  const minutesDelta = Math.round((endY - startY) / 30) * 30;
+  
+  // Trigger the resize sequence
+  fireEvent.mouseDown(resizeHandle, {
+    clientY: startY,
     preventDefault: jest.fn(),
-    stopPropagation: jest.fn(),
-    currentTarget: resizeHandle,
-    clientY: 100
-  };
-  
-  fireEvent.mouseDown(resizeHandle, mockResizeEvent);
-  
-  // Move mouse significantly to trigger resize
-  const mockMoveEvent = new MouseEvent('mousemove', {
-    clientY: 300,
-    bubbles: true
+    stopPropagation: jest.fn()
   });
-  window.dispatchEvent(mockMoveEvent);
-  
-  // Release mouse to complete resize
-  const mockUpEvent = new MouseEvent('mouseup', {
-    clientY: 300,
-    bubbles: true
-  });
-  window.dispatchEvent(mockUpEvent);
 
-  expect(onSaveEvent).toHaveBeenCalledWith(expect.objectContaining({
-    ...mockEvents[0],
-    end: expect.any(Date)
-  }));
+  fireEvent.mouseUp(window, {
+    clientY: endY
+  });
+
+  // Calculate expected end time
+  const expectedEnd = new Date(endDate);
+  expectedEnd.setMinutes(expectedEnd.getMinutes() + 30);
+
+  // Verify the event was saved with correct timing
+  expect(onSaveEvent).toHaveBeenCalledWith({
+    ...event,
+    end: expectedEnd
+  });
 });

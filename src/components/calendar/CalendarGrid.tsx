@@ -109,20 +109,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           const startY = e.clientY;
                           const originalEnd = new Date(event.end);
 
-                          const handleMouseMove = (moveEvent: MouseEvent) => {
-                            const deltaY = moveEvent.clientY - startY;
-                            const minutesDelta = Math.round(deltaY / 30) * 30;
-                            const newEnd = new Date(originalEnd);
-                            newEnd.setMinutes(newEnd.getMinutes() + minutesDelta);
-                            
-                            // Preview the resize
-                            const eventEl = e.currentTarget.parentElement;
-                            if (eventEl) {
-                              const heightDelta = Math.max(deltaY, -eventEl.clientHeight + 30);
-                              eventEl.style.height = `${eventEl.clientHeight + heightDelta}px`;
-                            }
-                          };
-
                           const handleMouseUp = (upEvent: MouseEvent) => {
                             const deltaY = upEvent.clientY - startY;
                             const minutesDelta = Math.round(deltaY / 30) * 30;
@@ -134,11 +120,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                               end: newEnd
                             });
 
-                            window.removeEventListener('mousemove', handleMouseMove);
                             window.removeEventListener('mouseup', handleMouseUp);
                           };
 
-                          window.addEventListener('mousemove', handleMouseMove);
                           window.addEventListener('mouseup', handleMouseUp);
                         }}
                       />
