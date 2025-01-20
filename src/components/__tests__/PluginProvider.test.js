@@ -1,9 +1,9 @@
-import { Fragment as _Fragment, jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import React from 'react';
-import { render, act } from '@testing-library/react';
-import { PluginProvider, usePluginContext } from '../PluginProvider';
-import { jest, describe, beforeEach, afterEach, it, expect } from '@jest/globals';
-import '@testing-library/jest-dom';
+const { Fragment: _Fragment, jsx: _jsx, jsxs: _jsxs } = require("react/jsx-runtime");
+const React = require('react');
+const { render, act } = require('@testing-library/react');
+const { PluginProvider, usePluginContext } = require('../PluginProvider');
+const { jest, describe, beforeEach, afterEach, it, expect } = require('@jest/globals');
+require('@testing-library/jest-dom');
 // Create mock functions
 const mockRegisterPlugin = jest.fn().mockImplementation(async () => { });
 const mockGetPlugin = jest.fn().mockImplementation(() => undefined);
