@@ -81,23 +81,21 @@ export class EventPool {
       attempts: 0,
       maxAttempts: this.config.maxAttempts
     });
-    event.setInUse(false); // Use the setter method
     return event;
   }
 
   private expandPool(): void {
     const currentSize = this.pool.length;
-    const targetSize = Math.min(
-      currentSize + this.config.expandSteps,
-      this.config.maxSize
-    );
-
-    if (currentSize >= targetSize) {
+    if (currentSize >= this.config.maxSize) {
       this.logger.warn('Cannot expand pool: maximum size reached');
       return;
     }
 
-    const expansionSize = targetSize - currentSize;
+    const expansionSize = Math.min(
+      this.config.expandSteps,
+      this.config.maxSize - currentSize
+    );
+
     for (let i = 0; i < expansionSize; i++) {
       const event = this.createEmptyEvent();
       event.setInUse(false);
@@ -139,6 +137,7 @@ export class EventPool {
     if (event) {
       Object.assign(event, data);
       event.status = EventDeliveryStatus.PENDING;
+      event.setInUse(true);
       return event;
     }
 
@@ -153,8 +152,23 @@ export class EventPool {
   release(event: PooledEvent): void {
     const pooledEvent = this.pool.find(e => e.id === event.id);
     if (pooledEvent) {
-      const emptyEvent = this.createEmptyEvent();
-      Object.assign(pooledEvent, emptyEvent);
+      // Reset all properties to empty values
+      Object.assign(pooledEvent, {
+        id: '',
+        type: '',
+        channel: '',
+        source: '',
+        timestamp: 0,
+        data: undefined,
+        version: undefined,
+        priority: undefined,
+        poolId: '',
+        attempts: 0,
+        maxAttempts: this.config.maxAttempts,
+        nextAttempt: undefined,
+        status: EventDeliveryStatus.PENDING,
+        error: undefined
+      });
       (pooledEvent as ManagedEvent).setInUse(false);
     }
   }
@@ -171,7 +185,7 @@ export class EventPool {
   }
 
   acquire(): ManagedEvent | null {
-    return this.createEvent({
+    const event = this.createEvent({
       id: '',
       type: '',
       channel: '',
@@ -181,6 +195,12 @@ export class EventPool {
       attempts: 0,
       maxAttempts: this.config.maxAttempts
     });
+    
+    if (event) {
+      event.setInUse(true);
+    }
+    
+    return event;
   }
 
   destroy(): void {
