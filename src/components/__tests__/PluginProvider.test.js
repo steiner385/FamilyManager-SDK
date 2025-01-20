@@ -8,14 +8,16 @@ require('@testing-library/jest-dom');
 const mockRegisterPlugin = jest.fn().mockImplementation(async () => { });
 const mockGetPlugin = jest.fn().mockImplementation(() => undefined);
 const mockIsPluginReady = jest.fn().mockImplementation(() => false);
+const mockPluginManager = {
+    registerPlugin: mockRegisterPlugin,
+    getPlugin: mockGetPlugin,
+    isInitialized: mockIsPluginReady,
+    plugins: new Map()
+};
 // Mock the PluginManager
 jest.mock('../../core/plugin/PluginManager', () => ({
     PluginManager: {
-        getInstance: () => ({
-            registerPlugin: mockRegisterPlugin,
-            getPlugin: mockGetPlugin,
-            isInitialized: mockIsPluginReady
-        })
+        getInstance: () => mockPluginManager
     }
 }));
 // Mock ErrorBoundary
@@ -62,6 +64,7 @@ describe('PluginProvider', () => {
     };
     beforeEach(() => {
         jest.clearAllMocks();
+        mockPluginManager.plugins.clear();
         mockRegisterPlugin.mockImplementation(async () => { });
         mockGetPlugin.mockImplementation(() => mockPlugin);
         mockIsPluginReady.mockImplementation(() => true);
@@ -207,8 +210,10 @@ describe('PluginProvider', () => {
         const MultiPluginTest = () => {
             const { installPlugin, getPlugin } = usePluginContext();
             return (_jsxs("div", { children: [_jsx("button", { "data-testid": "install-both", onClick: async () => {
-                            await installPlugin(mockPlugin);
-                            await installPlugin(anotherPlugin);
+                            await Promise.all([
+                                installPlugin(mockPlugin),
+                                installPlugin(anotherPlugin)
+                            ]);
                         }, children: "Install Both" }), _jsx("button", { "data-testid": "get-both", onClick: () => {
                             getPlugin(mockPlugin.name);
                             getPlugin(anotherPlugin.name);
