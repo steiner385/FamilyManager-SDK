@@ -1,6 +1,6 @@
-import { jsx as _jsx } from "react/jsx-runtime";
-import { render, screen, fireEvent } from '../../../testing/simple-test-utils';
-import { Modal } from '../Modal';
+const { jsx: _jsx } = require("react/jsx-runtime");
+const { render, screen, fireEvent } = require('../../../testing/simple-test-utils');
+const { Modal } = require('../Modal');
 // Mock Headless UI's Transition component
 jest.mock('@headlessui/react', () => {
     const Dialog = ({ children, ...props }) => {
