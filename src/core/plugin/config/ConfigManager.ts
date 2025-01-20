@@ -1,4 +1,5 @@
 import { EventBus } from '../../events/EventBus';
+import { Logger } from '../../logging/Logger';
 import { PluginConfig } from '../types';
 import { ValidationMiddleware } from './middleware/validation';
 import { createValidationMiddleware } from './middleware/validation';

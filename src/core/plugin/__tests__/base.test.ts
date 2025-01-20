@@ -79,7 +79,7 @@ describe('BasePlugin', () => {
     mockEventBus.start.mockResolvedValue(undefined);
     mockEventBus.stop.mockResolvedValue(undefined);
     mockEventBus.emit.mockImplementation(async (event) => {
-      return EventDeliveryStatus.SUCCESS;
+      return EventDeliveryStatus.DELIVERED;
     });
     mockEventBus.subscribe.mockReturnValue('subscription-id');
     mockEventBus.unsubscribe.mockImplementation(() => {});
@@ -102,13 +102,15 @@ describe('BasePlugin', () => {
       logMetadata: {},
       plugins: {
         hasPlugin: hasPluginMock
-      }
+      },
+      logger: mockLogger,
+      eventBus: mockEventBus
     } as unknown as PluginContext<Env>;
 
     // Reset mock states
     jest.clearAllMocks();
     mockEventBus.getRunningState.mockReturnValue(true);
-    mockEventBus.emit.mockResolvedValue(EventDeliveryStatus.SUCCESS);
+    mockEventBus.emit.mockResolvedValue(EventDeliveryStatus.DELIVERED);
 
     // Reset EventBus mock
     (EventBus.getInstance as jest.Mock).mockReturnValue(mockEventBus);
