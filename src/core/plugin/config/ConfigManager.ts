@@ -48,6 +48,10 @@ export class ConfigManager {
     this.middlewares.push(middleware);
   }
 
+  public async getConfig(pluginName: string): Promise<any> {
+    return this.configs.get(pluginName);
+  }
+
   public async setConfig(pluginName: string, config: any): Promise<void> {
     let currentConfig = config;
     

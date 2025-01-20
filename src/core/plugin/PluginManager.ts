@@ -64,7 +64,7 @@ export class PluginManager {
     await this.initializePlugin(plugin);
   }
 
-  async unregisterPlugin(pluginId: string): Promise<void> {
+  async uninstallPlugin(pluginId: string): Promise<void> {
     const plugin = this.plugins.get(pluginId);
     if (!plugin) {
       throw new Error(`Plugin ${pluginId} is not registered`);
