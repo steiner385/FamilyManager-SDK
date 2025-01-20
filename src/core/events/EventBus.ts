@@ -19,6 +19,10 @@ export class EventBus {
     return EventBus.instance;
   }
 
+  public static resetInstance(): void {
+    EventBus.instance = new EventBus();
+  }
+
   public async start(): Promise<void> {
     if (this.isRunning) {
       return;
