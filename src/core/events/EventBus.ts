@@ -19,7 +19,7 @@ export class EventBus {
   private logger: Logger;
 
   private constructor() {
-    this.logger = new Logger('EventBus');
+    this.logger = Logger.getInstance();
     this.channels = new Set();
     this.handlers = new Map();
     this.isRunning = false;

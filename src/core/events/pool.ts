@@ -86,15 +86,18 @@ export class EventPool {
     }
 
     const currentSize = this.pool.length;
-    const targetSize = Math.min(
-      currentSize + this.config.expandSteps,
-      this.config.maxSize
-    );
-    const expansionSize = targetSize - currentSize;
+    const remainingCapacity = this.config.maxSize - currentSize;
+    const expansionSize = Math.min(this.config.expandSteps, remainingCapacity);
 
-    for (let i = 0; i < expansionSize; i++) {
-      this.pool.push(this.createEmptyEvent());
+    if (expansionSize <= 0) {
+      return;
     }
+
+    const newEvents = Array(expansionSize)
+      .fill(null)
+      .map(() => this.createEmptyEvent());
+    
+    this.pool.push(...newEvents);
 
     this.logger.info(
       `Pool expanded by ${expansionSize} events (${currentSize} -> ${this.pool.length})`
@@ -102,14 +105,22 @@ export class EventPool {
   }
 
   private findAvailableEvent<T>(event: PoolEvent<T>): ManagedEvent<T> | null {
+    // First try to find the exact event if it's already in the pool
     const pooledEvent = this.pool.find(e => e === event);
     if (pooledEvent) {
       return pooledEvent as ManagedEvent<T>;
     }
 
-    const emptyEvent = this.pool.find(e => !e.id);
+    // Then look for any unused event slot
+    const emptyEvent = this.pool.find(e => !e.isInUse());
     if (emptyEvent) {
       return emptyEvent as ManagedEvent<T>;
+    }
+
+    // If pool is full but we can expand, do so
+    if (this.pool.length < this.config.maxSize) {
+      this.expandPool();
+      return this.pool.find(e => !e.isInUse()) as ManagedEvent<T>;
     }
 
     return null;
