@@ -53,7 +53,16 @@ export class ConfigManager {
   }
 
   public async setConfig(pluginName: string, config: any): Promise<void> {
-    let currentConfig = config;
+    let currentConfig = { ...config };
+    
+    // Handle encryption of sensitive fields
+    if (this.encryption) {
+      for (const [key, value] of Object.entries(currentConfig)) {
+        if (this.schemas.get(pluginName)?.properties?.[key]?.sensitive) {
+          currentConfig[key] = await this.encryption.encrypt(value);
+        }
+      }
+    }
     
     // Chain middlewares
     const executeMiddleware = async (index: number, currentConfig: any = config): Promise<void> => {

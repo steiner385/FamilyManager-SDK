@@ -21,11 +21,11 @@ export class PluginManager {
 
   public initialize(): void {
     if (this.initialized) {
-      this.logger.warn('PluginManager already initialized');
+      logger.warn('PluginManager already initialized');
       return;
     }
     this.initialized = true;
-    this.logger.debug('PluginManager initialized');
+    logger.debug('PluginManager initialized');
   }
 
   private checkInitialized(): void {
