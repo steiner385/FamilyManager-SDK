@@ -8,24 +8,19 @@ jest.mock('@headlessui/react', () => {
     const Component = props.as || 'div';
     return <Component {...props}>{children}</Component>;
   };
-  Dialog.displayName = 'Dialog';
   
-  const DialogPanel = ({ children, className }: { children: React.ReactNode; className?: string }) => (
+  Dialog.Panel = ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div data-testid="modal-panel" className={className}>{children}</div>
   );
-  DialogPanel.displayName = 'Dialog.Panel';
   
-  const DialogTitle = ({ children, className, ...props }: { children: React.ReactNode; className?: string } & any) => (
+  Dialog.Title = ({ children, className, ...props }: { children: React.ReactNode; className?: string } & any) => (
     <h1 className={className} {...props}>{children}</h1>
   );
-  DialogTitle.displayName = 'Dialog.Title';
 
   const TransitionRoot = ({ show, children }: { show: boolean; children: React.ReactNode }) => 
     show ? children : null;
-  TransitionRoot.displayName = 'Transition.Root';
 
   const TransitionChild = ({ children }: { children: React.ReactNode }) => children;
-  TransitionChild.displayName = 'Transition.Child';
 
   return {
     Transition: {
