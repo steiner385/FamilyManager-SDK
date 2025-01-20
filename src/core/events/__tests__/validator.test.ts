@@ -31,8 +31,16 @@ describe('AsyncValidator', () => {
 
     const result = await validator.validate(invalidEvent);
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain('Missing required field: id');
-    expect(result.errors).toContain('Missing required field: channel');
+    expect(result.errors).toContainEqual({
+      field: 'id',
+      message: 'Missing required field: id',
+      code: 'MISSING_FIELD'
+    });
+    expect(result.errors).toContainEqual({
+      field: 'channel',
+      message: 'Missing required field: channel', 
+      code: 'MISSING_FIELD'
+    });
   });
 
   it('should handle custom validation rules', async () => {
@@ -52,7 +60,11 @@ describe('AsyncValidator', () => {
 
     const invalidResult = await validator.validate(invalidEvent);
     expect(invalidResult.isValid).toBe(false);
-    expect(invalidResult.errors).toContain('Value must be positive');
+    expect(invalidResult.errors).toContainEqual({
+      field: 'custom',
+      message: 'Value must be positive',
+      code: 'CUSTOM_VALIDATION'
+    });
   });
 
   it('should validate multiple events in parallel', async () => {
@@ -80,7 +92,11 @@ describe('AsyncValidator', () => {
     const invalidEvent = createTestEvent('', { value: 1 });
     const result = await validator.validate(invalidEvent);
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain('Invalid event type');
+    expect(result.errors).toContainEqual({
+      field: 'type',
+      message: 'Invalid event type',
+      code: 'INVALID_TYPE'
+    });
   });
 
   it('should validate event timestamps', async () => {
@@ -89,6 +105,10 @@ describe('AsyncValidator', () => {
 
     const result = await validator.validate(event);
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain('Invalid timestamp');
+    expect(result.errors).toContainEqual({
+      field: 'timestamp',
+      message: 'Invalid timestamp',
+      code: 'INVALID_TIMESTAMP'
+    });
   });
 });
