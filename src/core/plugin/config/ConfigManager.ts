@@ -19,7 +19,7 @@ export class ConfigManager {
     this.configs = new Map();
     this.eventBus = EventBus.getInstance();
     this.storage = new FileConfigStorage();
-    this.middleware = new ValidationMiddleware();
+    this.middleware = createValidationMiddleware(null, null);
     this.schemas = new Map();
   }
 

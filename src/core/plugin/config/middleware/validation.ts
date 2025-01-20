@@ -55,7 +55,11 @@ export function createValidationMiddleware(validator: any, schema: any) {
     };
 
     if (!result.isValid) {
-      throw new Error(`Validation failed: ${result.errors.map(e => e.message).join(', ')}`);
+      throw new ConfigError(
+        ConfigErrorCode.VALIDATION_FAILED,
+        `Validation failed: ${result.errors.map(e => e.message).join(', ')}`,
+        { errors: result.errors }
+      );
     }
 
     await next();

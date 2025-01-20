@@ -14,6 +14,16 @@ export class PluginManager {
     this.plugins = new Map();
     this.pluginStates = new Map();
     this.initializedPlugins = new Set();
+    this.initialized = false;
+  }
+
+  public initialize(): void {
+    if (this.initialized) {
+      this.logger.warn('PluginManager already initialized');
+      return;
+    }
+    this.initialized = true;
+    this.logger.debug('PluginManager initialized');
   }
 
   public static getInstance(): PluginManager {
