@@ -33,12 +33,20 @@ export class EventBus {
     EventBus.instance = new EventBus();
   }
 
+  private logger = {
+    info: console.log,
+    debug: console.log,
+    warn: console.warn,
+    error: console.error
+  };
+
   public async start(): Promise<void> {
     if (this.isRunning) {
       return;
     }
 
     this.isRunning = true;
+    this.logger.info('EventBus started');
   }
 
   public async stop(): Promise<void> {
@@ -47,6 +55,8 @@ export class EventBus {
     }
 
     this.isRunning = false;
+    this.handlers.clear();
+    this.logger.info('EventBus stopped');
   }
 
   public registerChannel(channel: string): void {
@@ -54,7 +64,12 @@ export class EventBus {
       throw new Error('EventBus not started');
     }
 
+    if (this.channels.has(channel)) {
+      throw new Error(`Channel ${channel} is already registered`);
+    }
+
     this.channels.add(channel);
+    this.logger.debug(`Registered channel: ${channel}`);
   }
 
   public unregisterChannel(channel: string): void {
@@ -104,7 +119,22 @@ export class EventBus {
     }
   }
 
-  public async emit<T>(event: Event<T>): Promise<void> {
+  private async retryHandler(handler: EventHandler, event: Event<any>, retries = 3, delay = 100): Promise<boolean> {
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        await handler(event);
+        return true;
+      } catch (error) {
+        this.logger.warn('Retrying event delivery', { attempt, error });
+        if (attempt < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    return false;
+  }
+
+  public async emit<T>(event: Event<T>): Promise<EventDeliveryStatus> {
     if (!this.isRunning) {
       throw new Error('Cannot emit events while EventBus is stopped');
     }
@@ -114,17 +144,24 @@ export class EventBus {
     }
 
     const handlers = this.handlers.get(event.channel);
-    if (handlers) {
-      const promises = Array.from(handlers).map(async (handler) => {
-        try {
-          await handler(event);
-        } catch (error) {
-          console.error('Error in event handler:', error);
-        }
-      });
-
-      await Promise.all(promises);
+    if (!handlers || handlers.size === 0) {
+      this.logger.debug(`No subscribers for event ${event.channel}`);
+      return EventDeliveryStatus.SUCCESS;
     }
+
+    const results = await Promise.all(
+      Array.from(handlers).map(handler => this.retryHandler(handler, event))
+    );
+
+    const successCount = results.filter(success => success).length;
+
+    if (successCount === 0) {
+      return EventDeliveryStatus.FAILED;
+    } else if (successCount < handlers.size) {
+      return EventDeliveryStatus.PARTIAL;
+    }
+
+    return EventDeliveryStatus.SUCCESS;
   }
 }
 
