@@ -75,6 +75,9 @@ export class ConfigManager {
         }
       }
     }
+
+    // Store the config
+    this.configs.set(pluginName, currentConfig);
     
     // Chain middlewares
     const executeMiddleware = async (index: number, currentConfig: any = config): Promise<void> => {
