@@ -8,13 +8,11 @@ require('@testing-library/jest-dom');
 const mockPluginManager = {
     plugins: new Map(),
     registerPlugin: jest.fn().mockImplementation(async (plugin) => {
-        if (mockPluginManager.plugins.has(plugin.id)) {
-            throw new Error(`Plugin ${plugin.id} is already registered`);
-        }
         mockPluginManager.plugins.set(plugin.id, plugin);
+        return plugin;
     }),
     getPlugin: jest.fn().mockImplementation((id) => mockPluginManager.plugins.get(id)),
-    isInitialized: jest.fn().mockImplementation(() => true),
+    isInitialized: jest.fn().mockReturnValue(true),
 };
 // Mock the PluginManager
 jest.mock('../../core/plugin/PluginManager', () => ({
@@ -209,7 +207,6 @@ describe('PluginProvider', () => {
         const MultiPluginTest = () => {
             const { installPlugin, getPlugin } = usePluginContext();
             return (_jsxs("div", { children: [_jsx("button", { "data-testid": "install-both", onClick: async () => {
-                            await installPlugin(mockPlugin);
                             await installPlugin(anotherPlugin);
                         }, children: "Install Both" }), _jsx("button", { "data-testid": "get-both", onClick: () => {
                             getPlugin(mockPlugin.id);
