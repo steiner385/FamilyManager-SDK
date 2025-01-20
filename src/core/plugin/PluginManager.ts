@@ -25,7 +25,7 @@ export class PluginManager {
       return;
     }
     this.initialized = true;
-    this.logger.debug('PluginManager initialized');
+    this.logger.info('PluginManager initialized');
   }
 
   private checkInitialized(): void {
@@ -79,13 +79,6 @@ export class PluginManager {
     this.plugins.set(plugin.id, plugin);
     this.pluginStates.set(plugin.id, PluginStatus.INACTIVE);
     this.logger.info(`Registered plugin: ${plugin.name} (${plugin.id})`);
-
-    // Register routes if present
-    if (plugin.routes) {
-      for (const route of plugin.routes) {
-        routeRegistry.registerRoute(plugin.id, route);
-      }
-    }
   }
 
   async uninstallPlugin(pluginId: string): Promise<void> {
@@ -94,11 +87,22 @@ export class PluginManager {
       throw new Error(`Plugin ${pluginId} is not registered`);
     }
 
+    // Check for dependent plugins
+    const dependentPlugins = Array.from(this.plugins.values()).filter(
+      p => p.dependencies?.required && p.dependencies.required[pluginId]
+    );
+
+    if (dependentPlugins.length > 0) {
+      throw new Error(
+        `Cannot unregister plugin ${pluginId} because it is required by ${dependentPlugins.map(p => p.id).join(', ')}`
+      );
+    }
+
     await this.stopPlugin(plugin);
     this.plugins.delete(pluginId);
     this.pluginStates.delete(pluginId);
     this.initializedPlugins.delete(pluginId);
-    this.logger.info(`Plugin unregistered: ${pluginId}`);
+    this.logger.info(`Unregistered plugin: ${pluginId}`);
   }
 
   async startPlugin(pluginId: string): Promise<void> {
@@ -165,7 +169,17 @@ export class PluginManager {
     return this.initializedPlugins.has(pluginId);
   }
 
-  async initializePlugin(plugin: Plugin): Promise<void> {
+  async initializePlugin(pluginId: string): Promise<void> {
+    const plugin = this.plugins.get(pluginId);
+    if (!plugin) {
+      throw new Error(`Plugin ${pluginId} not found`);
+    }
+
+    if (this.initializedPlugins.has(pluginId)) {
+      this.logger.warn(`Plugin ${pluginId} is already initialized`);
+      return;
+    }
+
     try {
       if (plugin.onInit) {
         await plugin.onInit();
@@ -184,15 +198,16 @@ export class PluginManager {
           },
           metadata: plugin.metadata,
           logger: this.logger,
-          events: eventBus
+          events: this.eventBus
         });
       }
 
-      this.initializedPlugins.add(plugin.id);
-      this.logger.info(`Plugin initialized: ${plugin.id}`);
+      this.initializedPlugins.add(pluginId);
+      this.pluginStates.set(pluginId, PluginStatus.ACTIVE);
+      this.logger.info(`Plugin initialized: ${pluginId}`);
     } catch (error) {
-      this.logger.error(`Failed to initialize plugin ${plugin.id}`, { error });
-      this.pluginStates.set(plugin.id, PluginStatus.ERROR);
+      this.logger.error(`Failed to initialize plugin ${pluginId}`, { error });
+      this.pluginStates.set(pluginId, PluginStatus.ERROR);
       throw error;
     }
   }
