@@ -146,7 +146,10 @@ describe('LineChart', () => {
     );
 
     const points = screen.getAllByTestId('line-chart-point');
-    await user.hover(points[0]);
+    
+    await act(async () => {
+      await user.hover(points[0]);
+    });
 
     const tooltip = screen.getByTestId('line-chart-tooltip');
     expect(tooltip).toBeInTheDocument();
