@@ -2,7 +2,7 @@ const { Fragment: _Fragment, jsx: _jsx, jsxs: _jsxs } = require("react/jsx-runti
 const React = require('react');
 const { render, act } = require('@testing-library/react');
 const { PluginProvider, usePluginContext } = require('../PluginProvider');
-const { jest, describe, beforeEach, afterEach, it, expect } = require('@jest/globals');
+const { describe, beforeEach, afterEach, it, expect } = require('@jest/globals');
 require('@testing-library/jest-dom');
 // Create mock functions
 const mockRegisterPlugin = jest.fn().mockImplementation(async () => { });
