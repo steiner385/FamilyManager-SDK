@@ -1,35 +1,13 @@
-import { PrismaClient } from '@prisma/client';
-import { mockDeep, mockReset } from 'jest-mock-extended';
+import { Request } from '@jest/globals';
 
-export interface TestContext {
-  prisma: PrismaClient;
-  server: any; // Replace with your server type
-}
-
-export const setupTestContext = async (): Promise<TestContext> => {
-  const mockPrisma = mockDeep<PrismaClient>();
-  const mockServer = {}; // Replace with your server mock
-
+export const setupTestApp = () => {
   return {
-    prisma: mockPrisma,
-    server: mockServer,
+    request: async (req: Request) => {
+      // Mock response implementation
+      return new Response(JSON.stringify({ status: 'success' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   };
 };
-
-export const cleanupTestContext = async (): Promise<void> => {
-  // Reset all mocks
-  mockReset(mockDeep<PrismaClient>());
-};
-
-// Test user utilities
-export const getTestUsers = () => [
-  { id: '1', email: 'test1@example.com', role: 'USER' },
-  { id: '2', email: 'test2@example.com', role: 'ADMIN' },
-];
-
-export const createTestUser = (overrides = {}) => ({
-  id: 'test-id',
-  email: 'test@example.com',
-  role: 'USER',
-  ...overrides,
-});
