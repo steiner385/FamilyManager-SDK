@@ -68,8 +68,8 @@ test('updates event title when input changes', () => {
   const expectedEvent = {
     id: '1',
     title: 'Updated Meeting',
-    start: new Date(2023, 9, 10, 10, 0),
-    end: new Date(2023, 9, 10, 11, 0),
+    start: new Date(2023, 9, 10, 14, 0),
+    end: new Date(2023, 9, 10, 15, 0),
     calendarId: '1',
     color: '#3b82f6'
   };
