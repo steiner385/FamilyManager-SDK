@@ -323,9 +323,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   .filter(event => {
                     const eventStart = new Date(event.start);
                     const eventEnd = new Date(event.end);
-                    const isInDay = (eventStart >= dayStart && eventStart <= dayEnd) ||
-                                  (event.allDay && eventStart <= dayEnd && eventEnd >= dayStart);
-                    
                     if (event.recurring) {
                       const rule = new RRule({
                         freq: RRule[event.recurring.frequency.toUpperCase()],
@@ -336,12 +333,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       });
 
                       const occurrences = rule.between(dayStart, dayEnd, true);
-
-                      return occurrences.some(occurrence => {
-                        return occurrence.getDate() === day.getDate() && occurrence.getMonth() === day.getMonth();
-                      });
+                      return occurrences.length > 0;
                     }
-                    return isInDay;
+                    
+                    return (eventStart >= dayStart && eventStart <= dayEnd) ||
+                           (eventEnd > dayStart && eventEnd <= dayEnd) ||
+                           (eventStart <= dayStart && eventEnd >= dayEnd) ||
+                           (event.allDay && eventStart <= dayEnd && eventEnd >= dayStart);
                   })
                   .map(event => (
                     <div

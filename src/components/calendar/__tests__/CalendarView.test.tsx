@@ -313,22 +313,28 @@ test('handles drag and drop event resizing', () => {
   expect(resizeHandle).toBeInTheDocument();
 
   // Simulate resize drag
-  fireEvent.mouseDown(resizeHandle, {
-    clientY: 100,
-    target: resizeHandle,
-    buttons: 1
-  });
+  const mockResizeEvent = {
+    preventDefault: jest.fn(),
+    stopPropagation: jest.fn(),
+    currentTarget: resizeHandle,
+    clientY: 100
+  };
+  
+  fireEvent.mouseDown(resizeHandle, mockResizeEvent);
   
   // Move mouse significantly to trigger resize
-  fireEvent.mouseMove(window, {
+  const mockMoveEvent = new MouseEvent('mousemove', {
     clientY: 300,
-    buttons: 1
+    bubbles: true
   });
+  window.dispatchEvent(mockMoveEvent);
   
   // Release mouse to complete resize
-  fireEvent.mouseUp(window, {
-    clientY: 300
+  const mockUpEvent = new MouseEvent('mouseup', {
+    clientY: 300,
+    bubbles: true
   });
+  window.dispatchEvent(mockUpEvent);
 
   expect(onSaveEvent).toHaveBeenCalledWith(expect.objectContaining({
     ...mockEvents[0],
