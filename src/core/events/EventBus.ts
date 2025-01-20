@@ -151,7 +151,14 @@ export class EventBus {
     }
 
     const results = await Promise.all(
-      Array.from(handlers).map(handler => this.retryHandler(handler, event))
+      Array.from(handlers).map(async handler => {
+        try {
+          return await this.retryHandler(handler, event);
+        } catch (error) {
+          this.logger.error('Event handler failed after retries', { error, event });
+          return false;
+        }
+      })
     );
 
     const successCount = results.filter(success => success).length;
@@ -159,7 +166,12 @@ export class EventBus {
     if (successCount === 0) {
       return EventDeliveryStatus.FAILED;
     } else if (successCount < handlers.size) {
-      return EventDeliveryStatus.PARTIAL; // This is an enum value, not string
+      this.logger.error('Partial delivery failure', { 
+        successful: successCount, 
+        total: handlers.size,
+        event 
+      });
+      return EventDeliveryStatus.PARTIAL;
     }
 
     return EventDeliveryStatus.DELIVERED;
