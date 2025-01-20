@@ -1,3 +1,4 @@
+import { Logger } from '../logging/Logger';
 import { Event, EventHandler } from './types';
 
 export enum EventDeliveryStatus {
