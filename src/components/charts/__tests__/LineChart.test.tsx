@@ -6,9 +6,9 @@ import {
   describe,
   it,
   expect,
-  createMockData,
-  act
+  createMockData
 } from '../../../testing';
+import { act } from '@testing-library/react';
 import { LineChart } from '../LineChart';
 
 describe('LineChart', () => {
