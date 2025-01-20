@@ -71,12 +71,13 @@ export class PluginManager {
 
     // Check dependencies before registration
     if (plugin.dependencies?.required) {
-      for (const [depId, version] of Object.entries(plugin.dependencies.required)) {
-        if (!this.plugins.has(depId)) {
-          const error = `Missing required dependency: ${depId}`;
-          this.logger.error(error);
-          throw new Error(error);
-        }
+      const missingDeps = Object.entries(plugin.dependencies.required)
+        .filter(([depId]) => !this.plugins.has(depId));
+      
+      if (missingDeps.length > 0) {
+        const error = `Missing required dependency: ${missingDeps[0][0]}`;
+        this.logger.error(error);
+        throw new Error(error);
       }
     }
 

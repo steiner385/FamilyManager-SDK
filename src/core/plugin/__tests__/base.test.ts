@@ -163,9 +163,8 @@ describe('BasePlugin', () => {
     it('should fail initialization if required dependency is missing', async () => {
       plugin.metadata.dependencies = { required: { 'missing-plugin': '1.0.0' } };
       hasPluginMock.mockReturnValue(false);
-      await expect(async () => {
-        await plugin.initialize(mockContext);
-      }).rejects.toThrow('Required dependency not found: missing-plugin');
+      await expect(plugin.initialize(mockContext))
+        .rejects.toThrow('Required dependency not found: missing-plugin');
       expect(hasPluginMock).toHaveBeenCalledWith('missing-plugin');
     });
 
@@ -173,7 +172,7 @@ describe('BasePlugin', () => {
       plugin.metadata.optionalDependencies = { 'optional-plugin': '1.0.0' };
       hasPluginMock.mockReturnValue(false);
       await expect(plugin.initialize(mockContext)).resolves.not.toThrow();
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.stringContaining('Optional dependency not found: optional-plugin'),
         expect.any(Object)
       );
