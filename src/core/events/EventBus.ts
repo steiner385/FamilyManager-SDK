@@ -1,5 +1,11 @@
 import { Event, EventHandler } from './types';
 
+export enum EventDeliveryStatus {
+  SUCCESS = 'SUCCESS',
+  PARTIAL = 'PARTIAL',
+  FAILED = 'FAILED'
+}
+
 export class EventBus {
   private static instance: EventBus;
   private channels: Set<string>;
@@ -33,12 +39,20 @@ export class EventBus {
     EventBus.instance = new EventBus();
   }
 
-  private logger = {
-    info: console.log,
-    debug: console.log,
-    warn: console.warn,
-    error: console.error
-  };
+  private logger: any;
+
+  constructor() {
+    this.channels = new Set();
+    this.handlers = new Map();
+    this.isRunning = false;
+    this.subscriptionCounter = 0;
+    this.logger = {
+      info: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn()
+    };
+  }
 
   public async start(): Promise<void> {
     if (this.isRunning) {
@@ -102,19 +116,21 @@ export class EventBus {
 
     const subscriptionId = `${channel}-${++this.subscriptionCounter}`;
     handlers.add(handler as EventHandler);
+    this.subscriptionMap.set(subscriptionId, { channel, handler: handler as EventHandler });
 
     return subscriptionId;
   }
 
+  private subscriptionMap = new Map<string, { channel: string, handler: EventHandler }>();
+
   public unsubscribe(subscriptionId: string): void {
-    const [channel] = subscriptionId.split('-');
-    const handlers = this.handlers.get(channel);
-    if (handlers) {
-      // Since we can't easily map back to the original handler,
-      // we'll just remove one handler. This is a simplification.
-      const handler = handlers.values().next().value;
-      if (handler) {
+    const subscription = this.subscriptionMap.get(subscriptionId);
+    if (subscription) {
+      const { channel, handler } = subscription;
+      const handlers = this.handlers.get(channel);
+      if (handlers) {
         handlers.delete(handler);
+        this.subscriptionMap.delete(subscriptionId);
       }
     }
   }
