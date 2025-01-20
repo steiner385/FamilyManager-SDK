@@ -40,8 +40,10 @@ class TestPlugin extends BasePlugin {
     name: 'test-plugin',
     version: '1.0.0',
     description: 'Test plugin for unit tests',
-    dependencies: {},
-    optionalDependencies: {}
+    dependencies: {
+      required: {},
+      optional: {}
+    }
   };
 
   protected async onInitialize(context: PluginContext<Env>): Promise<void> {
@@ -69,23 +71,25 @@ class TestPlugin extends BasePlugin {
   }
 
   protected async validateDependencies(context: PluginContext<Env>): Promise<void> {
+    if (!this.metadata.dependencies) {
+      return;
+    }
+
     // Check required dependencies first
-    if (this.metadata.dependencies?.required) {
-      for (const [depId, version] of Object.entries(this.metadata.dependencies.required)) {
-        if (!context.plugins?.hasPlugin(depId)) {
-          const error = `Required dependency not found: ${depId}`;
-          this.logger?.error(error);
-          throw new Error(error);
-        }
+    const required = this.metadata.dependencies.required || {};
+    for (const [depId, version] of Object.entries(required)) {
+      if (!context.plugins?.hasPlugin(depId)) {
+        const error = `Required dependency not found: ${depId}`;
+        this.logger?.error(error);
+        throw new Error(error);
       }
     }
 
     // Then check optional dependencies
-    if (this.metadata.optionalDependencies) {
-      for (const [depId, version] of Object.entries(this.metadata.optionalDependencies)) {
-        if (!context.plugins?.hasPlugin(depId)) {
-          this.logger?.warn(`Optional dependency not found: ${depId}`, { dependencyId: depId });
-        }
+    const optional = this.metadata.dependencies.optional || {};
+    for (const [depId, version] of Object.entries(optional)) {
+      if (!context.plugins?.hasPlugin(depId)) {
+        this.logger?.warn(`Optional dependency not found: ${depId}`, { dependencyId: depId });
       }
     }
   }
@@ -170,7 +174,10 @@ describe('BasePlugin', () => {
     });
 
     it('should fail initialization if required dependency is missing', async () => {
-      plugin.metadata.dependencies = { required: { 'missing-plugin': '1.0.0' } };
+      plugin.metadata.dependencies = {
+        required: { 'missing-plugin': '1.0.0' },
+        optional: {}
+      };
       hasPluginMock.mockReturnValue(false);
       await expect(plugin.initialize(mockContext))
         .rejects.toThrow('Required dependency not found: missing-plugin');
@@ -178,7 +185,10 @@ describe('BasePlugin', () => {
     });
 
     it('should handle optional dependencies', async () => {
-      plugin.metadata.optionalDependencies = { 'optional-plugin': '1.0.0' };
+      plugin.metadata.dependencies = {
+        required: {},
+        optional: { 'optional-plugin': '1.0.0' }
+      };
       hasPluginMock.mockReturnValue(false);
       await expect(plugin.initialize(mockContext)).resolves.not.toThrow();
       expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -233,7 +243,10 @@ describe('BasePlugin', () => {
 
   describe('dependency management', () => {
     it('should validate dependencies on initialization', async () => {
-      plugin.metadata.dependencies = { required: { 'dep1': '1.0.0', 'dep2': '1.0.0' } };
+      plugin.metadata.dependencies = {
+        required: { 'dep1': '1.0.0', 'dep2': '1.0.0' },
+        optional: {}
+      };
       await expect(plugin.initialize(mockContext)).resolves.not.toThrow();
       expect(hasPluginMock).toHaveBeenCalledWith('dep1');
       expect(hasPluginMock).toHaveBeenCalledWith('dep2');
@@ -251,7 +264,10 @@ describe('BasePlugin', () => {
 
   describe('validation', () => {
     it('should warn about missing optional dependencies', async () => {
-      plugin.metadata.optionalDependencies = { 'opt1': '1.0.0', 'opt2': '1.0.0' };
+      plugin.metadata.dependencies = {
+        required: {},
+        optional: { 'opt1': '1.0.0', 'opt2': '1.0.0' }
+      };
       hasPluginMock.mockReturnValue(false);
       await plugin.initialize(mockContext);
       expect(logger.warn).toHaveBeenCalledTimes(2);

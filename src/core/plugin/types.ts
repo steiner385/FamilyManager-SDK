@@ -35,10 +35,6 @@ export interface Plugin {
   metadata: PluginMetadata;
   defaultLayout?: string;
   permissions?: string[];
-  dependencies?: {
-    required: Record<string, string>;
-    optional?: Record<string, string>;
-  };
   initialize?: (context: PluginContext) => Promise<void>;
   onInit?: () => Promise<void>;
   start?: () => Promise<void>;
