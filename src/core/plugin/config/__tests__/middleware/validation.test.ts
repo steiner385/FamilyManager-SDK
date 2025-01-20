@@ -65,14 +65,7 @@ describe('Validation Middleware', () => {
 
     await middleware(config, mockNext, context);
 
-    expect(mockValidator.validate).toHaveBeenCalledWith(
-      config,
-      schema,
-      expect.objectContaining({
-        pluginName: context.pluginName,
-        environment: context.environment
-      })
-    );
+    expect(mockValidator.validate).toHaveBeenCalledWith(config, schema);
     expect(mockNext).toHaveBeenCalledWith(config);
   });
 

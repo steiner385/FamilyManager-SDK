@@ -10,7 +10,7 @@ export class PluginManager {
   private initializedPlugins: Set<string>;
 
   private constructor() {
-    this.logger = Logger.getInstance();
+    this.logger = new Logger('PluginManager');
     this.plugins = new Map();
     this.pluginStates = new Map();
     this.initializedPlugins = new Set();
