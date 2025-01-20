@@ -36,18 +36,13 @@ const CalendarContainer = () => {
 
   const expandedEvents = useMemo(() => {
     return events.flatMap(event => generateRecurringInstances(event))
-      .map(event => {
-        const eventProps = {
-          ...event,
-          title: `${event.title}`, // Ensure title is rendered as text
-          start: new Date(event.start),
-          end: new Date(event.end)
-        };
-        return {
-          ...eventProps,
-          'data-testid': `event-${eventProps.title.replace(/\s+/g, '-')}`
-        };
-      });
+      .map(event => ({
+        ...event,
+        title: `${event.title}`, // Ensure title is rendered as text
+        start: new Date(event.start),
+        end: new Date(event.end),
+        'data-testid': `event-${event.title}`
+      }));
   }, [events]);
 
   const fetchData = useCallback(async () => {
