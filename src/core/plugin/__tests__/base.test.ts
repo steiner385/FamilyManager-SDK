@@ -69,21 +69,24 @@ class TestPlugin extends BasePlugin {
   }
 
   protected async validateDependencies(context: PluginContext<Env>): Promise<void> {
+    // Check required dependencies first
     if (this.metadata.dependencies?.required) {
-      const missingDeps = Object.entries(this.metadata.dependencies.required)
-        .filter(([depId]) => !context.plugins?.hasPlugin(depId));
-      
-      if (missingDeps.length > 0) {
-        throw new Error(`Required dependency not found: ${missingDeps[0][0]}`);
+      for (const [depId, version] of Object.entries(this.metadata.dependencies.required)) {
+        if (!context.plugins?.hasPlugin(depId)) {
+          const error = `Required dependency not found: ${depId}`;
+          this.logger?.error(error);
+          throw new Error(error);
+        }
       }
     }
 
+    // Then check optional dependencies
     if (this.metadata.optionalDependencies) {
-      Object.entries(this.metadata.optionalDependencies).forEach(([depId]) => {
+      for (const [depId, version] of Object.entries(this.metadata.optionalDependencies)) {
         if (!context.plugins?.hasPlugin(depId)) {
           this.logger?.warn(`Optional dependency not found: ${depId}`, { dependencyId: depId });
         }
-      });
+      }
     }
   }
 

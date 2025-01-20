@@ -56,23 +56,24 @@ export class ConfigManager {
   }
 
   public async setConfig(pluginName: string, config: any): Promise<void> {
-    let currentConfig = { ...config };
+    // Create a new config object to avoid mutations
+    const currentConfig = { ...config };
     
     // Handle encryption of sensitive fields
     if (this.encryption && this.schemas.has(pluginName)) {
       const schema = this.schemas.get(pluginName);
-      const newConfig = { ...currentConfig };
+      
+      // Encrypt sensitive fields
       for (const [key, value] of Object.entries(currentConfig)) {
         if (schema.properties?.[key]?.sensitive && typeof value === 'string') {
           try {
-            newConfig[key] = await this.encryption.encrypt(value);
+            currentConfig[key] = await this.encryption.encrypt(value);
           } catch (error) {
             this.logger?.error(`Failed to encrypt field ${key}:`, error);
             throw error;
           }
         }
       }
-      currentConfig = newConfig;
     }
     
     // Chain middlewares
