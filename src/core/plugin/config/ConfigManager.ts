@@ -62,7 +62,7 @@ export class ConfigManager {
         this.configs.set(pluginName, currentConfig);
         await this.eventBus.emit({
           id: `config-changed-${Date.now()}`,
-          type: 'config:changed',
+          type: 'CONFIG_CHANGED',
           channel: 'config',
           source: this.source,
           timestamp: Date.now(),
@@ -91,7 +91,7 @@ export class ConfigManager {
       if (!validationResult.isValid) {
         await this.eventBus.emit({
           id: `config-validation-failed-${Date.now()}`,
-          type: 'config:validation-failed',
+          type: 'CONFIG_VALIDATION_FAILED',
           channel: 'config',
           source: this.source,
           timestamp: Date.now(),

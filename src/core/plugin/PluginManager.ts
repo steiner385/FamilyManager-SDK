@@ -23,7 +23,7 @@ export class PluginManager {
       return;
     }
     this.initialized = true;
-    this.logger.debug('PluginManager initialized');
+    this.logger.info('PluginManager initialized');
   }
 
   public static getInstance(): PluginManager {

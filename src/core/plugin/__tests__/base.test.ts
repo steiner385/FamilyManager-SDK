@@ -22,7 +22,7 @@ class TestPlugin extends BasePlugin {
     name: 'test-plugin',
     version: '1.0.0',
     description: 'Test plugin for unit tests',
-    dependencies: { required: {}, optional: {} },
+    dependencies: {},
     optionalDependencies: {}
   };
 

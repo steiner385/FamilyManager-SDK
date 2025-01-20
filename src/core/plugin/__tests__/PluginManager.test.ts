@@ -122,7 +122,7 @@ describe('PluginManager', () => {
       const plugin = createTestPlugin({
         id: 'test-plugin',
         name: 'Test Plugin',
-        dependencies: { required: { dependency: '1.0.0' }, optional: {} }
+        dependencies: { dependency: '1.0.0' }
       });
 
       await expect(manager.registerPlugin(plugin)).rejects.toThrow(

@@ -50,6 +50,21 @@ export function createValidationMiddleware(validator: any, schema: any) {
       }
     }
 
+    // Validate metadata
+    if (!config.metadata?.name) {
+      errors.push({
+        field: 'metadata.name',
+        message: 'Plugin name is required'
+      });
+    }
+
+    if (!config.metadata?.version) {
+      errors.push({
+        field: 'metadata.version',
+        message: 'Plugin version is required'
+      });
+    }
+
     if (errors.length > 0) {
       throw new ConfigError(
         ConfigErrorCode.VALIDATION_FAILED,
