@@ -81,6 +81,15 @@ export class PluginManager {
       }
     }
 
+    // Check optional dependencies
+    if (plugin.dependencies?.optional) {
+      Object.entries(plugin.dependencies.optional).forEach(([depId]) => {
+        if (!this.plugins.has(depId)) {
+          this.logger.warn(`Optional dependency not found: ${depId}`);
+        }
+      });
+    }
+
     // Register routes if present
     if (plugin.routes) {
       for (const route of plugin.routes) {
