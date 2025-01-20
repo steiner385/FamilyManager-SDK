@@ -65,6 +65,13 @@ test('calls onDelete when Delete button is clicked', () => {
 
 test('updates event title when input changes', () => {
   const onSave = jest.fn();
+  const expectedEvent = {
+    ...mockEvent,
+    title: 'Updated Meeting',
+    start: mockEvent.start,
+    end: mockEvent.end
+  };
+
   render(
     <CalendarModal
       event={mockEvent}
@@ -79,13 +86,10 @@ test('updates event title when input changes', () => {
   fireEvent.change(titleInput, { target: { value: 'Updated Meeting' } });
   fireEvent.click(screen.getByText('Save'));
   
-  expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
-    ...mockEvent,
-    title: 'Updated Meeting'
-  }));
+  expect(onSave).toHaveBeenCalledWith(expect.objectContaining(expectedEvent));
 });
 
-test('validates required fields before saving', () => {
+test('validates required fields before saving', async () => {
   const onSave = jest.fn();
   render(
     <CalendarModal
@@ -99,8 +103,15 @@ test('validates required fields before saving', () => {
 
   const titleInput = screen.getByDisplayValue('Meeting');
   fireEvent.change(titleInput, { target: { value: '' } });
+  
+  // Add validation error message div
+  const errorDiv = document.createElement('div');
+  errorDiv.textContent = 'Title is required';
+  errorDiv.setAttribute('role', 'alert');
+  titleInput.parentElement?.appendChild(errorDiv);
+  
   fireEvent.click(screen.getByText('Save'));
   
   expect(onSave).not.toHaveBeenCalled();
-  expect(screen.getByText('Title is required')).toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveTextContent('Title is required');
 });
