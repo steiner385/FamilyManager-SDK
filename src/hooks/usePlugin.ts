@@ -1,51 +1,51 @@
 import { useEffect, useState } from 'react';
 import { Plugin } from '../core/plugin/types';
-import { pluginManager } from '../core/plugin/PluginManager';
+import { PluginManager } from '../core/plugin/PluginManager';
 
-export function usePlugin(pluginName: string): {
-  plugin: Plugin | null;
-  isLoading: boolean;
-  error: Error | null;
-} {
+export function usePlugin(pluginId: string) {
   const [plugin, setPlugin] = useState<Plugin | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    let mounted = true;
-
-    const loadPlugin = async () => {
+    const manager = PluginManager.getInstance();
+    
+    const initializePlugin = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
-
-        const existingPlugin = pluginManager.getPlugin(pluginName);
+        const existingPlugin = manager.getPlugin(pluginId);
+        
         if (!existingPlugin) {
-          throw new Error(`Plugin ${pluginName} not found`);
+          throw new Error(`Plugin ${pluginId} not found`);
         }
 
-        if (!pluginManager.isInitialized(pluginName)) {
-          await pluginManager.registerPlugin(existingPlugin);
+        if (!manager.isInitialized(pluginId)) {
+          await manager.initializePlugin(pluginId);
         }
 
-        if (mounted) {
-          setPlugin(existingPlugin);
-          setIsLoading(false);
-        }
+        setPlugin(existingPlugin);
+        setIsReady(true);
+        setError(null);
       } catch (err) {
-        if (mounted) {
-          setError(err instanceof Error ? err : new Error('Failed to load plugin'));
-          setIsLoading(false);
-        }
+        setError(err instanceof Error ? err : new Error('Failed to load plugin'));
+        setPlugin(null);
+        setIsReady(false);
       }
     };
 
-    loadPlugin();
+    if (manager.isInitialized(pluginId)) {
+      const existingPlugin = manager.getPlugin(pluginId);
+      if (existingPlugin) {
+        setPlugin(existingPlugin);
+        setIsReady(true);
+        setError(null);
+      } else {
+        setError(new Error(`Plugin ${pluginId} not found`));
+        setIsReady(false);
+      }
+    } else {
+      initializePlugin();
+    }
+  }, [pluginId]);
 
-    return () => {
-      mounted = false;
-    };
-  }, [pluginName]);
-
-  return { plugin, isLoading, error };
+  return { plugin, isReady, error };
 }
