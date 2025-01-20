@@ -156,7 +156,7 @@ export class EventBus {
     const handlers = this.handlers.get(event.channel);
     if (!handlers || handlers.size === 0) {
       this.logger.debug(`No subscribers for event ${event.channel}`);
-      return EventDeliveryStatus.SUCCESS;
+      return EventDeliveryStatus.DELIVERED;
     }
 
     const results = await Promise.all(

@@ -32,7 +32,7 @@ class ManagedEvent<T = unknown> implements PooledEvent<T> {
     this.maxAttempts = event.maxAttempts;
     this.nextAttempt = event.nextAttempt;
     this.status = EventDeliveryStatus.PENDING;
-    this._inUse = true;
+    this._inUse = event.id !== ''; // Only mark as in use if it has an ID
   }
 
   isInUse(): boolean {
@@ -67,7 +67,7 @@ export class EventPool {
   }
 
   private createEmptyEvent<T>(): ManagedEvent<T> {
-    return new ManagedEvent({
+    const event = new ManagedEvent({
       id: '',
       type: '',
       channel: '',
@@ -77,6 +77,8 @@ export class EventPool {
       attempts: 0,
       maxAttempts: this.config.maxAttempts
     });
+    event._inUse = false; // Explicitly mark as not in use
+    return event;
   }
 
   private expandPool(): void {
