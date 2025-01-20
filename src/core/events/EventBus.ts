@@ -1,15 +1,6 @@
 import { Logger } from '../logging/Logger';
 import { logger } from '../logging/Logger';
-import { Event, EventHandler } from './types';
-
-export enum EventDeliveryStatus {
-  PENDING = 'PENDING',
-  PROCESSING = 'PROCESSING', 
-  DELIVERED = 'DELIVERED',
-  FAILED = 'FAILED',
-  RETRYING = 'RETRYING',
-  PARTIAL = 'PARTIAL'
-}
+import { Event, EventHandler, EventDeliveryStatus } from './types';
 
 export class EventBus {
   private static instance: EventBus;
@@ -168,7 +159,7 @@ export class EventBus {
     if (successCount === 0) {
       return EventDeliveryStatus.FAILED;
     } else if (successCount < handlers.size) {
-      return EventDeliveryStatus.PARTIAL;
+      return EventDeliveryStatus.PARTIAL; // This is an enum value, not string
     }
 
     return EventDeliveryStatus.DELIVERED;
