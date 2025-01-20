@@ -24,6 +24,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   onDragStart,
   onDragEnd,
   onDrop,
+  onSaveEvent,
   draggingEvent,
 }) => {
   const handleDragOver = useCallback((e: React.DragEvent) => {
