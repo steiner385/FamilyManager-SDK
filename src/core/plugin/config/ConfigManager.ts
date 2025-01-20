@@ -61,6 +61,7 @@ export class ConfigManager {
       for (const [key, value] of Object.entries(currentConfig)) {
         if (schema.properties?.[key]?.sensitive) {
           currentConfig[key] = await this.encryption.encrypt(value);
+          this.logger.debug(`Encrypted sensitive field: ${key}`);
         }
       }
     }

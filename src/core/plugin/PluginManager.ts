@@ -68,7 +68,27 @@ export class PluginManager {
       throw new Error(`Plugin ${plugin.id} is already registered`);
     }
 
-    logger.info(`Registered plugin: ${plugin.name} (${plugin.id})`);
+    // Check dependencies before registration
+    if (plugin.dependencies?.required) {
+      for (const [depId, version] of Object.entries(plugin.dependencies.required)) {
+        if (!this.plugins.has(depId)) {
+          const error = `Missing required dependency: ${depId}`;
+          this.logger.error(error);
+          throw new Error(error);
+        }
+      }
+    }
+
+    // Register routes if present
+    if (plugin.routes) {
+      for (const route of plugin.routes) {
+        routeRegistry.registerRoute(plugin.id, route);
+      }
+    }
+
+    this.plugins.set(plugin.id, plugin);
+    this.pluginStates.set(plugin.id, PluginStatus.INACTIVE);
+    this.logger.info(`Registered plugin: ${plugin.name} (${plugin.id})`);
 
     // Check dependencies
     if (plugin.dependencies?.required) {
@@ -90,8 +110,15 @@ export class PluginManager {
     const plugin = this.plugins.get(pluginId);
     if (!plugin) {
       const error = `Plugin ${pluginId} is not registered`;
-      logger.error(error);
+      this.logger.error(error);
       throw new Error(error);
+    }
+
+    // Unregister routes if present
+    if (plugin.routes) {
+      for (const route of plugin.routes) {
+        routeRegistry.unregisterRoute(plugin.id, route);
+      }
     }
 
     // Check for dependent plugins
@@ -183,7 +210,8 @@ export class PluginManager {
     }
 
     if (this.initializedPlugins.has(pluginId)) {
-      this.logger.warn(`Plugin ${pluginId} is already initialized`);
+      const warning = `Plugin ${pluginId} is already initialized`;
+      this.logger.warn(warning);
       return;
     }
 
