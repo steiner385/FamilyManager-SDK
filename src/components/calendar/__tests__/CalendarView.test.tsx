@@ -56,7 +56,7 @@ test('handles recurring events correctly', () => {
     }
   };
 
-  render(
+  const { getByText } = render(
     <CalendarView
       calendars={mockCalendars}
       events={[...mockEvents, recurringEvent]}
@@ -70,6 +70,9 @@ test('handles recurring events correctly', () => {
       draggingEvent={null}
     />
   );
+
+  // Switch to month view where recurring events are visible
+  fireEvent.click(getByText('Month'));
 
   // Should show multiple instances of the recurring event
   const recurringEventElements = screen.getAllByText('Weekly Meeting');

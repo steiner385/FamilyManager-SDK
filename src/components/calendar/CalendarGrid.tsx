@@ -112,7 +112,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
                           const handleMouseUp = (upEvent: MouseEvent) => {
                             const deltaY = upEvent.clientY - startY;
-                            const minutesDelta = Math.round(deltaY / 30) * 30;
+                            // Each 30px represents 30 minutes
+                            const minutesDelta = Math.floor(deltaY / 30) * 30;
                             const newEnd = new Date(originalEnd);
                             newEnd.setMinutes(newEnd.getMinutes() + minutesDelta);
 
