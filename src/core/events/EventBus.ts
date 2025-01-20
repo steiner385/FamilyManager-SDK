@@ -7,7 +7,8 @@ export enum EventDeliveryStatus {
   PROCESSING = 'PROCESSING', 
   DELIVERED = 'DELIVERED',
   FAILED = 'FAILED',
-  RETRYING = 'RETRYING'
+  RETRYING = 'RETRYING',
+  PARTIAL = 'PARTIAL'
 }
 
 export class EventBus {
@@ -167,7 +168,7 @@ export class EventBus {
     if (successCount === 0) {
       return EventDeliveryStatus.FAILED;
     } else if (successCount < handlers.size) {
-      return EventDeliveryStatus.RETRYING;
+      return EventDeliveryStatus.PARTIAL;
     }
 
     return EventDeliveryStatus.DELIVERED;

@@ -108,13 +108,7 @@ export class EventPool {
   }
 
   private findAvailableEvent<T>(event: PoolEvent<T>): ManagedEvent<T> | null {
-    // First try to find the exact event if it's already in the pool
-    const pooledEvent = this.pool.find(e => e === event);
-    if (pooledEvent) {
-      return pooledEvent as ManagedEvent<T>;
-    }
-
-    // Then look for any unused event slot
+    // First try to find an unused event slot
     const emptyEvent = this.pool.find(e => !e.isInUse());
     if (emptyEvent) {
       return emptyEvent as ManagedEvent<T>;
@@ -159,7 +153,7 @@ export class EventPool {
   }
 
   getStats(): { size: number; available: number; inUse: number; total: number } {
-    const available = this.pool.filter(e => !e.id).length;
+    const available = this.pool.filter(e => !e.isInUse()).length;
     const inUse = this.pool.length - available;
     return {
       size: this.pool.length,
