@@ -2,7 +2,7 @@ import { Logger } from '../logging/Logger';
 import { PoolConfig, PoolEvent, PooledEvent, EventDeliveryStatus } from './types';
 
 class ManagedEvent<T = unknown> implements PooledEvent<T> {
-  private _inUse: boolean = false;
+  private _inUse: boolean = true; // Initialize as true since events are always created in-use
   id: string;
   type: string;
   channel: string;
@@ -37,6 +37,10 @@ class ManagedEvent<T = unknown> implements PooledEvent<T> {
 
   isInUse(): boolean {
     return this._inUse;
+  }
+
+  setInUse(value: boolean): void {
+    this._inUse = value;
   }
 }
 
@@ -77,7 +81,7 @@ export class EventPool {
       attempts: 0,
       maxAttempts: this.config.maxAttempts
     });
-    event._inUse = false; // Explicitly mark as not in use
+    event.setInUse(false); // Use the setter method
     return event;
   }
 
@@ -94,8 +98,11 @@ export class EventPool {
     }
 
     const expansionSize = targetSize - currentSize;
-    const newEvents = Array.from({ length: expansionSize }, () => this.createEmptyEvent());
-    this.pool.push(...newEvents);
+    for (let i = 0; i < expansionSize; i++) {
+      const event = this.createEmptyEvent();
+      event.setInUse(false);
+      this.pool.push(event);
+    }
 
     this.logger.info(
       `Pool expanded by ${expansionSize} events (${currentSize} -> ${this.pool.length})`
@@ -146,7 +153,9 @@ export class EventPool {
   release(event: PooledEvent): void {
     const pooledEvent = this.pool.find(e => e.id === event.id);
     if (pooledEvent) {
-      Object.assign(pooledEvent, this.createEmptyEvent());
+      const emptyEvent = this.createEmptyEvent();
+      Object.assign(pooledEvent, emptyEvent);
+      (pooledEvent as ManagedEvent).setInUse(false);
     }
   }
 
