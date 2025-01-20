@@ -1,6 +1,7 @@
 import { EventBus } from '../../events/EventBus';
 import { PluginConfig } from '../types';
 import { ValidationMiddleware } from './middleware/validation';
+import { createValidationMiddleware } from './middleware/validation';
 import { FileConfigStorage } from './storage/FileConfigStorage';
 import { ConfigStorage } from './storage/types';
 

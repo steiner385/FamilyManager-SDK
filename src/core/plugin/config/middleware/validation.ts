@@ -1,4 +1,5 @@
 import { PluginConfig } from '../../types';
+import { ConfigError, ConfigErrorCode } from '../errors';
 
 export interface ValidationResult {
   isValid: boolean;

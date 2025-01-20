@@ -37,11 +37,19 @@ export class PluginManager {
     PluginManager.instance = new PluginManager();
   }
 
+  public isPluginInstalled(pluginId: string): boolean {
+    return this.plugins.has(pluginId);
+  }
+
+  public isPluginActive(pluginId: string): boolean {
+    return this.pluginStates.get(pluginId) === PluginStatus.ACTIVE;
+  }
+
   public clearPlugins(): void {
     this.plugins.clear();
     this.pluginStates.clear();
     this.initializedPlugins.clear();
-    this.logger.info('All plugins cleared');
+    this.logger.debug('Cleared all plugins');
   }
 
   async registerPlugin(plugin: Plugin): Promise<void> {
