@@ -66,10 +66,12 @@ test('calls onDelete when Delete button is clicked', () => {
 test('updates event title when input changes', () => {
   const onSave = jest.fn();
   const expectedEvent = {
-    ...mockEvent,
+    id: '1',
     title: 'Updated Meeting',
-    start: mockEvent.start,
-    end: mockEvent.end
+    start: new Date(2023, 9, 10, 10, 0),
+    end: new Date(2023, 9, 10, 11, 0),
+    calendarId: '1',
+    color: '#3b82f6'
   };
 
   render(

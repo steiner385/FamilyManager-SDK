@@ -34,17 +34,42 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   const [color, setColor] = useState(event?.color || '#3b82f6');
   const [description, setDescription] = useState(event?.description || '');
 
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+
+  const validateEvent = () => {
+    const newErrors: {[key: string]: string} = {};
+    
+    if (!title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+    
+    if (!start) {
+      newErrors.start = 'Start time is required';
+    }
+    
+    if (!end) {
+      newErrors.end = 'End time is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = () => {
+    if (!validateEvent()) {
+      return;
+    }
+
     const newEvent: Event = {
       id: event?.id || Date.now().toString(),
-      title,
+      title: title.trim(),
       start: new Date(start),
       end: new Date(end),
       allDay,
       recurring,
       calendarId,
       color,
-      description,
+      description: description.trim(),
     };
     onSave(newEvent);
     onClose();
@@ -60,13 +85,20 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
       <form>
         <label>
           Title:
-          <input 
-            type="text" 
-            value={title} 
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Event Title"
-            data-testid="event-title-input"
-          />
+          <div>
+            <input 
+              type="text" 
+              value={title} 
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Event Title"
+              data-testid="event-title-input"
+            />
+            {errors.title && (
+              <div role="alert" className="error-message">
+                {errors.title}
+              </div>
+            )}
+          </div>
         </label>
         <label>
           Start:
