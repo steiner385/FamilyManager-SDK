@@ -60,7 +60,9 @@ describe('BasePlugin', () => {
     mockEventBus.getRunningState.mockReturnValue(true);
     mockEventBus.start.mockResolvedValue(undefined);
     mockEventBus.stop.mockResolvedValue(undefined);
-    mockEventBus.emit.mockResolvedValue(EventDeliveryStatus.SUCCESS);
+    mockEventBus.emit.mockImplementation(async (event) => {
+      return EventDeliveryStatus.SUCCESS;
+    });
     mockEventBus.subscribe.mockReturnValue('subscription-id');
     mockEventBus.unsubscribe.mockImplementation(() => {});
     mockEventBus.getChannels.mockReturnValue(['plugin']);
@@ -112,7 +114,7 @@ describe('BasePlugin', () => {
     });
 
     it('should fail initialization if required dependency is missing', async () => {
-      plugin.metadata.dependencies = new PluginDependencyConfig({ 'missing-plugin': '1.0.0' });
+      plugin.metadata.dependencies = { required: { 'missing-plugin': '1.0.0' } };
       hasPluginMock.mockReturnValue(false);
       await expect(plugin.initialize(mockContext)).rejects.toThrow('Required dependency not found: missing-plugin');
     });

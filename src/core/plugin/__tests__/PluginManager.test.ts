@@ -193,7 +193,7 @@ describe('PluginManager', () => {
       const dependent = createTestPlugin({
         id: 'dependent',
         name: 'Dependent',
-        dependencies: new PluginDependencyConfig({ dependency: '1.0.0' })
+        dependencies: { required: { dependency: '1.0.0' } }
       });
 
       await manager.registerPlugin(dependency);

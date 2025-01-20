@@ -56,7 +56,7 @@ export class ConfigManager {
     let currentConfig = config;
     
     // Chain middlewares
-    const executeMiddleware = async (index: number, config: any): Promise<void> => {
+    const executeMiddleware = async (index: number): Promise<void> => {
       if (index >= this.middlewares.length) {
         // All middleware executed, save config
         this.configs.set(pluginName, config);

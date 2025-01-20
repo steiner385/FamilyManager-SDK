@@ -25,7 +25,7 @@ export class PluginManager {
       return;
     }
     this.initialized = true;
-    this.logger.info('PluginManager initialized');
+    this.logger.debug('PluginManager initialized');
   }
 
   private checkInitialized(): void {
