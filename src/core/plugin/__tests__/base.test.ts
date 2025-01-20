@@ -141,6 +141,12 @@ describe('BasePlugin', () => {
 
     // Reset EventBus mock
     (EventBus.getInstance as jest.Mock).mockReturnValue(mockEventBus);
+    
+    // Reset logger mock
+    (mockLogger.warn as jest.Mock).mockClear();
+    (mockLogger.error as jest.Mock).mockClear();
+    (mockLogger.info as jest.Mock).mockClear();
+    (mockLogger.debug as jest.Mock).mockClear();
   });
 
   afterEach(async () => {
