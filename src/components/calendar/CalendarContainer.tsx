@@ -40,7 +40,8 @@ const CalendarContainer = () => {
         ...event,
         title: `${event.title}`, // Ensure title is rendered as text
         start: new Date(event.start),
-        end: new Date(event.end)
+        end: new Date(event.end),
+        'data-testid': `event-${event.title}`
       }));
   }, [events]);
 

@@ -107,13 +107,8 @@ test('validates required fields before saving', async () => {
   fireEvent.change(titleInput, { target: { value: '' } });
   
   // Add validation error message div
-  const errorDiv = document.createElement('div');
-  errorDiv.textContent = 'Title is required';
-  errorDiv.setAttribute('role', 'alert');
-  titleInput.parentElement?.appendChild(errorDiv);
-  
   fireEvent.click(screen.getByText('Save'));
   
   expect(onSave).not.toHaveBeenCalled();
-  expect(screen.getByRole('alert')).toHaveTextContent('Title is required');
+  expect(screen.getByTestId('title-error')).toHaveTextContent('Title is required');
 });

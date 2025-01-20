@@ -94,7 +94,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
               data-testid="event-title-input"
             />
             {errors.title && (
-              <div role="alert" className="error-message">
+              <div role="alert" className="error-message" data-testid="title-error">
                 {errors.title}
               </div>
             )}
