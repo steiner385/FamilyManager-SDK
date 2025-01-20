@@ -53,30 +53,32 @@ export const Modal: React.FC<ModalProps> = ({
       aria-labelledby={title ? 'modal-title' : undefined}
       aria-label={!title ? 'Modal dialog' : undefined}
     >
-      <Transition.Root show={isOpen} as={Fragment}>
-      <Transition.Child
-        as={Fragment}
-        enter="ease-out duration-300"
-        enterFrom="opacity-0"
-        enterTo="opacity-100"
-        leave="ease-in duration-200"
-        leaveFrom="opacity-100"
-        leaveTo="opacity-0"
-      >
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75" aria-hidden="true" />
-      </Transition.Child>
+      <Transition.Root show={isOpen} as="div">
+        <Transition.Child
+          as="div"
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+          className="fixed inset-0"
+        >
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75" aria-hidden="true" />
+        </Transition.Child>
 
-      <div className="fixed inset-0 z-10 overflow-y-auto">
-        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            enterTo="opacity-100 translate-y-0 sm:scale-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-            leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-          >
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Transition.Child
+              as="div"
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              className="w-full"
+            >
             <Dialog.Panel 
             className={`relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:my-8 sm:w-full ${maxWidthClasses[maxWidth]} sm:p-6`}
             data-testid="modal-panel"
