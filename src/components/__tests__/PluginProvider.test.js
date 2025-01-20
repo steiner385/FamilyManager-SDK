@@ -65,8 +65,10 @@ describe('PluginProvider', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockPluginManager.plugins.clear();
-        mockRegisterPlugin.mockImplementation(async () => { });
-        mockGetPlugin.mockImplementation(() => mockPlugin);
+        mockRegisterPlugin.mockImplementation(async (plugin) => {
+            mockPluginManager.plugins.set(plugin.id, plugin);
+        });
+        mockGetPlugin.mockImplementation((id) => mockPluginManager.plugins.get(id));
         mockIsPluginReady.mockImplementation(() => true);
         jest.useFakeTimers();
     });
@@ -235,8 +237,8 @@ describe('PluginProvider', () => {
         await act(async () => {
             getButton.click();
         });
-        expect(mockGetPlugin).toHaveBeenCalledWith(mockPlugin.name);
-        expect(mockGetPlugin).toHaveBeenCalledWith(anotherPlugin.name);
+        expect(mockGetPlugin).toHaveBeenCalledWith(mockPlugin.id);
+        expect(mockGetPlugin).toHaveBeenCalledWith(anotherPlugin.id);
     });
 });
 //# sourceMappingURL=PluginProvider.test.js.map
