@@ -15,6 +15,8 @@ export class ConfigManager {
   private encryption?: ConfigEncryption;
   private configs: Map<string, any>;
 
+  private logger = Logger.getInstance();
+
   private constructor() {
     this.middlewares = [];
     this.configs = new Map();

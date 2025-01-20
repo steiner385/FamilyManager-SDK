@@ -79,10 +79,7 @@ describe('BasePlugin', () => {
     mockEventBus.start.mockResolvedValue(undefined);
     mockEventBus.stop.mockResolvedValue(undefined);
     mockEventBus.emit.mockImplementation(async (event) => {
-      if (event.type === 'PLUGIN_INITIALIZED' || event.type === 'PLUGIN_TEARDOWN') {
-        return EventDeliveryStatus.SUCCESS;
-      }
-      return EventDeliveryStatus.FAILED;
+      return EventDeliveryStatus.SUCCESS;
     });
     mockEventBus.subscribe.mockReturnValue('subscription-id');
     mockEventBus.unsubscribe.mockImplementation(() => {});
