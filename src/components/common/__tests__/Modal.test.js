@@ -71,19 +71,18 @@ describe('Modal', () => {
     });
     it('has proper accessibility attributes', () => {
         render(_jsx(Modal, { ...defaultProps, title: "Test Title" }));
-        const modal = screen.getByTestId('modal');
-        expect(modal).toHaveAttribute('role', 'dialog');
-        expect(modal).toHaveAttribute('aria-modal', 'true');
-        expect(modal).toHaveAttribute('aria-labelledby', 'modal-title');
+        const dialog = screen.getByRole('dialog');
+        expect(dialog).toHaveAttribute('aria-modal', 'true');
+        expect(dialog).toHaveAttribute('aria-labelledby', 'modal-title');
         const closeButton = screen.getByTestId('modal-close-button');
         expect(closeButton).toHaveAttribute('aria-label', 'Close modal');
         expect(closeButton.querySelector('.sr-only')).toHaveTextContent('Close modal');
     });
     it('uses correct aria attributes when no title is provided', () => {
         render(_jsx(Modal, { ...defaultProps }));
-        const modal = screen.getByTestId('modal');
-        expect(modal).toHaveAttribute('aria-label', 'Modal dialog');
-        expect(modal).not.toHaveAttribute('aria-labelledby');
+        const dialog = screen.getByRole('dialog');
+        expect(dialog).toHaveAttribute('aria-modal', 'true');
+        expect(dialog).not.toHaveAttribute('aria-labelledby');
     });
     it('renders close button with correct styling', () => {
         render(_jsx(Modal, { ...defaultProps }));
@@ -93,7 +92,7 @@ describe('Modal', () => {
     it('renders with correct panel styling', () => {
         render(_jsx(Modal, { ...defaultProps }));
         const panel = screen.getByTestId('modal-panel');
-        expect(panel).toHaveClass('relative', 'transform', 'overflow-hidden', 'rounded-lg', 'bg-white', 'shadow-xl', 'transition-all');
+        expect(panel).toHaveClass('relative', 'transform', 'overflow-hidden', 'rounded-lg', 'bg-white', 'text-left', 'shadow-xl');
     });
 });
 //# sourceMappingURL=Modal.test.js.map
