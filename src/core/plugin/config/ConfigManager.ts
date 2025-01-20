@@ -9,7 +9,7 @@ export class ConfigManager {
   private static instance: ConfigManager;
   private eventBus: EventBus;
   private storage: ConfigStorage;
-  private middlewares: Array<(config: any, next: () => Promise<void>) => Promise<void>>;
+  private middlewares: Array<(config: any, next: (config: any) => Promise<void>) => Promise<void>>;
   private readonly source = 'config-manager';
   private schemas: Map<string, any>;
   private encryption?: ConfigEncryption;
@@ -56,10 +56,10 @@ export class ConfigManager {
     let currentConfig = config;
     
     // Chain middlewares
-    const executeMiddleware = async (index: number): Promise<void> => {
+    const executeMiddleware = async (index: number, config: any): Promise<void> => {
       if (index >= this.middlewares.length) {
         // All middleware executed, save config
-        this.configs.set(pluginName, currentConfig);
+        this.configs.set(pluginName, config);
         await this.eventBus.emit({
           id: `config-changed-${Date.now()}`,
           type: 'CONFIG_CHANGED',
@@ -68,15 +68,15 @@ export class ConfigManager {
           timestamp: Date.now(),
           data: {
             pluginName,
-            config: currentConfig
+            config
           }
         });
         return;
       }
 
       try {
-        await this.middlewares[index](currentConfig, async () => {
-          await executeMiddleware(index + 1);
+        await this.middlewares[index](config, async (nextConfig) => {
+          await executeMiddleware(index + 1, nextConfig);
         });
       } catch (error) {
         await this.eventBus.emit({

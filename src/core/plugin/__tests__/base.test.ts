@@ -33,6 +33,20 @@ class TestPlugin extends BasePlugin {
   protected async onTeardown(): Promise<void> {
     // Test teardown logic
   }
+
+  public async onError(error: Error): Promise<void> {
+    this.logger.error(`Plugin ${this.metadata.id} error:`, { error });
+  }
+
+  public async onDependencyChange(dependencyId: string): Promise<void> {
+    this.logger.debug(`Dependency ${dependencyId} changed`, { dependencyId });
+  }
+
+  protected checkInitialized(): void {
+    if (!this.initialized) {
+      throw new Error(`Plugin ${this.metadata.id} not initialized`);
+    }
+  }
 }
 
 describe('BasePlugin', () => {

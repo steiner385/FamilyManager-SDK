@@ -12,11 +12,11 @@ export interface ValidationError {
 }
 
 export function createValidationMiddleware(validator: any, schema: any) {
-  return async function validate(config: PluginConfig, next: () => Promise<void>): Promise<void> {
+  return async function validate(config: PluginConfig, next: () => Promise<void>, context?: any): Promise<void> {
     const errors: ValidationError[] = [];
 
     if (validator && schema) {
-      const result = validator.validate(config, schema);
+      const result = validator.validate(config, schema, context);
       if (!result.isValid) {
         errors.push(...result.errors);
       }
