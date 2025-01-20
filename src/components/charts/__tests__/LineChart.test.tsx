@@ -6,7 +6,8 @@ import {
   describe,
   it,
   expect,
-  createMockData
+  createMockData,
+  act
 } from '../../../testing';
 import { LineChart } from '../LineChart';
 
