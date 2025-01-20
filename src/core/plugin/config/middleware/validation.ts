@@ -10,8 +10,8 @@ export interface ValidationError {
   field?: string;
 }
 
-export class ValidationMiddleware {
-  async validate(config: PluginConfig): Promise<ValidationResult> {
+export function createValidationMiddleware(validator: any, schema: any) {
+  return async function validate(config: PluginConfig, next: () => Promise<void>): Promise<void> {
     const errors: ValidationError[] = [];
 
     // Validate required fields
@@ -49,18 +49,15 @@ export class ValidationMiddleware {
       }
     }
 
-    return {
+    const result = {
       isValid: errors.length === 0,
       errors
     };
-  }
 
-  private isValidVersion(version: string): boolean {
-    const semverRegex = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/;
-    return semverRegex.test(version);
+    if (!result.isValid) {
+      throw new Error(`Validation failed: ${result.errors.map(e => e.message).join(', ')}`);
+    }
+
+    await next();
   }
 }
-
-export const createValidationMiddleware = (): ValidationMiddleware => {
-  return new ValidationMiddleware();
-};

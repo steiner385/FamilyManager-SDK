@@ -8,12 +8,15 @@ export class ConfigManager {
   private static instance: ConfigManager;
   private eventBus: EventBus;
   private storage: ConfigStorage;
-  private middleware: ValidationMiddleware;
+  private middlewares: Array<(config: any, next: () => Promise<void>) => Promise<void>>;
   private readonly source = 'config-manager';
   private schemas: Map<string, any>;
   private encryption?: ConfigEncryption;
+  private configs: Map<string, any>;
 
   private constructor() {
+    this.middlewares = [];
+    this.configs = new Map();
     this.eventBus = EventBus.getInstance();
     this.storage = new FileConfigStorage();
     this.middleware = new ValidationMiddleware();
@@ -38,6 +41,38 @@ export class ConfigManager {
   public async init(): Promise<void> {
     await this.eventBus.start();
     this.eventBus.registerChannel('config');
+  }
+
+  public addMiddleware(middleware: (config: any, next: () => Promise<void>) => Promise<void>): void {
+    this.middlewares.push(middleware);
+  }
+
+  public async setConfig(pluginName: string, config: any): Promise<void> {
+    let currentConfig = config;
+    
+    // Chain middlewares
+    const executeMiddleware = async (index: number): Promise<void> => {
+      if (index >= this.middlewares.length) {
+        // All middleware executed, save config
+        this.configs.set(pluginName, currentConfig);
+        await this.eventBus.emit({
+          id: `config-changed-${Date.now()}`,
+          type: 'config:changed',
+          channel: 'config',
+          source: this.source,
+          timestamp: Date.now(),
+          data: {
+            pluginName,
+            config: currentConfig
+          }
+        });
+        return;
+      }
+
+      await this.middlewares[index](currentConfig, () => executeMiddleware(index + 1));
+    };
+
+    await executeMiddleware(0);
   }
 
   public async loadConfig(pluginName: string): Promise<PluginConfig | null> {

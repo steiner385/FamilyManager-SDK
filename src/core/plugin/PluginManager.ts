@@ -27,6 +27,13 @@ export class PluginManager {
     PluginManager.instance = new PluginManager();
   }
 
+  public clearPlugins(): void {
+    this.plugins.clear();
+    this.pluginStates.clear();
+    this.initializedPlugins.clear();
+    this.logger.info('All plugins cleared');
+  }
+
   async registerPlugin(plugin: Plugin): Promise<void> {
     if (this.plugins.has(plugin.id)) {
       throw new Error(`Plugin ${plugin.id} is already registered`);
