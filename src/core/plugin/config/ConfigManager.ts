@@ -59,9 +59,14 @@ export class ConfigManager {
     if (this.encryption && this.schemas.get(pluginName)) {
       const schema = this.schemas.get(pluginName);
       for (const [key, value] of Object.entries(currentConfig)) {
-        if (schema.properties?.[key]?.sensitive) {
-          currentConfig[key] = await this.encryption.encrypt(value);
-          this.logger.debug(`Encrypted sensitive field: ${key}`);
+        if (schema.properties?.[key]?.sensitive && typeof value === 'string') {
+          try {
+            currentConfig[key] = await this.encryption.encrypt(value);
+            logger.debug(`Encrypted sensitive field: ${key}`);
+          } catch (error) {
+            logger.error(`Failed to encrypt field ${key}:`, error);
+            throw error;
+          }
         }
       }
     }

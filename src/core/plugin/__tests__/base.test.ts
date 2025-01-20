@@ -18,7 +18,16 @@ jest.mock('../../utils/logger', () => ({
   }
 }), { virtual: true });
 
-const mockLogger = jest.mocked(logger);
+const mockLogger = {
+  info: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  error: jest.fn()
+};
+
+jest.mock('../../utils/logger', () => ({
+  logger: mockLogger
+}));
 jest.mock('../../events/EventBus', () => ({
   EventBus: {
     getInstance: jest.fn(),
@@ -70,7 +79,10 @@ describe('BasePlugin', () => {
     mockEventBus.start.mockResolvedValue(undefined);
     mockEventBus.stop.mockResolvedValue(undefined);
     mockEventBus.emit.mockImplementation(async (event) => {
-      return EventDeliveryStatus.SUCCESS;
+      if (event.type === 'PLUGIN_INITIALIZED' || event.type === 'PLUGIN_TEARDOWN') {
+        return EventDeliveryStatus.SUCCESS;
+      }
+      return EventDeliveryStatus.FAILED;
     });
     mockEventBus.subscribe.mockReturnValue('subscription-id');
     mockEventBus.unsubscribe.mockImplementation(() => {});

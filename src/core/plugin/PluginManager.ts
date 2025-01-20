@@ -2,6 +2,7 @@ import { Logger } from '../logging/Logger';
 import { Plugin, PluginMetrics, PluginStatus } from './types';
 import { eventBus } from '../events/EventBus';
 import { logger } from '../utils/logger';
+import { routeRegistry } from '../routing/RouteRegistry';
 
 export class PluginManager {
   private static instance: PluginManager;
@@ -11,7 +12,7 @@ export class PluginManager {
   private initializedPlugins: Set<string>;
 
   private constructor() {
-    this.logger = new Logger('PluginManager');
+    this.logger = logger;
     this.plugins = new Map();
     this.pluginStates = new Map();
     this.initializedPlugins = new Set();
