@@ -4,20 +4,23 @@ const { render, act } = require('@testing-library/react');
 const { PluginProvider, usePluginContext } = require('../PluginProvider');
 const { describe, beforeEach, afterEach, it, expect } = require('@jest/globals');
 require('@testing-library/jest-dom');
-// Create mock functions
+// Create mock plugin manager instance
 const mockPluginManager = {
     plugins: new Map(),
-    registerPlugin: jest.fn().mockImplementation(async (plugin) => {
-        mockPluginManager.plugins.set(plugin.id, plugin);
-        return plugin;
-    }),
-    getPlugin: jest.fn().mockImplementation((id) => mockPluginManager.plugins.get(id)),
-    isInitialized: jest.fn().mockReturnValue(true),
+    registerPlugin: jest.fn(),
+    getPlugin: jest.fn(),
+    isInitialized: jest.fn(),
+    getInstance: jest.fn()
 };
+
 // Mock the PluginManager
 jest.mock('../../core/plugin/PluginManager', () => ({
     PluginManager: {
-        getInstance: () => mockPluginManager
+        getInstance: () => ({
+            registerPlugin: mockPluginManager.registerPlugin,
+            getPlugin: mockPluginManager.getPlugin,
+            isInitialized: mockPluginManager.isInitialized
+        })
     }
 }));
 // Mock ErrorBoundary
@@ -53,19 +56,41 @@ describe('PluginProvider', () => {
     // Test component that uses the plugin context
     const TestComponent = () => {
         const context = usePluginContext();
-        return (_jsxs("div", { "data-testid": "test", children: [_jsx("button", { "data-testid": "install-button", onClick: async () => {
-                        try {
-                            await context.installPlugin(mockPlugin);
-                        }
-                        catch (error) {
-                            console.error(error);
-                        }
-                    }, children: "Install" }), _jsx("button", { "data-testid": "get-button", onClick: () => context.getPlugin('test-plugin'), children: "Get" }), _jsx("button", { "data-testid": "ready-button", onClick: () => context.isPluginReady('test-plugin'), children: "Check Ready" })] }));
+        return _jsxs("div", { 
+            "data-testid": "test", 
+            children: [
+                _jsx("button", { 
+                    "data-testid": "install-button", 
+                    onClick: () => context.installPlugin(mockPlugin), 
+                    children: "Install" 
+                }), 
+                _jsx("button", { 
+                    "data-testid": "get-button", 
+                    onClick: () => context.getPlugin('test-plugin'), 
+                    children: "Get" 
+                }), 
+                _jsx("button", { 
+                    "data-testid": "ready-button", 
+                    onClick: () => context.isPluginReady('test-plugin'), 
+                    children: "Check Ready" 
+                })
+            ] 
+        });
     };
     beforeEach(() => {
         jest.clearAllMocks();
         mockPluginManager.plugins.clear();
         jest.useFakeTimers();
+        
+        // Reset mock implementations
+        mockPluginManager.registerPlugin.mockImplementation(async (plugin) => {
+            mockPluginManager.plugins.set(plugin.id, plugin);
+            return plugin;
+        });
+        mockPluginManager.getPlugin.mockImplementation((id) => 
+            mockPluginManager.plugins.get(id)
+        );
+        mockPluginManager.isInitialized.mockReturnValue(true);
     });
     afterEach(() => {
         jest.useRealTimers();
