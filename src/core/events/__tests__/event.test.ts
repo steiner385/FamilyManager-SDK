@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach } from '@jest/globals';
+import { Request } from 'node-fetch';
 import { setupTestApp } from '../../../testing/utils/test-setup';
 import { EventBus } from '../EventBus';
 import { BaseEvent } from '../types';

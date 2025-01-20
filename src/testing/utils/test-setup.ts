@@ -1,4 +1,4 @@
-import { Request } from '@jest/globals';
+import { Request, Response } from 'node-fetch';
 
 export const setupTestApp = () => {
   return {
