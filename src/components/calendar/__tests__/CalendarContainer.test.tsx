@@ -30,7 +30,12 @@ test('renders CalendarContainer with plugin data', async () => {
   // Wait for loading state to clear
   expect(screen.getByText('Loading calendar...')).toBeInTheDocument();
   
-  // Wait for loading to finish and event to appear
+  // Wait for loading state to disappear
+  await waitFor(() => {
+    expect(screen.queryByText('Loading calendar...')).not.toBeInTheDocument();
+  });
+
+  // Wait for calendar grid and event to appear
   await screen.findByTestId('calendar-grid');
   await screen.findByTestId('event-Meeting');
   

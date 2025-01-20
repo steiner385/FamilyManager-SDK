@@ -41,7 +41,7 @@ const CalendarContainer = () => {
         title: `${event.title}`, // Ensure title is rendered as text
         start: new Date(event.start),
         end: new Date(event.end),
-        'data-testid': `event-${event.title}`,
+        'data-testid': `event-${event.title.replace(/\s+/g, '')}`, // Remove spaces from test id
         className: 'calendar-event'
       }));
   }, [events]);
