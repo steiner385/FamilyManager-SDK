@@ -212,13 +212,11 @@ describe('PluginProvider', () => {
         const MultiPluginTest = () => {
             const { installPlugin, getPlugin } = usePluginContext();
             return (_jsxs("div", { children: [_jsx("button", { "data-testid": "install-both", onClick: async () => {
-                            await Promise.all([
-                                installPlugin(mockPlugin),
-                                installPlugin(anotherPlugin)
-                            ]);
+                            await installPlugin(mockPlugin);
+                            await installPlugin(anotherPlugin);
                         }, children: "Install Both" }), _jsx("button", { "data-testid": "get-both", onClick: () => {
-                            getPlugin(mockPlugin.name);
-                            getPlugin(anotherPlugin.name);
+                            getPlugin(mockPlugin.id);
+                            getPlugin(anotherPlugin.id);
                         }, children: "Get Both" })] }));
         };
         const { getByTestId } = render(_jsx(PluginProvider, { children: _jsx(MultiPluginTest, {}) }));
