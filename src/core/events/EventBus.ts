@@ -39,19 +39,18 @@ export class EventBus {
     EventBus.instance = new EventBus();
   }
 
-  private logger: any;
+  private logger = {
+    info: console.log,
+    debug: console.debug,
+    warn: console.warn,
+    error: console.error
+  };
 
   constructor() {
     this.channels = new Set();
     this.handlers = new Map();
     this.isRunning = false;
     this.subscriptionCounter = 0;
-    this.logger = {
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn()
-    };
   }
 
   public async start(): Promise<void> {
