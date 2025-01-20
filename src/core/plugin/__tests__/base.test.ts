@@ -175,7 +175,7 @@ describe('BasePlugin', () => {
 
   describe('dependency management', () => {
     it('should validate dependencies on initialization', async () => {
-      plugin.metadata.dependencies = new PluginDependencyConfig({ 'dep1': '1.0.0', 'dep2': '1.0.0' });
+      plugin.metadata.dependencies = { required: { 'dep1': '1.0.0', 'dep2': '1.0.0' } };
       await expect(plugin.initialize(mockContext)).resolves.not.toThrow();
       expect(hasPluginMock).toHaveBeenCalledWith('dep1');
       expect(hasPluginMock).toHaveBeenCalledWith('dep2');

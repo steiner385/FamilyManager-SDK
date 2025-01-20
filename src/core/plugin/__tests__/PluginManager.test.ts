@@ -11,8 +11,18 @@ jest.mock('../../utils/logger', () => ({
     info: jest.fn(),
     warn: jest.fn(),
     debug: jest.fn(),
+    error: jest.fn(),
   },
 }));
+
+// Reset mocks before each test
+beforeEach(() => {
+  jest.clearAllMocks();
+  (logger.info as jest.Mock).mockClear();
+  (logger.warn as jest.Mock).mockClear();
+  (logger.debug as jest.Mock).mockClear();
+  (logger.error as jest.Mock).mockClear();
+});
 
 jest.mock('../../routing/RouteRegistry', () => ({
   routeRegistry: {
