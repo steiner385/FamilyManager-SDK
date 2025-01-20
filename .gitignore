@@ -9,6 +9,7 @@ build/
 lib/
 *.tsbuildinfo
 *.js
+src/**/*.js
 !*.config.js
 !jest.setup.js
 !.eslintrc.js
