@@ -70,11 +70,20 @@ class TestPlugin extends BasePlugin {
 
   protected async validateDependencies(context: PluginContext<Env>): Promise<void> {
     if (this.metadata.dependencies?.required) {
-      for (const [depId, version] of Object.entries(this.metadata.dependencies.required)) {
-        if (!context.plugins?.hasPlugin(depId)) {
-          throw new Error(`Required dependency not found: ${depId}`);
-        }
+      const missingDeps = Object.entries(this.metadata.dependencies.required)
+        .filter(([depId]) => !context.plugins?.hasPlugin(depId));
+      
+      if (missingDeps.length > 0) {
+        throw new Error(`Required dependency not found: ${missingDeps[0][0]}`);
       }
+    }
+
+    if (this.metadata.optionalDependencies) {
+      Object.entries(this.metadata.optionalDependencies).forEach(([depId]) => {
+        if (!context.plugins?.hasPlugin(depId)) {
+          this.logger?.warn(`Optional dependency not found: ${depId}`, { dependencyId: depId });
+        }
+      });
     }
   }
 

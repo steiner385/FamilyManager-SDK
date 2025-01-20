@@ -73,6 +73,8 @@ export class ConfigManager {
         }
       }
     }
+
+    this.configs.set(pluginName, currentConfig);
     
     this.configs.set(pluginName, currentConfig);
     
