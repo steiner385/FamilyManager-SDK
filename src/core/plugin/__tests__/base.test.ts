@@ -44,20 +44,38 @@ class TestPlugin extends BasePlugin {
     optionalDependencies: {}
   };
 
-  protected async onInitialize(_context: PluginContext<Env>): Promise<void> {
-    // Test initialization logic
+  protected async onInitialize(context: PluginContext<Env>): Promise<void> {
+    this.logger = context.logger;
+    this.eventBus = context.eventBus;
+    await this.eventBus.emit({
+      type: 'PLUGIN_INITIALIZED',
+      source: this.metadata.id
+    });
   }
 
   protected async onTeardown(): Promise<void> {
-    // Test teardown logic
+    await this.eventBus?.emit({
+      type: 'PLUGIN_TEARDOWN', 
+      source: this.metadata.id
+    });
   }
 
   public async onError(error: Error): Promise<void> {
-    this.logger.error(`Plugin ${this.metadata.id} error:`, { error });
+    this.logger?.error(`Plugin ${this.metadata.id} error:`, { error });
   }
 
   public async onDependencyChange(dependencyId: string): Promise<void> {
-    this.logger.debug(`Dependency ${dependencyId} changed`, { dependencyId });
+    this.logger?.debug(`Dependency ${dependencyId} changed`, { dependencyId });
+  }
+
+  protected async validateDependencies(context: PluginContext<Env>): Promise<void> {
+    if (this.metadata.dependencies?.required) {
+      for (const [depId, version] of Object.entries(this.metadata.dependencies.required)) {
+        if (!context.plugins?.hasPlugin(depId)) {
+          throw new Error(`Required dependency not found: ${depId}`);
+        }
+      }
+    }
   }
 
   protected checkInitialized(): void {

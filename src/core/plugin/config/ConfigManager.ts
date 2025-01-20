@@ -59,7 +59,7 @@ export class ConfigManager {
     let currentConfig = { ...config };
     
     // Handle encryption of sensitive fields
-    if (this.encryption && this.schemas.get(pluginName)) {
+    if (this.encryption && this.schemas.has(pluginName)) {
       const schema = this.schemas.get(pluginName);
       for (const [key, value] of Object.entries(currentConfig)) {
         if (schema.properties?.[key]?.sensitive && typeof value === 'string') {
