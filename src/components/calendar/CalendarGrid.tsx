@@ -141,7 +141,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           window.addEventListener('mousemove', handleMouseMove);
                           window.addEventListener('mouseup', handleMouseUp);
                         }}
-                        }}
                       />
                     </div>
                   ))}
