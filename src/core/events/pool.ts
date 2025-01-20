@@ -81,19 +81,17 @@ export class EventPool {
 
   private expandPool(): void {
     const currentSize = this.pool.length;
-    if (currentSize >= this.config.maxSize) {
+    const targetSize = Math.min(
+      currentSize + this.config.expandSteps,
+      this.config.maxSize
+    );
+
+    if (currentSize >= targetSize) {
       this.logger.warn('Cannot expand pool: maximum size reached');
       return;
     }
 
-    const neededSize = Math.min(
-      currentSize + this.config.expandSteps,
-      this.config.maxSize
-    );
-    
-    const expansionSize = neededSize - currentSize;
-    if (expansionSize <= 0) return;
-
+    const expansionSize = targetSize - currentSize;
     for (let i = 0; i < expansionSize; i++) {
       this.pool.push(this.createEmptyEvent());
     }
@@ -101,6 +99,12 @@ export class EventPool {
     this.logger.info(
       `Pool expanded by ${expansionSize} events (${currentSize} -> ${this.pool.length})`
     );
+  }
+
+  clear(): void {
+    this.pool = [];
+    this.initialize();
+    this.logger.info('Pool cleared and reinitialized');
   }
 
   private findAvailableEvent<T>(event: PoolEvent<T>): ManagedEvent<T> | null {
