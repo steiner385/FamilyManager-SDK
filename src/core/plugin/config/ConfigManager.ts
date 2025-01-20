@@ -57,14 +57,17 @@ export class ConfigManager {
 
   public async setConfig(pluginName: string, config: any): Promise<void> {
     // Create a new config object to avoid mutations
-    const currentConfig = { ...config };
+    let currentConfig = { ...config };
     
     // Handle encryption of sensitive fields
     if (this.encryption && this.schemas.has(pluginName)) {
       const schema = this.schemas.get(pluginName);
       
+      // Create new object to store encrypted values
+      currentConfig = { ...config };
+      
       // Encrypt sensitive fields
-      for (const [key, value] of Object.entries(currentConfig)) {
+      for (const [key, value] of Object.entries(config)) {
         if (schema.properties?.[key]?.sensitive && typeof value === 'string') {
           try {
             currentConfig[key] = await this.encryption.encrypt(value);
@@ -76,7 +79,7 @@ export class ConfigManager {
       }
     }
 
-    // Store the config
+    // Store the config and emit event
     this.configs.set(pluginName, currentConfig);
     
     // Chain middlewares
