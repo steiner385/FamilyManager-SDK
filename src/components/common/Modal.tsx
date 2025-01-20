@@ -1,5 +1,5 @@
-import React from 'react';
-import { Dialog } from '@headlessui/react';
+import React, { Fragment } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
 
 const CloseButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button
