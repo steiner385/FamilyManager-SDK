@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from '@jest/globals';
-import { setupTestApp } from '../../testing/utils/test-setup';
+import { setupTestApp } from '../../../testing/utils/test-setup';
 import { EventBus } from '../EventBus';
 import { BaseEvent } from '../types';
 
