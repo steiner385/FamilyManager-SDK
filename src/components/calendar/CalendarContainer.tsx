@@ -35,7 +35,13 @@ const CalendarContainer = () => {
   };
 
   const expandedEvents = useMemo(() => {
-    return events.flatMap(event => generateRecurringInstances(event));
+    return events.flatMap(event => generateRecurringInstances(event))
+      .map(event => ({
+        ...event,
+        title: `${event.title}`, // Ensure title is rendered as text
+        start: new Date(event.start),
+        end: new Date(event.end)
+      }));
   }, [events]);
 
   const fetchData = useCallback(async () => {
@@ -146,18 +152,20 @@ const CalendarContainer = () => {
   }, [draggingEvent, handleSaveEvent]);
 
   return (
-    <CalendarView
-      calendars={calendars}
-      events={expandedEvents}
-      loading={loading}
-      error={error}
-      onSaveEvent={handleSaveEvent}
-      onDeleteEvent={handleDeleteEvent}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDrop={handleDrop}
-      draggingEvent={draggingEvent}
-    />
+    <div data-testid="calendar-container">
+      <CalendarView
+        calendars={calendars}
+        events={expandedEvents}
+        loading={loading}
+        error={error}
+        onSaveEvent={handleSaveEvent}
+        onDeleteEvent={handleDeleteEvent}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDrop={handleDrop}
+        draggingEvent={draggingEvent}
+      />
+    </div>
   );
 };
 
