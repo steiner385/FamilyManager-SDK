@@ -99,10 +99,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     >
                       <div className="event-content">
                         {event.title}
-                        <div 
-                          className="resize-handle"
-                          data-testid="resize-handle"
-                          onMouseDown={(e) => {
+                      </div>
+                      <div 
+                        className="resize-handle"
+                        data-testid="resize-handle"
+                        onMouseDown={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           const startY = e.clientY;
@@ -139,6 +140,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
                           window.addEventListener('mousemove', handleMouseMove);
                           window.addEventListener('mouseup', handleMouseUp);
+                        }}
                         }}
                       />
                     </div>
@@ -221,7 +223,51 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                             onEventClick(event);
                           }}
                         >
-                          {event.title}
+                          <div className="event-content">
+                            {event.title}
+                          </div>
+                          <div 
+                            className="resize-handle"
+                            data-testid="resize-handle"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const startY = e.clientY;
+                              const originalEnd = new Date(event.end);
+
+                              const handleMouseMove = (moveEvent: MouseEvent) => {
+                                const deltaY = moveEvent.clientY - startY;
+                                const minutesDelta = Math.round(deltaY / 30) * 30;
+                                const newEnd = new Date(originalEnd);
+                                newEnd.setMinutes(newEnd.getMinutes() + minutesDelta);
+                                
+                                // Preview the resize
+                                const eventEl = e.currentTarget.parentElement;
+                                if (eventEl) {
+                                  const heightDelta = Math.max(deltaY, -eventEl.clientHeight + 30);
+                                  eventEl.style.height = `${eventEl.clientHeight + heightDelta}px`;
+                                }
+                              };
+
+                              const handleMouseUp = (upEvent: MouseEvent) => {
+                                const deltaY = upEvent.clientY - startY;
+                                const minutesDelta = Math.round(deltaY / 30) * 30;
+                                const newEnd = new Date(originalEnd);
+                                newEnd.setMinutes(newEnd.getMinutes() + minutesDelta);
+
+                                onSaveEvent({
+                                  ...event,
+                                  end: newEnd
+                                });
+
+                                window.removeEventListener('mousemove', handleMouseMove);
+                                window.removeEventListener('mouseup', handleMouseUp);
+                              };
+
+                              window.addEventListener('mousemove', handleMouseMove);
+                              window.addEventListener('mouseup', handleMouseUp);
+                            }}
+                          />
                         </div>
                       ))}
                     </div>
