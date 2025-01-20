@@ -13,7 +13,7 @@ jest.mock('../../utils/logger', () => ({
     debug: jest.fn(),
     error: jest.fn(),
   },
-}));
+}), { virtual: true });
 
 // Reset mocks before each test
 beforeEach(() => {

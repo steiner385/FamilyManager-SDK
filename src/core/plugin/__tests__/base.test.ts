@@ -9,7 +9,14 @@ import { describe, it, expect, jest, beforeAll, beforeEach, afterEach } from '@j
 
 type HasPluginFn = (id: string) => boolean;
 
-jest.mock('../../utils/logger');
+jest.mock('../../utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
+  },
+}), { virtual: true });
 jest.mock('../../events/EventBus', () => ({
   EventBus: {
     getInstance: jest.fn(),
