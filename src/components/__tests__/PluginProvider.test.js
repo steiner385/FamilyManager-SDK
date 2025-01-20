@@ -5,14 +5,16 @@ const { PluginProvider, usePluginContext } = require('../PluginProvider');
 const { describe, beforeEach, afterEach, it, expect } = require('@jest/globals');
 require('@testing-library/jest-dom');
 // Create mock functions
-const mockRegisterPlugin = jest.fn().mockImplementation(async () => { });
-const mockGetPlugin = jest.fn().mockImplementation(() => undefined);
-const mockIsPluginReady = jest.fn().mockImplementation(() => false);
 const mockPluginManager = {
-    registerPlugin: mockRegisterPlugin,
-    getPlugin: mockGetPlugin,
-    isInitialized: mockIsPluginReady,
-    plugins: new Map()
+    plugins: new Map(),
+    registerPlugin: jest.fn().mockImplementation(async (plugin) => {
+        if (mockPluginManager.plugins.has(plugin.id)) {
+            throw new Error(`Plugin ${plugin.id} is already registered`);
+        }
+        mockPluginManager.plugins.set(plugin.id, plugin);
+    }),
+    getPlugin: jest.fn().mockImplementation((id) => mockPluginManager.plugins.get(id)),
+    isInitialized: jest.fn().mockImplementation(() => true),
 };
 // Mock the PluginManager
 jest.mock('../../core/plugin/PluginManager', () => ({
@@ -65,11 +67,6 @@ describe('PluginProvider', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockPluginManager.plugins.clear();
-        mockRegisterPlugin.mockImplementation(async (plugin) => {
-            mockPluginManager.plugins.set(plugin.id, plugin);
-        });
-        mockGetPlugin.mockImplementation((id) => mockPluginManager.plugins.get(id));
-        mockIsPluginReady.mockImplementation(() => true);
         jest.useFakeTimers();
     });
     afterEach(() => {
@@ -108,7 +105,7 @@ describe('PluginProvider', () => {
         await act(async () => {
             getByTestId('install-button').click();
         });
-        expect(mockRegisterPlugin).toHaveBeenCalledWith(mockPlugin);
+        expect(mockPluginManager.registerPlugin).toHaveBeenCalledWith(mockPlugin);
     });
     it('should handle plugin retrieval', async () => {
         const { getByTestId } = render(_jsx(PluginProvider, { children: _jsx(TestComponent, {}) }));
@@ -118,7 +115,7 @@ describe('PluginProvider', () => {
         await act(async () => {
             getByTestId('get-button').click();
         });
-        expect(mockGetPlugin).toHaveBeenCalledWith('test-plugin');
+        expect(mockPluginManager.getPlugin).toHaveBeenCalledWith('test-plugin');
     });
     it('should check plugin ready state', async () => {
         const { getByTestId } = render(_jsx(PluginProvider, { children: _jsx(TestComponent, {}) }));
@@ -128,11 +125,11 @@ describe('PluginProvider', () => {
         await act(async () => {
             getByTestId('ready-button').click();
         });
-        expect(mockIsPluginReady).toHaveBeenCalledWith('test-plugin');
+        expect(mockPluginManager.isInitialized).toHaveBeenCalledWith('test-plugin');
     });
     it('should handle plugin installation errors', async () => {
         const consoleSpy = jest.spyOn(console, 'error').mockImplementation((...args) => { });
-        mockRegisterPlugin.mockImplementation(async () => {
+        mockPluginManager.registerPlugin.mockImplementationOnce(async () => {
             throw new Error('Installation failed');
         });
         const { getByTestId } = render(_jsx(PluginProvider, { children: _jsx(TestComponent, {}) }));
@@ -145,7 +142,7 @@ describe('PluginProvider', () => {
             getByTestId('install-button').click();
         });
         // Verify expectations
-        expect(mockRegisterPlugin).toHaveBeenCalledWith(mockPlugin);
+        expect(mockPluginManager.registerPlugin).toHaveBeenCalledWith(mockPlugin);
         expect(consoleSpy).toHaveBeenCalled();
         consoleSpy.mockRestore();
     }, 10000); // Increase timeout to 10 seconds
@@ -229,14 +226,14 @@ describe('PluginProvider', () => {
         await act(async () => {
             installButton.click();
         });
-        expect(mockRegisterPlugin).toHaveBeenCalledWith(mockPlugin);
-        expect(mockRegisterPlugin).toHaveBeenCalledWith(anotherPlugin);
+        expect(mockPluginManager.registerPlugin).toHaveBeenCalledWith(mockPlugin);
+        expect(mockPluginManager.registerPlugin).toHaveBeenCalledWith(anotherPlugin);
         const getButton = getByTestId('get-both');
         await act(async () => {
             getButton.click();
         });
-        expect(mockGetPlugin).toHaveBeenCalledWith(mockPlugin.id);
-        expect(mockGetPlugin).toHaveBeenCalledWith(anotherPlugin.id);
+        expect(mockPluginManager.getPlugin).toHaveBeenCalledWith(mockPlugin.id);
+        expect(mockPluginManager.getPlugin).toHaveBeenCalledWith(anotherPlugin.id);
     });
 });
 //# sourceMappingURL=PluginProvider.test.js.map
