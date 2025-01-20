@@ -13,6 +13,13 @@ export class EventBus {
   private isRunning: boolean;
   private subscriptionCounter: number;
 
+  private logger = {
+    info: console.log,
+    debug: console.debug,
+    warn: console.warn,
+    error: console.error
+  };
+
   private constructor() {
     this.channels = new Set();
     this.handlers = new Map();
@@ -39,19 +46,6 @@ export class EventBus {
     EventBus.instance = new EventBus();
   }
 
-  private logger = {
-    info: console.log,
-    debug: console.debug,
-    warn: console.warn,
-    error: console.error
-  };
-
-  constructor() {
-    this.channels = new Set();
-    this.handlers = new Map();
-    this.isRunning = false;
-    this.subscriptionCounter = 0;
-  }
 
   public async start(): Promise<void> {
     if (this.isRunning) {
