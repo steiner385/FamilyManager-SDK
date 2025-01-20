@@ -1,4 +1,5 @@
-import { AnalyticsTracker } from '../AnalyticsTracker';
+const { AnalyticsTracker } = require('../AnalyticsTracker');
+
 const mockAnalyticsEvent = {
     category: 'Test',
     action: 'test-action',
