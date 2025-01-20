@@ -90,6 +90,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       key={event.id}
                       className={`calendar-event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
                       style={{ backgroundColor: event.color }}
+                      data-testid={event['data-testid']}
                       draggable
                       onDragStart={() => onDragStart(event)}
                       onDragEnd={onDragEnd}
@@ -200,6 +201,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           key={event.id}
                           className={`calendar-event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
                           style={{ backgroundColor: event.color }}
+                          data-testid={event['data-testid']}
                           draggable
                           onDragStart={() => onDragStart(event)}
                           onDragEnd={onDragEnd}
@@ -333,6 +335,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       key={event.id}
                       className={`calendar-event ${draggingEvent?.id === event.id ? 'dragging' : ''}`}
                       style={{ backgroundColor: event.color }}
+                      data-testid={event['data-testid']}
                       draggable
                       onDragStart={() => onDragStart(event)}
                       onDragEnd={onDragEnd}
