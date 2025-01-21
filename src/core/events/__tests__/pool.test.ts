@@ -31,11 +31,11 @@ describe('EventPool', () => {
     const event = pool.acquire();
     expect(event).toBeDefined();
     if (event) {
-      expect(event.status).toBe('in-use');
+      expect(event.status).toBe('PROCESSING');
       expect(pool.getStats().inUse).toBe(1);
 
       pool.release(event);
-      expect(event.isInUse()).toBe(false);
+      expect(event.status).toBe('PENDING');
       expect(pool.getStats().inUse).toBe(0);
     }
   });
@@ -89,7 +89,7 @@ describe('EventPool', () => {
       expect(event.type).toBe('test');
       expect(event.timestamp).toBe(123);
       expect(event.data).toEqual({ value: 1 });
-      expect(event.status).toBe('in-use');
+      expect(event.status).toBe('PROCESSING');
     }
   });
 
@@ -160,7 +160,7 @@ describe('EventPool', () => {
       expect(event.type).toBe('test');
       expect(event.timestamp).toBe(123);
       expect(event.data).toEqual({ value: 1 });
-      expect(event.isInUse()).toBe(true);
+      expect(event.status).toBe('PROCESSING');
     }
   });
 });
