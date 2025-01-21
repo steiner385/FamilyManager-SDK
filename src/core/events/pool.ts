@@ -166,6 +166,7 @@ export class EventPool {
       event.status = EventDeliveryStatus.PROCESSING;
       event.status = EventDeliveryStatus.PROCESSING;
       event.status = EventDeliveryStatus.PROCESSING;
+      event.status = EventDeliveryStatus.PROCESSING;
       event.setInUse(true);
       return event;
     }
