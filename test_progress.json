@@ -8,9 +8,9 @@
     },
     {
       "name": "core/plugin",
-      "total_tests": 0,
+      "total_tests": 47,
       "failures": 0,
-      "last_run": null
+      "last_run": "2025-01-21T23:51:39.632Z"
     },
     {
       "name": "core/validation",
@@ -31,5 +31,5 @@
       "last_run": null
     }
   ],
-  "last_updated": "2025-01-21T23:50:46.157Z"
+  "last_updated": "2025-01-21T23:51:39.632Z"
 }
