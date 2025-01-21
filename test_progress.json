@@ -26,10 +26,10 @@
     },
     {
       "name": "components/calendar",
-      "total_tests": 0,
+      "total_tests": 12,
       "failures": 0,
-      "last_run": null
+      "last_run": "2025-01-21T23:54:25.157Z"
     }
   ],
-  "last_updated": "2025-01-21T23:53:45.157Z"
+  "last_updated": "2025-01-21T23:54:25.157Z"
 }
