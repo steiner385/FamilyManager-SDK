@@ -159,6 +159,7 @@ export class EventPool {
     if (event) {
       Object.assign(event, data);
       event.status = EventDeliveryStatus.PROCESSING;
+      event.status = EventDeliveryStatus.PROCESSING;
       event.setInUse(true);
       return event;
     }
