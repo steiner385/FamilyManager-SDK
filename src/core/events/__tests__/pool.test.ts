@@ -8,7 +8,10 @@ describe('EventPool', () => {
     pool = new EventPool({
       maxSize: 10,
       initialSize: 5,
-      expandSteps: 2
+      expandSteps: 2,
+      maxAttempts: 3,
+      retryDelay: 1000,
+      maxConcurrent: 5
     });
   });
 
@@ -138,7 +141,11 @@ describe('EventPool', () => {
       channel: 'test',
       type: 'test',
       timestamp: 123,
-      data: { value: 1 }
+      data: { value: 1 },
+      poolId: 'pool-1',
+      attempts: 0,
+      maxAttempts: 3,
+      source: 'test-source'
     };
 
     const event = pool.acquireFromEvent(baseEvent);
