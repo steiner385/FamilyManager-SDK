@@ -73,7 +73,7 @@ export class EventPool {
   }
 
   private createEmptyEvent<T>(): ManagedEvent<T> {
-    const event = new ManagedEvent({
+    const event = new ManagedEvent<T>({
       id: '',
       type: '',
       channel: '',
@@ -82,7 +82,7 @@ export class EventPool {
       poolId: '',
       attempts: 0,
       maxAttempts: this.config.maxAttempts
-    });
+    } as PoolEvent<T>);
     return event;
   }
 
@@ -158,7 +158,8 @@ export class EventPool {
 
     if (event) {
       Object.assign(event, data);
-      event.status = EventDeliveryStatus.PENDING;
+      event.status = EventDeliveryStatus.PROCESSING;
+      event.status = EventDeliveryStatus.PROCESSING;
       event.setInUse(true);
       return event;
     }
