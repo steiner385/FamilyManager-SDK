@@ -54,6 +54,6 @@ module.exports = {
   resetMocks: false,
   reporters: [
     'default',
-    ['<rootDir>/src/testing/reporters/ProgressReporter.js']
+    ['<rootDir>/src/testing/reporters/ProgressReporter.js', {}]
   ]
 }
