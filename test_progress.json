@@ -2,9 +2,9 @@
   "test_suites": [
     {
       "name": "core/events",
-      "total_tests": 0,
+      "total_tests": 31,
       "failures": 0,
-      "last_run": null
+      "last_run": "2025-01-21T23:50:46.157Z"
     },
     {
       "name": "core/plugin",
@@ -31,5 +31,5 @@
       "last_run": null
     }
   ],
-  "last_updated": "2024-01-22T00:00:00Z"
+  "last_updated": "2025-01-21T23:50:46.157Z"
 }
