@@ -31,7 +31,7 @@ describe('EventPool', () => {
     const event = pool.acquire();
     expect(event).toBeDefined();
     if (event) {
-      expect(event.isInUse()).toBe(true);
+      expect(event.status).toBe('in-use');
       expect(pool.getStats().inUse).toBe(1);
 
       pool.release(event);
@@ -75,7 +75,11 @@ describe('EventPool', () => {
       channel: 'test',
       type: 'test',
       timestamp: 123,
-      data: { value: 1 }
+      data: { value: 1 },
+      poolId: 'pool-1',
+      attempts: 0,
+      maxAttempts: 3,
+      source: 'test-source'
     });
 
     expect(event).toBeDefined();
@@ -85,7 +89,7 @@ describe('EventPool', () => {
       expect(event.type).toBe('test');
       expect(event.timestamp).toBe(123);
       expect(event.data).toEqual({ value: 1 });
-      expect(event.isInUse()).toBe(true);
+      expect(event.status).toBe('in-use');
     }
   });
 
