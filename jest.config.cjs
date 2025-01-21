@@ -10,29 +10,50 @@ module.exports = {
     '^@hooks/(.*)$': '<rootDir>/src/hooks/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@testing/(.*)$': '<rootDir>/src/testing/$1',
-    '^@types/(.*)$': '<rootDir>/src/types/$1',
-    '^@contexts/(.*)$': '<rootDir>/src/contexts/$1'
+    '^@types/(.*)$': '<rootDir>/types/$1',
+    '^@contexts/(.*)$': '<rootDir>/src/contexts/$1',
+    '^@test/(.*)$': '<rootDir>/test/$1'
   },
   setupFilesAfterEnv: [
     '<rootDir>/src/core/testing/setup/jest.setup.ts'
   ],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: 'tsconfig.test.json'
+    '^.+\\.[tj]sx?$': ['ts-jest', {
+      tsconfig: 'tsconfig.test.json',
+      useESM: true,
+      diagnostics: {
+        ignoreCodes: [1343] // Ignore 'not using file extension' warning
+      }
     }]
   },
-  testMatch: [
-    "**/__tests__/**/*.test.[jt]s?(x)",
-    "**/*.test.[jt]s?(x)"
-  ],
+  moduleDirectories: ['node_modules', 'src'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  globals: {
-    'ts-jest': {
-      isolatedModules: true,
-      tsconfig: 'tsconfig.test.json'
-    }
-  },
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons']
-  }
-};
+  },
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(module-that-needs-transform)/)'
+  ],
+  roots: ['<rootDir>/src', '<rootDir>/test'],
+  modulePaths: ['<rootDir>'],
+  testMatch: [
+    '**/__tests__/**/*.[jt]s?(x)',
+    '**/?(*.)+(spec|test).[jt]s?(x)'
+  ],
+  coverageDirectory: '<rootDir>/coverage',
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/coverage/',
+    '/test/setup/',
+    '\\.d\\.ts$'
+  ],
+  clearMocks: true,
+  restoreMocks: true,
+  resetMocks: false,
+  reporters: [
+    'default',
+    ['<rootDir>/src/testing/reporters/ProgressReporter.js']
+  ]
+}
