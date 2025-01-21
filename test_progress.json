@@ -14,9 +14,9 @@
     },
     {
       "name": "core/validation",
-      "total_tests": 0,
+      "total_tests": 17,
       "failures": 0,
-      "last_run": null
+      "last_run": "2025-01-21T23:52:25.157Z"
     },
     {
       "name": "components/common",
@@ -31,5 +31,5 @@
       "last_run": null
     }
   ],
-  "last_updated": "2025-01-21T23:51:39.632Z"
+  "last_updated": "2025-01-21T23:52:25.157Z"
 }
