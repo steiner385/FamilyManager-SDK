@@ -20,9 +20,9 @@
     },
     {
       "name": "components/common",
-      "total_tests": 0,
+      "total_tests": 24,
       "failures": 0,
-      "last_run": null
+      "last_run": "2025-01-21T23:53:45.157Z"
     },
     {
       "name": "components/calendar",
@@ -31,5 +31,5 @@
       "last_run": null
     }
   ],
-  "last_updated": "2025-01-21T23:52:25.157Z"
+  "last_updated": "2025-01-21T23:53:45.157Z"
 }
