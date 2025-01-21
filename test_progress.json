@@ -1,0 +1,35 @@
+{
+  "test_suites": [
+    {
+      "name": "core/events",
+      "total_tests": 0,
+      "failures": 0,
+      "last_run": null
+    },
+    {
+      "name": "core/plugin",
+      "total_tests": 0,
+      "failures": 0,
+      "last_run": null
+    },
+    {
+      "name": "core/validation",
+      "total_tests": 0,
+      "failures": 0,
+      "last_run": null
+    },
+    {
+      "name": "components/common",
+      "total_tests": 0,
+      "failures": 0,
+      "last_run": null
+    },
+    {
+      "name": "components/calendar",
+      "total_tests": 0,
+      "failures": 0,
+      "last_run": null
+    }
+  ],
+  "last_updated": "2024-01-22T00:00:00Z"
+}
