@@ -212,9 +212,9 @@
     },
     "core/routing/RouteRegistry": {
       "path": "src/core/routing/__tests__/RouteRegistry.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:20:20.614Z",
+      "totalTests": 17,
+      "passingTests": 17,
       "failingTests": 0
     },
     "core/plugin/config/middleware/logging": {
