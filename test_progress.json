@@ -233,9 +233,9 @@
     },
     "core/events/performance/types": {
       "path": "src/core/events/__tests__/performance/types.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:21:38.717Z",
+      "totalTests": 1,
+      "passingTests": 1,
       "failingTests": 0
     },
     "core/patterns/singleton": {
