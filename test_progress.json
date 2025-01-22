@@ -198,9 +198,9 @@
     },
     "core/plugin/config/security/encryption": {
       "path": "src/core/plugin/config/__tests__/security/encryption.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:17:22.734Z",
+      "totalTests": 5,
+      "passingTests": 5,
       "failingTests": 0
     },
     "core/events/router": {
