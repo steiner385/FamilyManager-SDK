@@ -58,9 +58,9 @@
     },
     "components/common/LoadingSpinner": {
       "path": "src/components/common/__tests__/LoadingSpinner.test.tsx",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:02:35.767Z",
+      "totalTests": 7,
+      "passingTests": 7,
       "failingTests": 0
     },
     "core/registry/ComponentRegistry": {
