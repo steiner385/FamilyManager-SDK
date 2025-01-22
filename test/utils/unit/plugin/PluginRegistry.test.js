@@ -1,5 +1,5 @@
 import { describe, beforeEach, it, expect } from '@jest/globals';
-import { pluginRegistry } from '../../../core/plugin/registry.ts';
+import { pluginRegistry } from '../../../core/plugin/registry';
 import { MockPlugin } from '../../plugin-helpers';
 describe('PluginRegistry', () => {
     let mockPlugin;
