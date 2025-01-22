@@ -37,9 +37,9 @@
     },
     "components/common/Modal": {
       "path": "src/components/common/__tests__/Modal.test.tsx",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:01:21.952Z",
+      "totalTests": 9,
+      "passingTests": 9,
       "failingTests": 0
     },
     "core/customization/ComponentCustomizer": {
