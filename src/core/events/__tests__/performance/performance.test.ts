@@ -20,7 +20,8 @@ describe('Event System Performance', () => {
     }
 
     // Create new instance with performance-optimized config
-    eventBus = EventBus.getInstance({
+    eventBus = EventBus.getInstance();
+    eventBus.configure({
       maxRetries: 3,
       retryDelay: 50
     });
