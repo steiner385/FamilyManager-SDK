@@ -191,9 +191,9 @@
     },
     "core/performance/PerformanceMonitor": {
       "path": "src/core/performance/__tests__/PerformanceMonitor.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:16:52.550Z",
+      "totalTests": 17,
+      "passingTests": 17,
       "failingTests": 0
     },
     "core/plugin/config/security/encryption": {
