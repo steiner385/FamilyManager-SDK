@@ -65,9 +65,9 @@
     },
     "core/registry/ComponentRegistry": {
       "path": "src/core/registry/__tests__/ComponentRegistry.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:03:02.533Z",
+      "totalTests": 6,
+      "passingTests": 6,
       "failingTests": 0
     },
     "core/events/bus": {
