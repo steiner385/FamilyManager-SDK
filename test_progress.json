@@ -9,9 +9,9 @@
     },
     "core/plugin/PluginManager": {
       "path": "src/core/plugin/__tests__/PluginManager.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T00:59:20.595Z",
+      "totalTests": 20,
+      "passingTests": 20,
       "failingTests": 0
     },
     "core/plugin/base": {
