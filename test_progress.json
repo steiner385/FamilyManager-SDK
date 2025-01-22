@@ -170,9 +170,9 @@
     },
     "core/events/utils/test-helpers": {
       "path": "src/core/events/utils/__tests__/test-helpers.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:15:28.734Z",
+      "totalTests": 6,
+      "passingTests": 6,
       "failingTests": 0
     },
     "test/utils/unit/plugin/BasePlugin": {
