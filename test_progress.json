@@ -149,9 +149,9 @@
     },
     "core/logging/Logger": {
       "path": "src/core/logging/__tests__/Logger.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:13:57.165Z",
+      "totalTests": 24,
+      "passingTests": 24,
       "failingTests": 0
     },
     "core/events/compression": {
