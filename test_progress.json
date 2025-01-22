@@ -114,9 +114,9 @@
     },
     "core/integration/plugin-system": {
       "path": "src/core/__tests__/integration/plugin-system.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:11:04.935Z",
+      "totalTests": 2,
+      "passingTests": 2,
       "failingTests": 0
     },
     "core/events/event": {
