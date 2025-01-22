@@ -2,10 +2,10 @@
   "testSuites": {
     "core/events/pool": {
       "path": "src/core/events/__tests__/pool.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
-      "failingTests": 0
+      "lastExecuted": "2025-01-22T00:58:17.543Z",
+      "totalTests": 9,
+      "passingTests": 8,
+      "failingTests": 1
     },
     "core/plugin/PluginManager": {
       "path": "src/core/plugin/__tests__/PluginManager.test.ts",
