@@ -21,10 +21,6 @@ describe('Event System Performance', () => {
 
     // Create new instance with performance-optimized config
     eventBus = EventBus.getInstance();
-    eventBus.configure({
-      maxRetries: 3,
-      retryDelay: 50
-    });
     await eventBus.start();
     
     // Register test channel
