@@ -142,9 +142,9 @@
     },
     "core/state/ComponentStateManager": {
       "path": "src/core/state/__tests__/ComponentStateManager.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:13:32.084Z",
+      "totalTests": 10,
+      "passingTests": 10,
       "failingTests": 0
     },
     "core/logging/Logger": {
