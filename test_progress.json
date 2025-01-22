@@ -163,9 +163,9 @@
     },
     "core/errors/errors": {
       "path": "src/core/errors/__tests__/errors.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:15:03.378Z",
+      "totalTests": 8,
+      "passingTests": 8,
       "failingTests": 0
     },
     "core/events/utils/test-helpers": {
