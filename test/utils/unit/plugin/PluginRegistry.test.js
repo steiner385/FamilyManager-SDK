@@ -1,4 +1,4 @@
-import { pluginRegistry } from '../../../plugin/registry';
+import { pluginRegistry } from '../../core/plugin/registry';
 import { MockPlugin } from '../../plugin-helpers';
 describe('PluginRegistry', () => {
     let mockPlugin;
