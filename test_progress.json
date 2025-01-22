@@ -86,9 +86,9 @@
     },
     "core/store/PluginUIStore": {
       "path": "src/core/store/__tests__/PluginUIStore.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:04:39.899Z",
+      "totalTests": 3,
+      "passingTests": 3,
       "failingTests": 0
     },
     "test/utils/unit/plugin/PluginRegistry": {
