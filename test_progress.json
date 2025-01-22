@@ -23,9 +23,9 @@
     },
     "core/lifecycle/ComponentLifecycle": {
       "path": "src/core/lifecycle/__tests__/ComponentLifecycle.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:00:17.241Z",
+      "totalTests": 19,
+      "passingTests": 19,
       "failingTests": 0
     },
     "core/forms/FormManager": {
