@@ -240,9 +240,9 @@
     },
     "core/patterns/singleton": {
       "path": "src/core/patterns/__tests__/singleton.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:22:09.838Z",
+      "totalTests": 6,
+      "passingTests": 6,
       "failingTests": 0
     },
     "core/layout/LayoutManager": {
