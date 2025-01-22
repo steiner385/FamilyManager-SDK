@@ -220,6 +220,7 @@ export class EventPool {
     
     if (event) {
       event.setInUse(true);
+      event.status = EventDeliveryStatus.PROCESSING;
       return event;
     }
     
