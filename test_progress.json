@@ -44,9 +44,9 @@
     },
     "core/customization/ComponentCustomizer": {
       "path": "src/core/customization/__tests__/ComponentCustomizer.test.tsx",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:01:58.143Z",
+      "totalTests": 15,
+      "passingTests": 15,
       "failingTests": 0
     },
     "components/common/LoadingSkeleton": {
