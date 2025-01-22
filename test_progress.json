@@ -366,9 +366,9 @@
     },
     "core/events/identity": {
       "path": "src/core/events/__tests__/identity.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:27:50.816Z",
+      "totalTests": 3,
+      "passingTests": 3,
       "failingTests": 0
     },
     "core/accessibility/AccessibilityManager": {
