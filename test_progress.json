@@ -16,9 +16,9 @@
     },
     "core/plugin/base": {
       "path": "src/core/plugin/__tests__/base.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T00:59:51.339Z",
+      "totalTests": 12,
+      "passingTests": 12,
       "failingTests": 0
     },
     "core/lifecycle/ComponentLifecycle": {
