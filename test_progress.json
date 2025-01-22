@@ -30,9 +30,9 @@
     },
     "core/forms/FormManager": {
       "path": "src/core/forms/__tests__/FormManager.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:00:54.143Z",
+      "totalTests": 22,
+      "passingTests": 22,
       "failingTests": 0
     },
     "components/common/Modal": {
