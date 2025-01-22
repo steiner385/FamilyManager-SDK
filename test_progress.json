@@ -226,9 +226,9 @@
     },
     "core/state/StatePersistenceManager": {
       "path": "src/core/state/__tests__/StatePersistenceManager.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:20:59.571Z",
+      "totalTests": 3,
+      "passingTests": 3,
       "failingTests": 0
     },
     "core/events/performance/types": {
