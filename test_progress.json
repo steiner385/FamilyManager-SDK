@@ -184,9 +184,9 @@
     },
     "core/analytics/AnalyticsTracker": {
       "path": "src/core/analytics/__tests__/AnalyticsTracker.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:16:22.866Z",
+      "totalTests": 2,
+      "passingTests": 2,
       "failingTests": 0
     },
     "core/performance/PerformanceMonitor": {
