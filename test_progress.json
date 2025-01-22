@@ -1,35 +1,389 @@
 {
-  "test_suites": [
-    {
-      "name": "core/events",
-      "total_tests": 31,
-      "failures": 0,
-      "last_run": "2025-01-21T23:50:46.157Z"
+  "testSuites": {
+    "core/events/pool": {
+      "path": "src/core/events/__tests__/pool.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
     },
-    {
-      "name": "core/plugin",
-      "total_tests": 47,
-      "failures": 0,
-      "last_run": "2025-01-21T23:51:39.632Z"
+    "core/plugin/PluginManager": {
+      "path": "src/core/plugin/__tests__/PluginManager.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
     },
-    {
-      "name": "core/validation",
-      "total_tests": 17,
-      "failures": 0,
-      "last_run": "2025-01-21T23:52:25.157Z"
+    "core/plugin/base": {
+      "path": "src/core/plugin/__tests__/base.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
     },
-    {
-      "name": "components/common",
-      "total_tests": 24,
-      "failures": 0,
-      "last_run": "2025-01-21T23:53:45.157Z"
+    "core/lifecycle/ComponentLifecycle": {
+      "path": "src/core/lifecycle/__tests__/ComponentLifecycle.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
     },
-    {
-      "name": "components/calendar",
-      "total_tests": 12,
-      "failures": 0,
-      "last_run": "2025-01-21T23:54:25.157Z"
+    "core/forms/FormManager": {
+      "path": "src/core/forms/__tests__/FormManager.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "components/common/Modal": {
+      "path": "src/components/common/__tests__/Modal.test.tsx",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/customization/ComponentCustomizer": {
+      "path": "src/core/customization/__tests__/ComponentCustomizer.test.tsx",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "components/common/LoadingSkeleton": {
+      "path": "src/components/common/__tests__/LoadingSkeleton.test.tsx",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "components/common/LoadingSpinner": {
+      "path": "src/components/common/__tests__/LoadingSpinner.test.tsx",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/registry/ComponentRegistry": {
+      "path": "src/core/registry/__tests__/ComponentRegistry.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/bus": {
+      "path": "src/core/events/__tests__/bus.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "hooks/usePlugin": {
+      "path": "src/hooks/__tests__/usePlugin.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/store/PluginUIStore": {
+      "path": "src/core/store/__tests__/PluginUIStore.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "test/utils/unit/plugin/PluginRegistry": {
+      "path": "test/utils/unit/plugin/PluginRegistry.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/errors/AppError": {
+      "path": "src/core/errors/__tests__/AppError.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/batch": {
+      "path": "src/core/events/__tests__/batch.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/integration/plugin-system": {
+      "path": "src/core/__tests__/integration/plugin-system.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/event": {
+      "path": "src/core/events/__tests__/event.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/validation/validators": {
+      "path": "src/core/validation/__tests__/validators.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/plugin/config/ConfigManager": {
+      "path": "src/core/plugin/config/__tests__/ConfigManager.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/state/ComponentStateManager": {
+      "path": "src/core/state/__tests__/ComponentStateManager.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/logging/Logger": {
+      "path": "src/core/logging/__tests__/Logger.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/compression": {
+      "path": "src/core/events/__tests__/compression.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/errors/errors": {
+      "path": "src/core/errors/__tests__/errors.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/utils/test-helpers": {
+      "path": "src/core/events/utils/__tests__/test-helpers.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "test/utils/unit/plugin/BasePlugin": {
+      "path": "test/utils/unit/plugin/BasePlugin.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/analytics/AnalyticsTracker": {
+      "path": "src/core/analytics/__tests__/AnalyticsTracker.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/performance/PerformanceMonitor": {
+      "path": "src/core/performance/__tests__/PerformanceMonitor.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/plugin/config/security/encryption": {
+      "path": "src/core/plugin/config/__tests__/security/encryption.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/router": {
+      "path": "src/core/events/__tests__/router.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/routing/RouteRegistry": {
+      "path": "src/core/routing/__tests__/RouteRegistry.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/plugin/config/middleware/logging": {
+      "path": "src/core/plugin/config/__tests__/middleware/logging.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/state/StatePersistenceManager": {
+      "path": "src/core/state/__tests__/StatePersistenceManager.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/performance/types": {
+      "path": "src/core/events/__tests__/performance/types.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/patterns/singleton": {
+      "path": "src/core/patterns/__tests__/singleton.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/layout/LayoutManager": {
+      "path": "src/core/layout/__tests__/LayoutManager.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/plugin/config/middleware/validation": {
+      "path": "src/core/plugin/config/__tests__/middleware/validation.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/performance/performance": {
+      "path": "src/core/events/__tests__/performance/performance.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "test/utils/unit/plugin/PluginRegistry": {
+      "path": "test/utils/unit/plugin/PluginRegistry.test.js",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "test/utils/unit/plugin/BasePlugin": {
+      "path": "test/utils/unit/plugin/BasePlugin.test.js",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "test/utils/integration/plugin/PluginSystem": {
+      "path": "test/utils/integration/plugin/PluginSystem.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "test/utils/integration/plugin/PluginSystem": {
+      "path": "test/utils/integration/plugin/PluginSystem.test.js",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "examples/tasks-plugin/tasks-plugin": {
+      "path": "src/examples/tasks-plugin/__tests__/tasks-plugin.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "examples/basic-plugin/basic-plugin": {
+      "path": "src/examples/basic-plugin/__tests__/basic-plugin.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "components/metrics/MetricsCard": {
+      "path": "src/components/metrics/__tests__/MetricsCard.test.tsx",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "components/charts/LineChart": {
+      "path": "src/components/charts/__tests__/LineChart.test.tsx",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "components/calendar/CalendarView": {
+      "path": "src/components/calendar/__tests__/CalendarView.test.tsx",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "components/calendar/CalendarModal": {
+      "path": "src/components/calendar/__tests__/CalendarModal.test.tsx",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "components/calendar/CalendarContainer": {
+      "path": "src/components/calendar/__tests__/CalendarContainer.test.tsx",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/theme/ThemeManager": {
+      "path": "src/core/theme/__tests__/ThemeManager.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/validator": {
+      "path": "src/core/events/__tests__/validator.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/performance": {
+      "path": "src/core/events/__tests__/performance.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/events/identity": {
+      "path": "src/core/events/__tests__/identity.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "core/accessibility/AccessibilityManager": {
+      "path": "src/core/accessibility/__tests__/AccessibilityManager.test.ts",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
+    },
+    "components/PluginProvider": {
+      "path": "src/components/__tests__/PluginProvider.test.tsx",
+      "lastExecuted": null,
+      "totalTests": 0,
+      "passingTests": 0,
+      "failingTests": 0
     }
-  ],
-  "last_updated": "2025-01-21T23:54:25.157Z"
+  }
 }
