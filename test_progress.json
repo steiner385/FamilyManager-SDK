@@ -177,9 +177,9 @@
     },
     "test/utils/unit/plugin/BasePlugin": {
       "path": "test/utils/unit/plugin/BasePlugin.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:15:55.444Z",
+      "totalTests": 7,
+      "passingTests": 7,
       "failingTests": 0
     },
     "core/analytics/AnalyticsTracker": {
