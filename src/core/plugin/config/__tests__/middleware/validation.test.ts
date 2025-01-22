@@ -1,7 +1,7 @@
 import { createValidationMiddleware } from '../../middleware/validation';
 import { ConfigError } from '../../errors';
 import { ConfigValidator, ConfigValidationResult } from '../../validation';
-import { PluginConfig } from '../../types';
+import { ConfigValue } from '../../types';
 import { NextFunction, MiddlewareContext } from '../../middleware/types';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
@@ -63,7 +63,7 @@ describe('Validation Middleware', () => {
     mockValidator.validate.mockReturnValue(validResult);
     const middleware = createValidationMiddleware(mockValidator, schema);
 
-    await middleware(config, mockNext, context);
+    await middleware(config, mockNext);
 
     expect(mockValidator.validate).toHaveBeenCalledWith(config, schema);
     expect(mockNext).toHaveBeenCalledWith(config);
@@ -81,7 +81,7 @@ describe('Validation Middleware', () => {
     mockValidator.validate.mockReturnValue(invalidResult);
     const middleware = createValidationMiddleware(mockValidator, schema);
 
-    await expect(middleware(config, mockNext, context))
+    await expect(middleware(config, mockNext))
       .rejects
       .toThrow(ConfigError);
 
