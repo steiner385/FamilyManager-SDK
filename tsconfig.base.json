@@ -8,7 +8,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "strict": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -18,10 +18,18 @@
     "composite": true,
     "stripInternal": true,
     "preserveSymlinks": true,
-    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "typeRoots": ["./node_modules/@types", "./types"],
     "types": ["node", "react", "react-dom"],
+    "noEmit": false,
+    "emitDeclarationOnly": false,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@core/*": ["./src/core/*"],
+      "@components/*": ["./src/components/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@types/*": ["./types/*"],
+      "@contexts/*": ["./src/contexts/*"]
     }
   }
 }
