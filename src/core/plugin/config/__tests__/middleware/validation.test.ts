@@ -8,7 +8,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 describe('Validation Middleware', () => {
   let mockValidator: jest.Mocked<ConfigValidator>;
   let mockNext: jest.MockedFunction<NextFunction>;
-  let config: PluginConfig;
+  let config: ConfigValue;
   let schema: Record<string, any>;
   let context: MiddlewareContext;
 
