@@ -128,9 +128,9 @@
     },
     "core/validation/validators": {
       "path": "src/core/validation/__tests__/validators.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:12:42.082Z",
+      "totalTests": 12,
+      "passingTests": 12,
       "failingTests": 0
     },
     "core/plugin/config/ConfigManager": {
