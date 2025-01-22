@@ -156,9 +156,9 @@
     },
     "core/events/compression": {
       "path": "src/core/events/__tests__/compression.test.ts",
-      "lastExecuted": null,
-      "totalTests": 0,
-      "passingTests": 0,
+      "lastExecuted": "2025-01-22T01:14:25.187Z",
+      "totalTests": 3,
+      "passingTests": 3,
       "failingTests": 0
     },
     "core/errors/errors": {
