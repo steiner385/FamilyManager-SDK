@@ -6,26 +6,21 @@
     "rootDir": "..",
     "tsBuildInfoFile": "../../dist/components/.tsbuildinfo",
     "jsx": "react-jsx",
-    "types": ["node", "react", "react-dom", "@testing-library/jest-dom"],
+    "esModuleInterop": true,
     "paths": {
-      "@/*": ["*"],
-      "@core/*": ["core/*"],
-      "@components/*": ["components/*"],
-      "@hooks/*": ["hooks/*"],
-      "@utils/*": ["utils/*"],
-      "@testing/*": ["testing/*"],
-      "@types/*": ["types/*"],
-      "@contexts/*": ["contexts/*"]
+      "@/*": ["../*"]
     }
   },
   "include": [
     "./**/*.ts",
     "./**/*.tsx",
-    "../hooks/**/*.ts",
-    "../hooks/**/*.tsx"
+    "../contexts/**/*",
+    "../hooks/**/*",
+    "../core/**/*"
   ],
   "references": [
-    { "path": "../types" },
-    { "path": "../core" }
+    { "path": "../contexts" },
+    { "path": "../core" },
+    { "path": "../hooks" }
   ]
 }

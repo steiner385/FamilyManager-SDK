@@ -7,14 +7,16 @@
     "tsBuildInfoFile": "../../dist/contexts/.tsbuildinfo",
     "jsx": "react-jsx",
     "esModuleInterop": true,
-    "types": ["node", "react", "react-dom", "@testing-library/jest-dom"]
+    "paths": {
+      "@/*": ["../*"]
+    }
   },
   "include": [
     "./**/*.ts",
-    "./**/*.tsx"
+    "./**/*.tsx",
+    "../core/**/*"
   ],
   "references": [
-    { "path": "../components" },
-    { "path": "../types" }
+    { "path": "../core" }
   ]
 }

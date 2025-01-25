@@ -1,4 +1,4 @@
-import { PluginConfig, PluginConfigSchema } from './types';
+import { ConfigValue, ConfigSchema } from './types';
 
 export interface ValidationContext {
   pluginName: string;
@@ -19,22 +19,22 @@ export interface ConfigValidationResult {
 
 export interface ConfigValidator {
   validate(
-    config: PluginConfig, 
-    schema: PluginConfigSchema,
+    config: ConfigValue,
+    schema: ConfigSchema,
     context: ValidationContext
   ): ConfigValidationResult;
 }
 
 export class DefaultConfigValidator implements ConfigValidator {
   validate(
-    config: PluginConfig,
-    schema: PluginConfigSchema,
+    config: ConfigValue,
+    schema: ConfigSchema,
     context: ValidationContext
   ): ConfigValidationResult {
     const errors: ConfigValidationError[] = [];
     const configPath = context.configPath || [];
 
-    for (const [key, def] of Object.entries(schema)) {
+    for (const [key, def] of Object.entries(schema.properties)) {
       const currentPath = [...configPath, key];
       this.validateField(config[key], def, currentPath, context, errors);
     }

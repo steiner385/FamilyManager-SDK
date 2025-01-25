@@ -10,9 +10,9 @@ interface PluginContainerProps {
 }
 
 export function PluginContainer({ pluginName, children, className }: PluginContainerProps) {
-  const { plugin, isLoading, error } = usePlugin(pluginName);
+  const { plugin, isReady, error } = usePlugin(pluginName);
 
-  if (isLoading) {
+  if (!isReady) {
     return <LoadingSpinner size="large" />;
   }
 

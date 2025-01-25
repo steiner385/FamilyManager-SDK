@@ -1,4 +1,4 @@
-import { PluginConfig } from '../../types';
+import { ConfigValue } from '../types';
 import { ConfigError, ConfigErrorCode } from '../errors';
 
 export interface ValidationResult {
@@ -12,7 +12,7 @@ export interface ValidationError {
 }
 
 export function createValidationMiddleware(validator: any, schema: any) {
-  return async function validate(config: PluginConfig, next: (config: PluginConfig) => Promise<void>): Promise<void> {
+  return async function validate(config: ConfigValue, next: (config: ConfigValue) => Promise<void>): Promise<void> {
     const errors: ValidationError[] = [];
 
     if (validator && schema) {
@@ -22,24 +22,9 @@ export function createValidationMiddleware(validator: any, schema: any) {
       }
     }
 
-    // Basic validation if no schema provided
-    if (!config.metadata?.name) {
-      errors.push({
-        field: 'metadata.name',
-        message: 'Plugin name is required'
-      });
-    }
-
-    if (!config.metadata?.version) {
-      errors.push({
-        field: 'metadata.version',
-        message: 'Plugin version is required'
-      });
-    }
-
     if (errors.length > 0) {
       throw new ConfigError(
-        ConfigErrorCode.VALIDATION_FAILED,
+        ConfigErrorCode.VALIDATION_ERROR,
         `Validation failed: ${errors.map(e => e.message).join(', ')}`,
         { errors }
       );

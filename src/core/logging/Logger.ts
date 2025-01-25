@@ -31,20 +31,37 @@ export class Logger {
     return Logger.instance;
   }
 
+  public static resetInstance(): void {
+    Logger.instance = new Logger();
+  }
+
+  private safeLog(level: string, message: string, meta?: Record<string, unknown>): void {
+    try {
+      this.logger[level as keyof winston.Logger](message, meta);
+    } catch (error) {
+      console.error(`Failed to log message: ${message}`, error);
+    }
+  }
+
   public info(message: string, meta?: Record<string, unknown>): void {
-    this.logger.info(message, meta);
+    this.safeLog('info', message, meta);
   }
 
   public error(message: string, meta?: Record<string, unknown>): void {
-    this.logger.error(message, meta);
+    this.safeLog('error', message, meta);
   }
 
   public warn(message: string, meta?: Record<string, unknown>): void {
-    this.logger.warn(message, meta);
+    this.safeLog('warn', message, meta);
   }
 
   public debug(message: string, meta?: Record<string, unknown>): void {
-    this.logger.debug(message, meta);
+    this.safeLog('debug', message, meta);
+  }
+
+  // For testing purposes
+  public setLogger(customLogger: winston.Logger): void {
+    this.logger = customLogger;
   }
 }
 

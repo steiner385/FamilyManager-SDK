@@ -1,6 +1,7 @@
 import { type ComponentType } from 'react';
 import { Logger } from '../logging/Logger';
 import { EventBus } from '../events/EventBus';
+import { Calendar, Event } from '../../contexts/CalendarContext';
 
 export interface PluginConfig {
   name: string;
@@ -24,6 +25,12 @@ export interface PluginMetadata {
   optionalDependencies?: Record<string, string>;
   layouts?: PluginLayout[];
   preferences?: PluginPreference[];
+  type?: 'calendar' | 'default';  // Added to identify plugin types
+}
+
+export interface PluginDependencies {
+  required?: Record<string, string>;
+  optional?: Record<string, string>;
 }
 
 export interface Plugin {
@@ -35,6 +42,9 @@ export interface Plugin {
   metadata: PluginMetadata;
   defaultLayout?: string;
   permissions?: string[];
+  components?: Record<string, ComponentType>;
+  dependencies?: PluginDependencies;
+  theme?: unknown;
   initialize?: (context: PluginContext) => Promise<void>;
   onInit?: () => Promise<void>;
   start?: () => Promise<void>;
@@ -43,6 +53,14 @@ export interface Plugin {
   onDisable?: () => Promise<void>;
   teardown?: () => Promise<void>;
   getPluginMetrics?: (pluginName: string, timeRange?: string) => Promise<PluginMetrics>;
+}
+
+// Calendar-specific plugin interface
+export interface CalendarPlugin extends Plugin {
+  getCalendars: () => Promise<Calendar[]>;
+  getEvents: () => Promise<Event[]>;
+  saveEvent: (event: Event) => Promise<void>;
+  deleteEvent: (eventId: string) => Promise<void>;
 }
 
 export interface PluginRoute {
@@ -60,6 +78,11 @@ export interface PluginContext {
   metadata: PluginMetadata;
   logger: Logger;
   events: EventBus;
+  plugins: {
+    hasPlugin: (id: string) => boolean;
+    getPlugin: (id: string) => Plugin | undefined;
+    getPluginState: (id: string) => PluginStatus | undefined;
+  };
 }
 
 export interface PluginMetrics {

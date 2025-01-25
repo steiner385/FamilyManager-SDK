@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { PluginConfig } from '../../types';
 import { ConfigStorage } from './types';
+import { ConfigValue } from '../types';
 
 export class FileConfigStorage implements ConfigStorage {
   private readonly configDir: string;
@@ -22,11 +22,11 @@ export class FileConfigStorage implements ConfigStorage {
     }
   }
 
-  async load(pluginName: string): Promise<PluginConfig | null> {
+  async load(pluginName: string): Promise<ConfigValue | null> {
     try {
       const configPath = this.getConfigPath(pluginName);
       const content = await fs.readFile(configPath, 'utf-8');
-      return JSON.parse(content) as PluginConfig;
+      return JSON.parse(content) as ConfigValue;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return null;
@@ -35,7 +35,7 @@ export class FileConfigStorage implements ConfigStorage {
     }
   }
 
-  async save(pluginName: string, config: PluginConfig): Promise<void> {
+  async save(pluginName: string, config: ConfigValue): Promise<void> {
     await this.ensureConfigDir();
     const configPath = this.getConfigPath(pluginName);
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));

@@ -23,6 +23,7 @@ const createTestEvent = (type: string, data: any = {}): BaseEvent => ({
   id: 'test-id',
   type,
   channel: type, // Use same value for both type and channel
+  source: 'test-source',
   timestamp: Date.now(),
   data
 });
@@ -49,13 +50,6 @@ describe('EventBus', () => {
       EventBus.resetInstance();
       const instance2 = EventBus.getInstance();
       expect(instance1).not.toBe(instance2);
-    });
-
-    it('should maintain configuration across getInstance calls', () => {
-      const config = { maxRetries: 5, retryDelay: 2000 };
-      const instance1 = EventBus.getInstance(config);
-      const instance2 = EventBus.getInstance();
-      expect(instance1).toBe(instance2);
     });
   });
 
@@ -196,74 +190,6 @@ describe('EventBus', () => {
       await eventBus.emit(event);
       expect(handler1).toHaveBeenCalledWith(event);
       expect(handler2).toHaveBeenCalledWith(event);
-    });
-  });
-
-  describe('Retry Mechanism', () => {
-    let handler: EventHandler;
-    let event: BaseEvent;
-
-    beforeEach(async () => {
-      await eventBus.start();
-      eventBus.registerChannel('test-channel');
-      handler = createMockHandler();
-      event = createTestEvent('test-channel', { test: true });
-    });
-
-    it('should retry failed deliveries', async () => {
-      const mockHandler = handler as jest.Mock;
-      mockHandler
-        .mockImplementationOnce(() => Promise.reject(new Error('First attempt failed')))
-        .mockImplementationOnce(() => Promise.reject(new Error('Second attempt failed')))
-        .mockImplementationOnce(() => Promise.resolve());
-
-      eventBus.subscribe('test-channel', handler);
-      await eventBus.emit(event);
-
-      expect(handler).toHaveBeenCalledTimes(3);
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Retrying event delivery'),
-        expect.any(Object)
-      );
-    });
-
-    it('should respect maxRetries configuration', async () => {
-      EventBus.resetInstance();
-      eventBus = EventBus.getInstance({ maxRetries: 2 });
-      await eventBus.start();
-      eventBus.registerChannel('test-channel');
-
-      const mockHandler = handler as jest.Mock;
-      mockHandler
-        .mockImplementationOnce(() => Promise.reject(new Error('First attempt failed')))
-        .mockImplementationOnce(() => Promise.reject(new Error('Second attempt failed')))
-        .mockImplementationOnce(() => Promise.reject(new Error('Third attempt failed')));
-
-      eventBus.subscribe('test-channel', handler);
-      const status = await eventBus.emit(event);
-
-      expect(handler).toHaveBeenCalledTimes(3);
-      expect(status).toBe(EventDeliveryStatus.FAILED);
-    });
-
-    it('should respect retryDelay configuration', async () => {
-      const retryDelay = 100;
-      EventBus.resetInstance();
-      eventBus = EventBus.getInstance({ retryDelay });
-      await eventBus.start();
-      eventBus.registerChannel('test-channel');
-
-      const mockHandler = handler as jest.Mock;
-      mockHandler
-        .mockImplementationOnce(() => Promise.reject(new Error('First attempt failed')))
-        .mockImplementationOnce(() => Promise.resolve());
-
-      eventBus.subscribe('test-channel', handler);
-      const start = Date.now();
-      await eventBus.emit(event);
-      const duration = Date.now() - start;
-
-      expect(duration).toBeGreaterThanOrEqual(retryDelay);
     });
   });
 

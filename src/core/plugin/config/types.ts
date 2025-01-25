@@ -1,34 +1,40 @@
-export type ConfigMiddleware = (
-  config: PluginConfig,
-  next: (config: PluginConfig) => Promise<void>
-) => Promise<void>;
+export interface ConfigSchema {
+  properties: Record<string, ConfigPropertySchema>;
+}
+
+export interface ConfigPropertySchema {
+  type: 'string' | 'number' | 'boolean' | 'object';
+  sensitive?: boolean;
+  required?: boolean;
+  description?: string;
+}
+
+export interface ConfigValue {
+  [key: string]: unknown;
+}
 
 export interface ConfigEncryption {
   encrypt(value: string): Promise<string>;
   decrypt(value: string): Promise<string>;
 }
 
-export interface PluginConfigSchema {
-  [key: string]: {
-    type: 'string' | 'number' | 'boolean' | 'object' | 'array';
-    required?: boolean;
-    default?: any;
-    validate?: (value: any) => boolean;
-    description?: string;
-    sensitive?: boolean;
-  };
-}
-
-export interface PluginConfig {
-  [key: string]: any;
-}
-
 export interface ConfigValidationError {
-  key: string;
+  field?: string;
   message: string;
 }
 
 export interface ConfigValidationResult {
   isValid: boolean;
   errors: ConfigValidationError[];
+}
+
+export type ConfigMiddleware = (
+  config: ConfigValue,
+  next: (config: ConfigValue) => Promise<void>
+) => Promise<void>;
+
+export interface MiddlewareContext {
+  pluginName: string;
+  environment: string;
+  timestamp: number;
 }

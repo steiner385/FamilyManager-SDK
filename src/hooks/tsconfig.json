@@ -1,19 +1,24 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": true,
     "outDir": "../../dist/hooks",
     "rootDir": "..",
-    "tsBuildInfoFile": "../../dist/hooks/.tsbuildinfo"
+    "tsBuildInfoFile": "../../dist/hooks/.tsbuildinfo",
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "paths": {
+      "@/*": ["../*"]
+    }
   },
   "include": [
     "./**/*.ts",
-    "./**/*.tsx"
+    "./**/*.tsx",
+    "../contexts/**/*",
+    "../core/**/*"
   ],
   "references": [
-    { "path": "../types" },
-    { "path": "../core" },
     { "path": "../contexts" },
-    { "path": "../store" }
+    { "path": "../core" }
   ]
 }

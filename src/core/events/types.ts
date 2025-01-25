@@ -29,7 +29,8 @@ export enum EventDeliveryStatus {
   PROCESSING = 'PROCESSING',
   DELIVERED = 'DELIVERED',
   FAILED = 'FAILED',
-  RETRYING = 'RETRYING'
+  RETRYING = 'RETRYING',
+  PARTIAL = 'PARTIAL'
 }
 
 export interface ValidationResult {

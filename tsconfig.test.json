@@ -1,8 +1,23 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "rootDir": ".",
+    "baseUrl": ".",
     "types": ["node", "jest", "react", "react-dom"],
-    "noEmit": true
+    "noEmit": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@core/*": ["./src/core/*"],
+      "@components/*": ["./src/components/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@types/*": ["./types/*"],
+      "@contexts/*": ["./src/contexts/*"],
+      "@test/*": ["./test/*"]
+    }
   },
   "include": [
     "src/**/*.ts",

@@ -1,23 +1,38 @@
-import { PluginContext, PluginMetadata } from '../plugin/types';
-import { BasePlugin } from '../plugin/base';
-import { Hono } from 'hono';
-import { PrismaClient } from '@prisma/client';
-import { pluginRegistry } from '../plugin/registry';
+import { PluginContext, PluginMetadata, PluginConfig, Plugin, PluginStatus } from '../../src/core/plugin/types';
+import { BasePlugin } from '../../src/core/plugin/base';
+import { Logger } from '../../src/core/logging/Logger';
+import { EventBus } from '../../src/core/events/EventBus';
+import { pluginRegistry } from '../../src/core/plugin/registry';
 
 export function createMockPluginContext(): PluginContext {
-  return {
-    app: new Hono(),
-    prisma: new PrismaClient(),
-    config: {
+  const mockConfig: PluginConfig = {
+    name: 'test-plugin',
+    version: '1.0.0',
+    description: 'Test plugin',
+    settings: {
       env: 'test'
-    },
+    }
+  };
+
+  const mockMetadata: PluginMetadata = {
+    id: 'test-plugin',
+    name: 'Test Plugin',
+    version: '1.0.0',
+    description: 'Test plugin'
+  };
+
+  return {
+    id: 'test-plugin',
+    name: 'Test Plugin',
+    version: '1.0.0',
+    config: mockConfig,
+    metadata: mockMetadata,
+    logger: Logger.getInstance(),
+    events: EventBus.getInstance(),
     plugins: {
-      hasPlugin: (name: string) => pluginRegistry.hasPlugin(name),
-      getPlugin: (name: string) => pluginRegistry.getPlugin(name),
-      getPluginState: (name: string) => pluginRegistry.getPluginState(name)
-    },
-    logMetadata: {
-      context: 'test'
+      hasPlugin: (id: string) => pluginRegistry.getPlugin(id) !== undefined,
+      getPlugin: (id: string) => pluginRegistry.getPlugin(id),
+      getPluginState: (id: string) => pluginRegistry.getPluginState(id)
     }
   };
 }
@@ -26,11 +41,15 @@ export class MockPlugin extends BasePlugin {
   initializeCalled = false;
   teardownCalled = false;
   
-  readonly metadata: PluginMetadata = {
-    name: 'mock-plugin',
-    version: '1.0.0',
-    description: 'Mock plugin for testing'
-  };
+  constructor() {
+    const metadata: PluginMetadata = {
+      id: 'mock-plugin',
+      name: 'mock-plugin',
+      version: '1.0.0',
+      description: 'Mock plugin for testing'
+    };
+    super('mock-plugin', 'mock-plugin', '1.0.0', 'Mock plugin for testing', metadata);
+  }
 
   protected async onInitialize(): Promise<void> {
     this.initializeCalled = true;
@@ -45,12 +64,18 @@ export class DependentMockPlugin extends BasePlugin {
   initializeCalled = false;
   teardownCalled = false;
 
-  readonly metadata: PluginMetadata = {
-    name: 'dependent-mock-plugin',
-    version: '1.0.0',
-    description: 'Mock plugin with dependencies',
-    dependencies: ['mock-plugin']
-  };
+  constructor() {
+    const metadata: PluginMetadata = {
+      id: 'dependent-mock-plugin',
+      name: 'dependent-mock-plugin',
+      version: '1.0.0',
+      description: 'Mock plugin with dependencies',
+      dependencies: {
+        'mock-plugin': '1.0.0'
+      }
+    };
+    super('dependent-mock-plugin', 'dependent-mock-plugin', '1.0.0', 'Mock plugin with dependencies', metadata);
+  }
 
   protected async onInitialize(): Promise<void> {
     this.initializeCalled = true;

@@ -1,8 +1,11 @@
 import { Logger } from '../logging/Logger';
 import { Plugin, PluginMetrics, PluginStatus } from './types';
 import { eventBus } from '../events/EventBus';
-import { logger } from '../utils/logger';
+import { logger } from '../logging/Logger';
 import { routeRegistry } from '../routing/RouteRegistry';
+import { ComponentRegistry } from '../registry/ComponentRegistry';
+import { ThemeManager } from '../theme/ThemeManager';
+import { pluginRegistry } from './registry';
 
 export class PluginManager {
   private static instance: PluginManager;
@@ -10,12 +13,16 @@ export class PluginManager {
   private plugins: Map<string, Plugin>;
   private pluginStates: Map<string, PluginStatus>;
   private initializedPlugins: Set<string>;
+  private componentRegistry: ComponentRegistry;
+  private themeManager: ThemeManager;
 
   private constructor() {
     this.logger = logger;
     this.plugins = new Map();
     this.pluginStates = new Map();
     this.initializedPlugins = new Set();
+    this.componentRegistry = ComponentRegistry.getInstance();
+    this.themeManager = ThemeManager.getInstance();
     this.initialized = false;
   }
 
@@ -23,11 +30,11 @@ export class PluginManager {
 
   public initialize(): void {
     if (this.initialized) {
-      logger.warn('PluginManager already initialized');
+      this.logger.warn('PluginManager already initialized');
       return;
     }
     this.initialized = true;
-    logger.debug('PluginManager initialized');
+    this.logger.debug('PluginManager initialized');
   }
 
   private checkInitialized(): void {
@@ -59,7 +66,7 @@ export class PluginManager {
     this.plugins.clear();
     this.pluginStates.clear();
     this.initializedPlugins.clear();
-    logger.debug('Cleared all plugins');
+    this.logger.debug('Cleared all plugins');
   }
 
   async registerPlugin(plugin: Plugin): Promise<void> {
@@ -96,8 +103,21 @@ export class PluginManager {
       }
     }
 
+    // Register components if present
+    if (plugin.components) {
+      Object.entries(plugin.components).forEach(([name, component]) => {
+        this.componentRegistry.register(name, component);
+      });
+    }
+
+    // Apply theme if present
+    if (plugin.theme) {
+      this.themeManager.extendTheme(plugin.theme);
+    }
+
     this.plugins.set(plugin.id, plugin);
     this.pluginStates.set(plugin.id, PluginStatus.INACTIVE);
+    pluginRegistry.register(plugin);
     this.logger.info(`Registered plugin: ${plugin.name} (${plugin.id})`);
   }
 
@@ -118,7 +138,7 @@ export class PluginManager {
 
     // Check for dependent plugins
     const dependentPlugins = Array.from(this.plugins.values()).filter(
-      p => p.dependencies?.required && p.dependencies.required[pluginId]
+      p => p.dependencies?.required && Object.keys(p.dependencies.required).includes(pluginId)
     );
 
     if (dependentPlugins.length > 0) {
@@ -131,7 +151,8 @@ export class PluginManager {
     this.plugins.delete(pluginId);
     this.pluginStates.delete(pluginId);
     this.initializedPlugins.delete(pluginId);
-    logger.info(`Unregistered plugin: ${pluginId}`);
+    pluginRegistry.unregister(pluginId);
+    this.logger.info(`Unregistered plugin: ${pluginId}`);
   }
 
   async startPlugin(pluginId: string): Promise<void> {
@@ -153,13 +174,14 @@ export class PluginManager {
     }
 
     this.pluginStates.set(pluginId, PluginStatus.ACTIVE);
+    pluginRegistry.setPluginState(pluginId, PluginStatus.ACTIVE);
     this.logger.info(`Plugin started: ${pluginId}`);
   }
 
   async stopPlugin(plugin: Plugin): Promise<void> {
     // Check if any other plugins depend on this one
     const dependentPlugins = Array.from(this.plugins.values()).filter(
-      p => p.dependencies?.required[plugin.id]
+      p => p.dependencies?.required && Object.keys(p.dependencies.required).includes(plugin.id)
     );
 
     if (dependentPlugins.length > 0) {
@@ -179,6 +201,7 @@ export class PluginManager {
     }
 
     this.pluginStates.set(plugin.id, PluginStatus.INACTIVE);
+    pluginRegistry.setPluginState(plugin.id, PluginStatus.INACTIVE);
     this.logger.info(`Plugin stopped: ${plugin.id}`);
   }
 
@@ -228,16 +251,23 @@ export class PluginManager {
           },
           metadata: plugin.metadata,
           logger: this.logger,
-          events: this.eventBus
+          events: eventBus,
+          plugins: {
+            hasPlugin: (id: string) => pluginRegistry.getPlugin(id) !== undefined,
+            getPlugin: (id: string) => pluginRegistry.getPlugin(id),
+            getPluginState: (id: string) => pluginRegistry.getPluginState(id)
+          }
         });
       }
 
       this.initializedPlugins.add(pluginId);
       this.pluginStates.set(pluginId, PluginStatus.ACTIVE);
+      pluginRegistry.setPluginState(pluginId, PluginStatus.ACTIVE);
       this.logger.info(`Plugin initialized: ${pluginId}`);
     } catch (error) {
       this.logger.error(`Failed to initialize plugin ${pluginId}`, { error });
       this.pluginStates.set(pluginId, PluginStatus.ERROR);
+      pluginRegistry.setPluginState(pluginId, PluginStatus.ERROR);
       throw error;
     }
   }

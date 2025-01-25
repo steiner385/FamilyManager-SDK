@@ -1,29 +1,21 @@
-import React from 'react';
-import { describe, expect, it, jest, beforeEach } from '@jest/globals';
-import { PluginManager } from '../PluginManager';
-import { Plugin, PluginRoute, PluginDependencyConfig, PluginState, PluginConfig, PluginMetadata } from '../types';
-import { logger } from '../../utils/logger';
-import { routeRegistry } from '../../routing/RouteRegistry';
+// Mock setup must come before imports
+const mockLoggerInstance = {
+  info: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  error: jest.fn(),
+  setLogger: jest.fn()
+};
+
+jest.mock('../../logging/Logger', () => ({
+  Logger: {
+    getInstance: jest.fn(() => mockLoggerInstance),
+    resetInstance: jest.fn()
+  },
+  logger: mockLoggerInstance
+}));
 
 // Mock dependencies
-jest.mock('../../utils/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-    error: jest.fn(),
-  },
-}), { virtual: true });
-
-// Reset mocks before each test
-beforeEach(() => {
-  jest.clearAllMocks();
-  (logger.info as jest.Mock).mockClear();
-  (logger.warn as jest.Mock).mockClear();
-  (logger.debug as jest.Mock).mockClear();
-  (logger.error as jest.Mock).mockClear();
-});
-
 jest.mock('../../routing/RouteRegistry', () => ({
   routeRegistry: {
     registerRoute: jest.fn(),
@@ -31,39 +23,46 @@ jest.mock('../../routing/RouteRegistry', () => ({
   },
 }));
 
+jest.mock('../registry', () => ({
+  pluginRegistry: {
+    register: jest.fn(),
+    unregister: jest.fn(),
+    getPlugin: jest.fn(),
+    getPluginState: jest.fn(),
+    setPluginState: jest.fn()
+  }
+}));
+
+// Imports must come after mock setup
+import React from 'react';
+import { describe, expect, it, jest, beforeEach } from '@jest/globals';
+import { PluginManager } from '../PluginManager';
+import { Plugin, PluginRoute, PluginStatus } from '../types';
+import { routeRegistry } from '../../routing/RouteRegistry';
+import { pluginRegistry } from '../registry';
+
 describe('PluginManager', () => {
   let manager: PluginManager;
   const TestComponent = () => React.createElement('div');
 
-  const createTestPlugin = (overrides: Partial<Plugin> = {}): Plugin => ({
-    id: 'test-plugin',
-    name: 'Test Plugin',
-    version: '1.0.0',
-    status: 'active',
-    state: {
-      isEnabled: true,
-      status: 'active',
-      isInitialized: false,
-      error: null
-    },
-    config: {
-      metadata: {
-        id: 'test-plugin',
-        name: 'Test Plugin',
-        version: '1.0.0',
-        description: 'Test plugin',
-        author: 'Test Author'
-      }
-    },
-    metadata: {
+  const createTestPlugin = (overrides: Partial<Plugin> = {}): Plugin => {
+    const metadata = {
       id: 'test-plugin',
       name: 'Test Plugin',
       version: '1.0.0',
       description: 'Test plugin',
       author: 'Test Author'
-    },
-    ...overrides
-  });
+    };
+
+    return {
+      id: 'test-plugin',
+      name: 'Test Plugin',
+      version: '1.0.0',
+      description: 'Test plugin',
+      metadata,
+      ...overrides
+    };
+  };
 
   beforeEach(() => {
     // Reset singleton instance
@@ -82,13 +81,13 @@ describe('PluginManager', () => {
   describe('Initialization', () => {
     it('should initialize correctly', () => {
       manager.initialize();
-      expect(logger.debug).toHaveBeenCalledWith('PluginManager initialized');
+      expect(mockLoggerInstance.debug).toHaveBeenCalledWith('PluginManager initialized');
     });
 
     it('should handle multiple initialization attempts', () => {
       manager.initialize();
       manager.initialize();
-      expect(logger.warn).toHaveBeenCalledWith('PluginManager already initialized');
+      expect(mockLoggerInstance.warn).toHaveBeenCalledWith('PluginManager already initialized');
     });
 
     it('should prevent plugin operations before initialization', async () => {
@@ -111,7 +110,7 @@ describe('PluginManager', () => {
       await manager.registerPlugin(plugin);
       expect(manager.isPluginInstalled('test-plugin')).toBe(true);
       expect(manager.isPluginActive('test-plugin')).toBe(false);
-      expect(logger.info).toHaveBeenCalledWith('Registered plugin: Test Plugin (test-plugin)');
+      expect(mockLoggerInstance.info).toHaveBeenCalledWith('Registered plugin: Test Plugin (test-plugin)');
     });
 
     it('should prevent duplicate plugin registration', async () => {
@@ -132,7 +131,9 @@ describe('PluginManager', () => {
       const plugin = createTestPlugin({
         id: 'test-plugin',
         name: 'Test Plugin',
-        dependencies: { dependency: '1.0.0' }
+        dependencies: {
+          required: { dependency: '1.0.0' }
+        }
       });
 
       await expect(manager.registerPlugin(plugin)).rejects.toThrow(
@@ -185,7 +186,7 @@ describe('PluginManager', () => {
 
       expect(manager.isPluginInstalled('test-plugin')).toBe(false);
       expect(manager.isPluginActive('test-plugin')).toBe(false);
-      expect(logger.info).toHaveBeenCalledWith('Unregistered plugin: test-plugin');
+      expect(mockLoggerInstance.info).toHaveBeenCalledWith('Unregistered plugin: test-plugin');
     });
 
     it('should prevent uninstalling non-existent plugin', async () => {
@@ -203,7 +204,9 @@ describe('PluginManager', () => {
       const dependent = createTestPlugin({
         id: 'dependent',
         name: 'Dependent',
-        dependencies: { required: { dependency: '1.0.0' } }
+        dependencies: {
+          required: { dependency: '1.0.0' }
+        }
       });
 
       await manager.registerPlugin(dependency);
@@ -271,8 +274,7 @@ describe('PluginManager', () => {
       await manager.registerPlugin(plugin);
       await manager.initializePlugin('test-plugin');
       await manager.initializePlugin('test-plugin');
-      await manager.initializePlugin('test-plugin');
-      expect(logger.warn).toHaveBeenCalledWith('Plugin test-plugin is already initialized');
+      expect(mockLoggerInstance.warn).toHaveBeenCalledWith('Plugin test-plugin is already initialized');
     });
   });
 
@@ -323,7 +325,7 @@ describe('PluginManager', () => {
 
       manager.clearPlugins();
       expect(manager.getAllPlugins()).toHaveLength(0);
-      expect(logger.debug).toHaveBeenCalledWith('Cleared all plugins');
+      expect(mockLoggerInstance.debug).toHaveBeenCalledWith('Cleared all plugins');
     });
   });
 });

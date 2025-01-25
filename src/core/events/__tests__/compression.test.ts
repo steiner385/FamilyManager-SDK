@@ -1,9 +1,8 @@
 import { EventCompressor } from '../compression';
 import { BaseEvent } from '../types';
 
-interface TestEvent extends BaseEvent<unknown> {
-  id: string;
-  channel: string;
+interface TestEvent extends BaseEvent<Record<string, unknown>> {
+  // No need to redeclare id and channel as they're already in BaseEvent
 }
 
 describe('EventCompressor', () => {
@@ -23,7 +22,7 @@ describe('EventCompressor', () => {
       type: 'test',
       timestamp: Date.now(),
       source: 'test-source',
-      payload: {
+      data: {
         value: 'test'.repeat(50),  // Make sure data is large enough to trigger compression
         number: 123,
         nested: {
@@ -33,12 +32,12 @@ describe('EventCompressor', () => {
       }
     };
 
-    const compressed = await compressor.compress(event.payload);
+    const compressed = await compressor.compress(event.data);
     expect(compressed).toBeDefined();
     expect(typeof compressed).toBe('string');
 
-    const decompressed = await compressor.decompress<typeof event.payload>(compressed as string);
-    expect(decompressed).toEqual(event.payload);
+    const decompressed = await compressor.decompress(compressed as string);
+    expect(decompressed).toEqual(event.data);
   });
 
   it('should not compress small data', async () => {
@@ -48,11 +47,11 @@ describe('EventCompressor', () => {
       type: 'test',
       timestamp: Date.now(),
       source: 'test-source',
-      payload: { small: 'data' }
+      data: { small: 'data' }
     };
 
-    const result = await compressor.compress(event.payload);
-    expect(result).toBe(event.payload);
+    const result = await compressor.compress(event.data);
+    expect(result).toBe(event.data);
   });
 
   it('should handle batch compression', async () => {
@@ -63,7 +62,7 @@ describe('EventCompressor', () => {
         type: 'test',
         timestamp: Date.now(),
         source: 'test-source',
-        payload: { value: 'test1'.repeat(50) }
+        data: { value: 'test1'.repeat(50) }
       },
       {
         id: '2',
@@ -71,7 +70,7 @@ describe('EventCompressor', () => {
         type: 'test',
         timestamp: Date.now(),
         source: 'test-source',
-        payload: { value: Array(50).fill(123) }
+        data: { value: Array(50).fill(123) }
       },
       {
         id: '3',
@@ -79,7 +78,7 @@ describe('EventCompressor', () => {
         type: 'test',
         timestamp: Date.now(),
         source: 'test-source',
-        payload: { value: Array(50).fill('test') }
+        data: { value: Array(50).fill('test') }
       },
       {
         id: '4',
@@ -87,21 +86,21 @@ describe('EventCompressor', () => {
         type: 'test',
         timestamp: Date.now(),
         source: 'test-source',
-        payload: { nested: { deep: { value: 'test'.repeat(50) } } }
+        data: { nested: { deep: { value: 'test'.repeat(50) } } }
       }
     ];
 
     const compressed = await Promise.all(
-      events.map(event => compressor.compress(event.payload))
+      events.map(event => compressor.compress(event.data))
     );
 
     expect(compressed).toHaveLength(4);
     expect(compressed.every(c => typeof c === 'string')).toBe(true);
 
     const decompressed = await Promise.all(
-      compressed.map(c => compressor.decompress<Record<string, unknown>>(c as string))
+      compressed.map(c => compressor.decompress(c as string))
     );
 
-    expect(decompressed).toEqual(events.map(e => e.payload));
+    expect(decompressed).toEqual(events.map(e => e.data));
   });
 });

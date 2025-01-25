@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from '@jest/globals';
 import { Request } from 'node-fetch';
-import { setupTestApp } from '../../../testing/utils/test-setup';
+import { setupTestApp } from '../../../core/testing/utils/test-setup';
 import { EventBus } from '../EventBus';
 import { BaseEvent } from '../types';
 
@@ -16,7 +16,10 @@ describe('Event API', () => {
 
   it('should handle basic event operations', async () => {
     const event: BaseEvent = {
+      id: 'test-event-1',
       type: 'test-event',
+      channel: 'test-channel',
+      source: 'test-source',
       timestamp: Date.now(),
       data: { test: true }
     };

@@ -1,284 +1,317 @@
 import { BasePlugin } from '../base';
 import { EventBus } from '../../events/EventBus';
-import { EventDeliveryStatus } from '../../events/types';
-import { logger } from '../../utils/logger';
-import { PluginContext, PluginMetadata, PluginDependencyConfig } from '../types';
-import type { Env } from 'hono/types';
-import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
-import { describe, it, expect, jest, beforeAll, beforeEach, afterEach } from '@jest/globals';
+import { Logger } from '../../logging/Logger';
+import { PluginContext, PluginMetadata, PluginStatus, Plugin } from '../types';
+import { Event } from '../../events/types';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { PluginRegistry } from '../registry';
 
-type HasPluginFn = (id: string) => boolean;
-
-jest.mock('../../utils/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-    error: jest.fn()
-  }
-}), { virtual: true });
-
-jest.mock('../../utils/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-    error: jest.fn()
+// Mock logger
+jest.mock('../../logging/Logger', () => ({
+  Logger: {
+    getInstance: jest.fn()
   }
 }));
 
-const mockLogger = jest.mocked(logger);
+// Mock EventBus
 jest.mock('../../events/EventBus', () => ({
   EventBus: {
-    getInstance: jest.fn(),
+    getInstance: jest.fn()
   }
 }));
 
-class TestPlugin extends BasePlugin {
-  readonly metadata: PluginMetadata = {
-    id: 'test-plugin',
-    name: 'test-plugin',
-    version: '1.0.0',
-    description: 'Test plugin for unit tests',
-    dependencies: {
-      required: {},
-      optional: {}
-    }
+// Mock PluginRegistry
+jest.mock('../registry', () => {
+  const mockRegistry = {
+    register: jest.fn(),
+    unregister: jest.fn(),
+    getPlugin: jest.fn() as jest.MockedFunction<(id: string) => Plugin | undefined>,
+    getPluginState: jest.fn() as jest.MockedFunction<(id: string) => PluginStatus | undefined>,
+    setPluginState: jest.fn() as jest.MockedFunction<(id: string, state: PluginStatus) => void>,
+    getAllPlugins: jest.fn() as jest.MockedFunction<() => Plugin[]>,
+    getActivePlugins: jest.fn() as jest.MockedFunction<() => Plugin[]>,
+    clear: jest.fn()
   };
 
-  protected async onInitialize(context: PluginContext<Env>): Promise<void> {
-    this.logger = context.logger;
-    this.eventBus = context.eventBus;
-    await this.eventBus.emit({
-      type: 'PLUGIN_INITIALIZED',
-      source: this.metadata.id
-    });
-  }
+  return {
+    PluginRegistry: {
+      getInstance: jest.fn().mockReturnValue(mockRegistry)
+    },
+    pluginRegistry: mockRegistry
+  };
+});
 
-  protected async onTeardown(): Promise<void> {
-    await this.eventBus?.emit({
-      type: 'PLUGIN_TEARDOWN', 
-      source: this.metadata.id
-    });
-  }
+// Get mock instances
+const mockPluginRegistry = (PluginRegistry.getInstance() as jest.MockedObject<PluginRegistry>);
 
-  public async onError(error: Error): Promise<void> {
-    this.logger?.error(`Plugin ${this.metadata.id} error:`, { error });
-  }
+// Create a proper mock Logger instance
+const mockLoggerInstance = {
+  info: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn() as jest.MockedFunction<(message: string, meta?: Record<string, unknown>) => void>,
+  error: jest.fn(),
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn()
+  },
+  safeLog: jest.fn(),
+  setLogger: jest.fn()
+} as unknown as Logger;
 
-  public async onDependencyChange(dependencyId: string): Promise<void> {
-    this.logger?.debug(`Dependency ${dependencyId} changed`, { dependencyId });
-  }
+// Create a proper mock EventBus instance
+const mockEventBusInstance = {
+  subscribers: new Map(),
+  stats: {
+    totalEvents: 0,
+    eventsPerSecond: 0,
+    lastEventTimestamp: Date.now()
+  },
+  history: [],
+  startTime: Date.now(),
+  subscribe: jest.fn().mockImplementation(async () => {}),
+  publish: jest.fn().mockImplementation(async () => {}),
+  getStats: jest.fn().mockReturnValue({ totalEvents: 0, eventsPerSecond: 0, lastEventTimestamp: Date.now() }),
+  clearHistory: jest.fn(),
+  getHistory: jest.fn().mockReturnValue([]),
+  stop: jest.fn().mockImplementation(async () => {})
+} as unknown as EventBus;
 
-  protected async validateDependencies(context: PluginContext<Env>): Promise<void> {
-    if (!this.metadata.dependencies) {
-      return;
-    }
+// Set up mock returns
+(Logger.getInstance as jest.Mock).mockReturnValue(mockLoggerInstance);
+(EventBus.getInstance as jest.Mock).mockReturnValue(mockEventBusInstance);
 
-    // Check required dependencies first
-    const required = this.metadata.dependencies.required || {};
-    for (const [depId, version] of Object.entries(required)) {
-      if (!context.plugins?.hasPlugin(depId)) {
-        const error = `Required dependency not found: ${depId}`;
-        this.logger?.error(error);
-        throw new Error(error);
-      }
-    }
-
-    // Then check optional dependencies
-    const optional = this.metadata.dependencies.optional || {};
-    for (const [depId, version] of Object.entries(optional)) {
-      if (!context.plugins?.hasPlugin(depId)) {
-        this.logger?.warn(`Optional dependency not found: ${depId}`, { dependencyId: depId });
-      }
-    }
-  }
-
-  protected checkInitialized(): void {
-    if (!this.initialized) {
-      throw new Error(`Plugin ${this.metadata.id} not initialized`);
-    }
+class TestPlugin extends BasePlugin {
+  protected async onInitialize(context: PluginContext): Promise<void> {
+    // Test implementation
   }
 }
 
 describe('BasePlugin', () => {
   let plugin: TestPlugin;
-  let mockContext: PluginContext<Env>;
-  let mockEventBus: DeepMockProxy<EventBus>;
-  let hasPluginMock: jest.MockedFunction<HasPluginFn>;
+  let mockContext: PluginContext;
+  const mockMetadata: PluginMetadata = {
+    id: 'test-plugin',
+    name: 'Test Plugin',
+    version: '1.0.0',
+    description: 'Test plugin',
+    author: 'Test Author'
+  };
 
-  beforeAll(() => {
-    mockEventBus = mockDeep<EventBus>();
-    mockEventBus.getRunningState.mockReturnValue(true);
-    mockEventBus.start.mockResolvedValue(undefined);
-    mockEventBus.stop.mockResolvedValue(undefined);
-    mockEventBus.emit.mockImplementation(async (event) => {
-      return EventDeliveryStatus.DELIVERED;
+  beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+
+    // Reset mock registry state
+    mockPluginRegistry.getPluginState.mockReturnValue(PluginStatus.INACTIVE);
+    mockPluginRegistry.getPlugin.mockImplementation((id: string): Plugin | undefined => {
+      if (id === 'test-plugin') return plugin;
+      if (id === 'test-dependency') return {
+        id: 'test-dependency',
+        name: 'Test Dependency',
+        version: '1.0.0',
+        metadata: {
+          id: 'test-dependency',
+          name: 'Test Dependency',
+          version: '1.0.0'
+        }
+      } as Plugin;
+      if (id === 'optional-dep') return {
+        id: 'optional-dep',
+        name: 'Optional Dependency',
+        version: '1.0.0',
+        metadata: {
+          id: 'optional-dep',
+          name: 'Optional Dependency',
+          version: '1.0.0'
+        }
+      } as Plugin;
+      return undefined;
     });
-    mockEventBus.subscribe.mockReturnValue('subscription-id');
-    mockEventBus.unsubscribe.mockImplementation(() => {});
-    mockEventBus.getChannels.mockReturnValue(['plugin']);
-    mockEventBus.registerChannel.mockImplementation(() => {});
 
-    // Set up the mock for EventBus.getInstance
-    (EventBus.getInstance as jest.Mock).mockReturnValue(mockEventBus);
-  });
+    // Create plugin instance
+    plugin = new TestPlugin(
+      'test-plugin',
+      'Test Plugin',
+      '1.0.0',
+      'Test plugin for unit tests',
+      mockMetadata
+    );
 
-  beforeEach(async () => {
-    // Create new plugin instance
-    plugin = new TestPlugin();
-    
-    // Create hasPlugin mock
-    hasPluginMock = jest.fn().mockReturnValue(true) as jest.MockedFunction<HasPluginFn>;
-    
     // Create mock context
     mockContext = {
-      logMetadata: {},
-      plugins: {
-        hasPlugin: hasPluginMock
+      id: 'test-plugin',
+      name: 'Test Plugin',
+      version: '1.0.0',
+      config: {
+        name: 'Test Plugin',
+        version: '1.0.0',
+        description: 'Test plugin'
       },
-      logger: mockLogger,
-      eventBus: mockEventBus
-    } as unknown as PluginContext<Env>;
-
-    // Reset mock states
-    jest.clearAllMocks();
-    mockEventBus.getRunningState.mockReturnValue(true);
-    mockEventBus.emit.mockResolvedValue(EventDeliveryStatus.DELIVERED);
-
-    // Reset EventBus mock
-    (EventBus.getInstance as jest.Mock).mockReturnValue(mockEventBus);
-    
-    // Reset logger mock
-    (mockLogger.warn as jest.Mock).mockClear();
-    (mockLogger.error as jest.Mock).mockClear();
-    (mockLogger.info as jest.Mock).mockClear();
-    (mockLogger.debug as jest.Mock).mockClear();
-  });
-
-  afterEach(async () => {
-    // Check if plugin exists and is initialized before teardown
-    if (plugin && (plugin as any).initialized) {
-      await plugin.teardown();
-    }
+      metadata: mockMetadata,
+      logger: mockLoggerInstance,
+      events: mockEventBusInstance,
+      plugins: {
+        hasPlugin: (id: string): boolean => mockPluginRegistry.getPlugin(id) !== undefined,
+        getPlugin: (id: string): Plugin | undefined => mockPluginRegistry.getPlugin(id),
+        getPluginState: (id: string): PluginStatus | undefined => mockPluginRegistry.getPluginState(id)
+      }
+    };
   });
 
   describe('initialization', () => {
     it('should initialize plugin successfully', async () => {
       await expect(plugin.initialize(mockContext)).resolves.not.toThrow();
-      expect((plugin as any).initialized).toBe(true);
-      expect(mockEventBus.emit).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'PLUGIN_INITIALIZED',
-        source: 'test-plugin'
-      }));
+      expect(plugin['initialized']).toBe(true);
+      expect(mockPluginRegistry.setPluginState).toHaveBeenCalledWith(plugin.id, PluginStatus.INACTIVE);
     });
 
-    it('should fail initialization if required dependency is missing', async () => {
-      plugin.metadata.dependencies = {
-        required: { 'missing-plugin': '1.0.0' },
-        optional: {}
+    it('should handle dependencies', async () => {
+      mockMetadata.dependencies = {
+        'test-dependency': '1.0.0'
       };
-      hasPluginMock.mockReturnValue(false);
-      await expect(plugin.initialize(mockContext))
-        .rejects.toThrow('Required dependency not found: missing-plugin');
-      expect(hasPluginMock).toHaveBeenCalledWith('missing-plugin');
+
+      await plugin.initialize(mockContext);
+      expect(mockLoggerInstance.debug).toHaveBeenCalledWith(
+        'Validating dependency: test-dependency (1.0.0)'
+      );
     });
 
     it('should handle optional dependencies', async () => {
-      plugin.metadata.dependencies = {
-        required: {},
-        optional: { 'optional-plugin': '1.0.0' }
+      // Create a new metadata without required dependencies
+      const testMetadata = { ...mockMetadata };
+      delete testMetadata.dependencies;
+      testMetadata.optionalDependencies = {
+        'optional-dep': '1.0.0'
       };
-      hasPluginMock.mockReturnValue(false);
-      await expect(plugin.initialize(mockContext)).resolves.not.toThrow();
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Optional dependency not found: optional-plugin'),
-        expect.any(Object)
+
+      // Create a new plugin instance with the test metadata
+      const testPlugin = new TestPlugin(
+        'test-plugin',
+        'Test Plugin',
+        '1.0.0',
+        'Test plugin for unit tests',
+        testMetadata
       );
+
+      // Clear any previous mock calls
+      jest.clearAllMocks();
+      
+      await testPlugin.initialize(mockContext);
+      expect(mockLoggerInstance.debug).toHaveBeenCalledWith(
+        'Initializing optional dependency: optional-dep (1.0.0)'
+      );
+    });
+
+    it('should prevent multiple initializations', async () => {
+      await plugin.initialize(mockContext);
+      await expect(plugin.initialize(mockContext))
+        .rejects
+        .toThrow('Plugin test-plugin already initialized');
     });
   });
 
-  describe('teardown', () => {
-    it('should tear down plugin successfully', async () => {
+  describe('lifecycle', () => {
+    beforeEach(async () => {
       await plugin.initialize(mockContext);
+    });
+
+    it('should start plugin', async () => {
+      await expect(plugin.start()).resolves.not.toThrow();
+      expect(mockPluginRegistry.setPluginState).toHaveBeenCalledWith(plugin.id, PluginStatus.ACTIVE);
+      expect(mockLoggerInstance.info).toHaveBeenCalledWith(
+        'Plugin started: test-plugin'
+      );
+    });
+
+    it('should prevent starting uninitialized plugin', async () => {
+      const uninitializedPlugin = new TestPlugin(
+        'uninitialized',
+        'Uninitialized',
+        '1.0.0',
+        'Test plugin',
+        { ...mockMetadata, id: 'uninitialized' }
+      );
+      await expect(uninitializedPlugin.start()).rejects.toThrow(
+        'Plugin must be initialized before starting'
+      );
+    });
+
+    it('should stop plugin', async () => {
+      await plugin.start();
+      await expect(plugin.stop()).resolves.not.toThrow();
+      expect(mockPluginRegistry.setPluginState).toHaveBeenCalledWith(plugin.id, PluginStatus.INACTIVE);
+      expect(mockLoggerInstance.info).toHaveBeenCalledWith(
+        'Plugin stopped: test-plugin'
+      );
+    });
+
+    it('should handle teardown', async () => {
+      await plugin.start();
       await expect(plugin.teardown()).resolves.not.toThrow();
-      expect((plugin as any).initialized).toBe(false);
-      expect(mockEventBus.emit).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'PLUGIN_TEARDOWN',
-        source: 'test-plugin'
-      }));
-    });
-
-    it('should handle teardown when not initialized', async () => {
-      await expect(plugin.teardown()).resolves.not.toThrow();
-      expect(mockEventBus.emit).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle initialization errors', async () => {
-      const error = new Error('Init error');
-      jest.spyOn(plugin as any, 'onInitialize').mockRejectedValueOnce(error);
-      await expect(plugin.initialize(mockContext)).rejects.toThrow(error);
-      expect((plugin as any).initialized).toBe(false);
-    });
-
-    it('should handle teardown errors', async () => {
-      await plugin.initialize(mockContext);
-      const error = new Error('Teardown error');
-      jest.spyOn(plugin as any, 'onTeardown').mockRejectedValueOnce(error);
-      await expect(plugin.teardown()).rejects.toThrow(error);
-    });
-
-    it('should handle plugin errors', async () => {
-      await plugin.initialize(mockContext);
-      const error = new Error('Plugin error');
-      await plugin.onError(error);
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Plugin test-plugin error:'),
-        expect.any(Object)
+      expect(plugin['initialized']).toBe(false);
+      expect(mockPluginRegistry.setPluginState).toHaveBeenCalledWith(plugin.id, PluginStatus.DISABLED);
+      expect(mockLoggerInstance.info).toHaveBeenCalledWith(
+        'Plugin torn down: test-plugin'
       );
     });
-  });
 
-  describe('dependency management', () => {
-    it('should validate dependencies on initialization', async () => {
-      plugin.metadata.dependencies = {
-        required: { 'dep1': '1.0.0', 'dep2': '1.0.0' },
-        optional: {}
-      };
-      await expect(plugin.initialize(mockContext)).resolves.not.toThrow();
-      expect(hasPluginMock).toHaveBeenCalledWith('dep1');
-      expect(hasPluginMock).toHaveBeenCalledWith('dep2');
-    });
-
-    it('should handle dependency changes', async () => {
-      await plugin.initialize(mockContext);
-      await plugin.onDependencyChange('dep1');
-      expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining('Dependency dep1 changed'),
-        expect.any(Object)
+    it('should ignore stop when not initialized', async () => {
+      const uninitializedPlugin = new TestPlugin(
+        'uninitialized',
+        'Uninitialized',
+        '1.0.0',
+        'Test plugin',
+        { ...mockMetadata, id: 'uninitialized' }
       );
+      // Clear any previous mock calls
+      mockPluginRegistry.setPluginState.mockClear();
+      await expect(uninitializedPlugin.stop()).resolves.not.toThrow();
+      expect(mockPluginRegistry.setPluginState).not.toHaveBeenCalled();
+    });
+
+    it('should ignore teardown when not initialized', async () => {
+      const uninitializedPlugin = new TestPlugin(
+        'uninitialized',
+        'Uninitialized',
+        '1.0.0',
+        'Test plugin',
+        { ...mockMetadata, id: 'uninitialized' }
+      );
+      // Clear any previous mock calls
+      mockPluginRegistry.setPluginState.mockClear();
+      await expect(uninitializedPlugin.teardown()).resolves.not.toThrow();
+      expect(mockPluginRegistry.setPluginState).not.toHaveBeenCalled();
     });
   });
 
-  describe('validation', () => {
-    it('should warn about missing optional dependencies', async () => {
-      plugin.metadata.dependencies = {
-        required: {},
-        optional: { 'opt1': '1.0.0', 'opt2': '1.0.0' }
-      };
-      hasPluginMock.mockReturnValue(false);
+  describe('metrics', () => {
+    beforeEach(async () => {
       await plugin.initialize(mockContext);
-      expect(logger.warn).toHaveBeenCalledTimes(2);
+      await plugin.start();
+      mockPluginRegistry.getPluginState.mockReturnValue(PluginStatus.ACTIVE);
     });
 
-    it('should check initialization state', async () => {
-      expect(() => (plugin as any).checkInitialized()).toThrow('Plugin test-plugin not initialized');
-      await plugin.initialize(mockContext);
-      expect(() => (plugin as any).checkInitialized()).not.toThrow();
-      await plugin.teardown();
-      expect(() => (plugin as any).checkInitialized()).toThrow('Plugin test-plugin not initialized');
+    it('should return plugin metrics', async () => {
+      const metrics = await plugin.getPluginMetrics('test-plugin');
+      expect(metrics).toEqual({
+        id: 'test-plugin',
+        name: 'Test Plugin',
+        version: '1.0.0',
+        status: PluginStatus.ACTIVE,
+        uptime: expect.any(Number),
+        memoryUsage: expect.any(Number),
+        eventCount: 0,
+        errorCount: 0
+      });
+    });
+
+    it('should reflect current plugin state in metrics', async () => {
+      await plugin.stop();
+      mockPluginRegistry.getPluginState.mockReturnValue(PluginStatus.INACTIVE);
+      const metrics = await plugin.getPluginMetrics('test-plugin');
+      expect(metrics.status).toBe(PluginStatus.INACTIVE);
     });
   });
 });

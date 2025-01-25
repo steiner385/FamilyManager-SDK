@@ -1,15 +1,20 @@
 import React, { createContext, useContext } from 'react';
-import { PluginMetadata } from '../core/plugin/types';
+import { Plugin } from '../core/plugin/types';
 
 interface PluginContextValue {
-  plugins: PluginMetadata[];
+  plugins: Plugin[];
 }
 
 const PluginContext = createContext<PluginContextValue>({
   plugins: [],
 });
 
-export const PluginProvider: React.FC<{ plugins: PluginMetadata[] }> = ({
+interface PluginProviderProps {
+  plugins: Plugin[];
+  children: React.ReactNode;
+}
+
+export const PluginProvider: React.FC<PluginProviderProps> = ({
   plugins,
   children,
 }) => {
@@ -20,4 +25,12 @@ export const PluginProvider: React.FC<{ plugins: PluginMetadata[] }> = ({
   );
 };
 
-export const usePluginContext = () => useContext(PluginContext);
+export const usePluginContext = () => {
+  const context = useContext(PluginContext);
+  if (!context) {
+    throw new Error('usePluginContext must be used within a PluginProvider');
+  }
+  return context;
+};
+
+export { PluginContext };

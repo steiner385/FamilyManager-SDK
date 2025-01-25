@@ -61,7 +61,7 @@ describe('EventBatcher', () => {
     // Mock the process batch to return failed status
     processBatchMock.mockImplementationOnce(async (events: BaseEvent[]) => {
       return events.map(() => ({
-        status: EventDeliveryStatus.Failed,
+        status: EventDeliveryStatus.FAILED,
         errors: ['Processing failed']
       }));
     });

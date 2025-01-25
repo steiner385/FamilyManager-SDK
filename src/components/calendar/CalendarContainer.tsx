@@ -1,174 +1,141 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RRule } from 'rrule';
-import CalendarView from './CalendarView';
-import { Calendar, Event } from '../../contexts/CalendarContext';
+import { Calendar, Event, WEEKDAYS } from '../../contexts/CalendarContext';
 import { usePlugins } from '../../hooks/usePlugins';
+import { CalendarPlugin, Plugin } from '../../core/plugin/types';
 
-const CalendarContainer = () => {
+interface CalendarContainerProps {
+  children: React.ReactNode;
+}
+
+interface CalendarChildProps {
+  calendars: Calendar[];
+  events: Event[];
+  onSaveEvent: (event: Event) => Promise<void>;
+  onDeleteEvent: (eventId: string, calendarId: string) => Promise<void>;
+}
+
+export function CalendarContainer({ children }: CalendarContainerProps) {
   const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { plugins } = usePlugins();
 
-  const generateRecurringInstances = (event: Event): Event[] => {
-    if (!event.recurring) return [event];
-    
-    const rule = new RRule({
-      freq: RRule[event.recurring.frequency.toUpperCase()],
-      interval: event.recurring.interval,
-      dtstart: event.start,
-      until: event.recurring.until,
-      count: event.recurring.count,
-      byweekday: event.recurring.byDay,
-      bymonth: event.recurring.byMonth,
-      bymonthday: event.recurring.byMonthDay
-    });
-
-    const dates = rule.all();
-    return dates.map((date, index) => ({
-      ...event,
-      id: `${event.id}-${index}`,
-      start: date,
-      end: new Date(date.getTime() + (event.end.getTime() - event.start.getTime()))
-    }));
+  const getRRuleFrequency = (freq: string): number => {
+    switch (freq.toUpperCase()) {
+      case 'YEARLY': return RRule.YEARLY;
+      case 'MONTHLY': return RRule.MONTHLY;
+      case 'WEEKLY': return RRule.WEEKLY;
+      case 'DAILY': return RRule.DAILY;
+      default: throw new Error(`Invalid frequency: ${freq}`);
+    }
   };
 
-  const expandedEvents = useMemo(() => {
-    return events.flatMap(event => generateRecurringInstances(event))
-      .map(event => ({
-        ...event,
-        title: `${event.title}`, // Ensure title is rendered as text
-        start: new Date(event.start),
-        end: new Date(event.end),
-        'data-testid': `event-${event.title.replace(/\s+/g, '')}`, // Remove spaces from test id
-        className: 'calendar-event'
-      }));
-  }, [events]);
-
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const pluginCalendars: Calendar[] = [];
-      const pluginEvents: Event[] = [];
-
-      for (const plugin of plugins) {
-        try {
-          if (plugin.getCalendars) {
-            const calendars = await plugin.getCalendars();
-            pluginCalendars.push(...calendars);
-          }
-          if (plugin.getEvents) {
-            const events = await plugin.getEvents();
-            pluginEvents.push(...events);
-          }
-        } catch (err) {
-          console.error(`Error loading data from plugin ${plugin.id}:`, err);
-          setError(`Failed to load data from ${plugin.name}`);
-        }
-      }
-
-      setCalendars(pluginCalendars);
-      setEvents(pluginEvents);
-    } catch (err) {
-      console.error('Error loading calendar data:', err);
-      setError('Failed to load calendar data');
-    } finally {
-      setLoading(false);
+  const convertEventToRRule = (event: Event): RRule => {
+    if (!event.recurring) {
+      throw new Error('Event has no recurrence rule');
     }
-  }, [plugins]);
 
-  // Fetch calendars and events from plugins
+    return new RRule({
+      freq: getRRuleFrequency(event.recurring.frequency),
+      interval: event.recurring.interval || 1,
+      byweekday: event.recurring.byDay?.map(day => 
+        Object.values(WEEKDAYS)[day]
+      ),
+      bymonth: event.recurring.byMonth,
+      bymonthday: event.recurring.byMonthDay,
+      until: event.recurring.until,
+      count: event.recurring.count
+    });
+  };
+
+  const isCalendarPlugin = (plugin: Plugin): plugin is CalendarPlugin => {
+    return (
+      'metadata' in plugin &&
+      plugin.metadata.type === 'calendar' &&
+      'getCalendars' in plugin &&
+      'getEvents' in plugin &&
+      'saveEvent' in plugin &&
+      'deleteEvent' in plugin
+    );
+  };
+
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    const loadCalendarData = async () => {
+      try {
+        // Load calendars and events from plugins
+        for (const plugin of plugins) {
+          if (isCalendarPlugin(plugin)) {
+            const pluginCalendars = await plugin.getCalendars();
+            setCalendars(prev => [...prev, ...pluginCalendars]);
+
+            const pluginEvents = await plugin.getEvents();
+            setEvents(prev => [...prev, ...pluginEvents]);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load calendar data:', error);
+      }
+    };
+
+    loadCalendarData();
+  }, [plugins]);
 
   const handleSaveEvent = async (event: Event) => {
     try {
-      setLoading(true);
-      setError(null);
+      const calendarPlugin = plugins.find(p => 
+        isCalendarPlugin(p) && p.id === event.calendarId
+      ) as CalendarPlugin | undefined;
       
-      // Delegate event saving to the appropriate plugin
-      const plugin = plugins.find((p) => p.id === event.calendarId);
-      if (plugin?.saveEvent) {
-        await plugin.saveEvent(event);
-        // Refresh events after saving
-        const updatedEvents = await plugin.getEvents();
-        setEvents(updatedEvents);
+      if (calendarPlugin) {
+        await calendarPlugin.saveEvent(event);
+        // Refresh events after save
+        const updatedEvents = await calendarPlugin.getEvents();
+        setEvents(prev => prev.map(e => 
+          e.calendarId === event.calendarId 
+            ? updatedEvents.find((ue: Event) => ue.id === e.id) || e 
+            : e
+        ));
       }
-    } catch (err) {
-      console.error('Error saving event:', err);
-      setError('Failed to save event');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Failed to save event:', error);
     }
   };
 
-  const handleDeleteEvent = async (eventId: string) => {
+  const handleDeleteEvent = async (eventId: string, calendarId: string) => {
     try {
-      setLoading(true);
-      setError(null);
+      const calendarPlugin = plugins.find(p => 
+        isCalendarPlugin(p) && p.id === calendarId
+      ) as CalendarPlugin | undefined;
       
-      // Delegate event deletion to the appropriate plugin
-      const event = events.find((e) => e.id === eventId);
-      if (event) {
-        const plugin = plugins.find((p) => p.id === event.calendarId);
-        if (plugin?.deleteEvent) {
-          await plugin.deleteEvent(eventId);
-          // Refresh events after deletion
-          const updatedEvents = await plugin.getEvents();
-          setEvents(updatedEvents);
-        }
+      if (calendarPlugin) {
+        await calendarPlugin.deleteEvent(eventId);
+        // Refresh events after delete
+        const updatedEvents = await calendarPlugin.getEvents();
+        setEvents(prev => prev.filter(e => 
+          e.calendarId !== calendarId || 
+          (e.calendarId === calendarId && updatedEvents.some((ue: Event) => ue.id === e.id))
+        ));
       }
-    } catch (err) {
-      console.error('Error deleting event:', err);
-      setError('Failed to delete event');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Failed to delete event:', error);
     }
   };
 
-  const [draggingEvent, setDraggingEvent] = useState<Event | null>(null);
-
-  const handleDragStart = useCallback((event: Event) => {
-    setDraggingEvent(event);
-  }, []);
-
-  const handleDragEnd = useCallback(() => {
-    setDraggingEvent(null);
-  }, []);
-
-  const handleDrop = useCallback((date: Date) => {
-    if (draggingEvent) {
-      const duration = draggingEvent.end.getTime() - draggingEvent.start.getTime();
-      const updatedEvent = {
-        ...draggingEvent,
-        start: date,
-        end: new Date(date.getTime() + duration)
-      };
-      handleSaveEvent(updatedEvent);
-      setDraggingEvent(null);
+  const childrenWithProps = React.Children.map(children, child => {
+    if (React.isValidElement<Partial<CalendarChildProps>>(child)) {
+      return React.cloneElement(child, {
+        calendars,
+        events,
+        onSaveEvent: handleSaveEvent,
+        onDeleteEvent: handleDeleteEvent
+      });
     }
-  }, [draggingEvent, handleSaveEvent]);
+    return child;
+  });
 
   return (
-    <div data-testid="calendar-container">
-      <CalendarView
-        calendars={calendars}
-        events={expandedEvents}
-        loading={loading}
-        error={error}
-        onSaveEvent={handleSaveEvent}
-        onDeleteEvent={handleDeleteEvent}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDrop={handleDrop}
-        draggingEvent={draggingEvent}
-      />
+    <div className="calendar-container">
+      {childrenWithProps}
     </div>
   );
-};
-
-export default CalendarContainer;
+}

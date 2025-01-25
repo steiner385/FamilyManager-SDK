@@ -1,6 +1,7 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useContext } from 'react';
+import { RRule } from 'rrule';
 
-interface Event {
+export interface Event {
   id: string;
   title: string;
   start: Date;
@@ -12,17 +13,31 @@ interface Event {
   description?: string;
   location?: string;
   attendees?: string[];
+  'data-testid'?: string;  // Added for testing purposes
 }
 
-interface RecurrenceRule {
+export interface RecurrenceRule {
   frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   interval?: number;
-  byDay?: string[];
-  byMonthDay?: number[];
+  byDay?: number[];  // 0-6 for Sunday-Saturday
+  byMonth?: number[];  // 1-12 for January-December
+  byMonthDay?: number[];  // 1-31
   until?: Date;
+  count?: number;  // Number of occurrences
 }
 
-interface Calendar {
+// Constants for day mapping
+export const WEEKDAYS = {
+  SU: RRule.SU,
+  MO: RRule.MO,
+  TU: RRule.TU,
+  WE: RRule.WE,
+  TH: RRule.TH,
+  FR: RRule.FR,
+  SA: RRule.SA
+} as const;
+
+export interface Calendar {
   id: string;
   name: string;
   color: string;
@@ -85,6 +100,14 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       {children}
     </CalendarContext.Provider>
   );
+};
+
+export const useCalendarContext = () => {
+  const context = useContext(CalendarContext);
+  if (!context) {
+    throw new Error('useCalendarContext must be used within a CalendarProvider');
+  }
+  return context;
 };
 
 export default CalendarContext;

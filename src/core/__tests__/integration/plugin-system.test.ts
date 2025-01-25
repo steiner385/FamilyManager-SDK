@@ -27,12 +27,15 @@ describe('Plugin System Integration', () => {
   });
 
   it('handles complete plugin lifecycle', async () => {
+    const TestComponent = () => null;
+    
     // Create test plugin with components and theme
     const mockPlugin = createMockPlugin({
-      name: 'test-plugin',
+      id: 'lifecycle-test-plugin',
+      name: 'lifecycle-test-plugin',
       version: '1.0.0',
       components: {
-        TestComponent: () => null
+        TestComponent
       },
       theme: {
         colors: {
@@ -67,7 +70,9 @@ describe('Plugin System Integration', () => {
     expect(pluginManager.isInitialized(pluginId)).toBe(true);
 
     // Verify components are registered
-    expect(componentRegistry.get('TestComponent')).toBeTruthy();
+    const registeredComponent = componentRegistry.get('TestComponent');
+    expect(registeredComponent).toBeTruthy();
+    expect(registeredComponent).toBe(TestComponent);
 
     // Verify theme is applied
     const currentTheme = themeManager.getCurrentTheme();
@@ -81,6 +86,7 @@ describe('Plugin System Integration', () => {
   it('handles plugin dependencies correctly', async () => {
     // First create and register the dependency plugin
     const dependencyPlugin = createMockPlugin({
+      id: 'dependency-plugin',
       name: 'dependency-plugin',
       version: '1.0.0'
     });
@@ -90,9 +96,12 @@ describe('Plugin System Integration', () => {
 
     // Then create and register the main plugin that depends on it
     const mainPlugin = createMockPlugin({
+      id: 'main-plugin',
       name: 'main-plugin',
       version: '1.0.0',
-      dependencies: [`mock-dependency-plugin`] // Use the full ID including the 'mock-' prefix
+      dependencies: {
+        [dependencyPlugin.id]: dependencyPlugin.version
+      }
     });
 
     await pluginManager.registerPlugin(mainPlugin);

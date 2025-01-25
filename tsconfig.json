@@ -3,18 +3,22 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./src",
+    "baseUrl": ".",
+    "declarationDir": "./dist",
+    "sourceRoot": "./src",
+    "inlineSourceMap": false,
+    "inlineSources": false,
+    "composite": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "paths": {
-      "@/*": ["./*"],
-      "@core/*": ["./core/*"],
-      "@components/*": ["./components/*"],
-      "@hooks/*": ["./hooks/*"],
-      "@utils/*": ["./utils/*"],
-      "@types/*": ["./types/*"],
-      "@contexts/*": ["./contexts/*"]
+      "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
   "exclude": [
     "node_modules",
     "dist",
@@ -26,10 +30,14 @@
     "**/*.spec.*",
     "**/*.stories.*",
     "e2e/**/*",
-    "src/testing/**/*",
-    "src/core/testing/**/*",
-    "src/examples/**/*",
     "test/**/*",
     "tests/**/*"
+  ],
+  "references": [
+    { "path": "./src/components" },
+    { "path": "./src/contexts" },
+    { "path": "./src/core" },
+    { "path": "./src/hooks" },
+    { "path": "./src/types" }
   ]
 }

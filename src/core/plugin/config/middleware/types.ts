@@ -1,6 +1,6 @@
-import { PluginConfig } from '../types';
+import { ConfigValue } from '../types';
 
-export type NextFunction = (config: PluginConfig) => Promise<void>;
+export type NextFunction = (config: ConfigValue) => Promise<void>;
 
 export interface MiddlewareContext {
   pluginName: string;
@@ -9,7 +9,7 @@ export interface MiddlewareContext {
 }
 
 export type ConfigMiddleware = (
-  config: PluginConfig,
+  config: ConfigValue,
   next: NextFunction,
   context: MiddlewareContext
 ) => Promise<void>;

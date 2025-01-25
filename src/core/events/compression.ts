@@ -7,20 +7,11 @@ export interface CompressionConfig {
 
 export class EventCompressor {
   private config: CompressionConfig;
-  private encoder: TextEncoder;
-  private decoder: TextDecoder;
 
   constructor(config: CompressionConfig) {
     this.config = {
       compressionLevel: 6,
       ...config
-    };
-    // Node.js environment - use Buffer instead of TextEncoder/TextDecoder
-    this.encoder = {
-      encode: (str: string) => Buffer.from(str)
-    };
-    this.decoder = {
-      decode: (buf: Uint8Array) => Buffer.from(buf).toString()
     };
   }
 
@@ -36,14 +27,14 @@ export class EventCompressor {
 
     try {
       const jsonString = JSON.stringify(data);
-      const uint8Array = this.encoder.encode(jsonString);
+      const uint8Array = Buffer.from(jsonString, 'utf-8');
       
       const compressed = pako.deflate(uint8Array, {
         level: this.config.compressionLevel
       });
       
       // Convert to base64 for safe transmission
-      return btoa(String.fromCharCode.apply(null, compressed as unknown as number[]));
+      return Buffer.from(compressed).toString('base64');
     } catch (error) {
       console.error('Compression failed:', error);
       return data;
@@ -52,15 +43,10 @@ export class EventCompressor {
 
   async decompress(data: string): Promise<unknown> {
     try {
-      // Convert from base64 to Uint8Array
-      const binaryString = atob(data);
-      const uint8Array = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        uint8Array[i] = binaryString.charCodeAt(i);
-      }
-
-      const decompressed = pako.inflate(uint8Array);
-      const jsonString = this.decoder.decode(decompressed);
+      // Convert from base64 to Buffer
+      const buffer = Buffer.from(data, 'base64');
+      const decompressed = pako.inflate(buffer);
+      const jsonString = Buffer.from(decompressed).toString('utf-8');
       return JSON.parse(jsonString);
     } catch (error) {
       console.error('Decompression failed:', error);

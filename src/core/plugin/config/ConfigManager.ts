@@ -1,20 +1,25 @@
 import { EventBus } from '../../events/EventBus';
 import { Logger } from '../../logging/Logger';
-import { PluginConfig } from '../types';
-import { ValidationMiddleware } from './middleware/validation';
 import { createValidationMiddleware } from './middleware/validation';
 import { FileConfigStorage } from './storage/FileConfigStorage';
 import { ConfigStorage } from './storage/types';
+import { 
+  ConfigEncryption, 
+  ConfigValue, 
+  ConfigMiddleware, 
+  ConfigSchema 
+} from './types';
 
 export class ConfigManager {
   private static instance: ConfigManager;
   private eventBus: EventBus;
   private storage: ConfigStorage;
-  private middlewares: Array<(config: any, next: (config: any) => Promise<void>) => Promise<void>>;
+  private middlewares: ConfigMiddleware[];
   private readonly source = 'config-manager';
-  private schemas: Map<string, any>;
+  private schemas: Map<string, ConfigSchema>;
   private encryption?: ConfigEncryption;
-  private configs: Map<string, any>;
+  private configs: Map<string, ConfigValue>;
+  private validationMiddleware: ReturnType<typeof createValidationMiddleware>;
 
   private logger = Logger.getInstance();
 
@@ -23,7 +28,7 @@ export class ConfigManager {
     this.configs = new Map();
     this.eventBus = EventBus.getInstance();
     this.storage = new FileConfigStorage();
-    this.middleware = createValidationMiddleware(null, null);
+    this.validationMiddleware = createValidationMiddleware(null, null);
     this.schemas = new Map();
   }
 
@@ -34,7 +39,7 @@ export class ConfigManager {
     return ConfigManager.instance;
   }
 
-  public registerSchema(pluginName: string, schema: any): void {
+  public registerSchema(pluginName: string, schema: ConfigSchema): void {
     this.schemas.set(pluginName, schema);
   }
 
@@ -47,15 +52,15 @@ export class ConfigManager {
     this.eventBus.registerChannel('config');
   }
 
-  public addMiddleware(middleware: (config: any, next: () => Promise<void>) => Promise<void>): void {
+  public addMiddleware(middleware: ConfigMiddleware): void {
     this.middlewares.push(middleware);
   }
 
-  public async getConfig(pluginName: string): Promise<any> {
+  public async getConfig(pluginName: string): Promise<ConfigValue | undefined> {
     return this.configs.get(pluginName);
   }
 
-  public async setConfig(pluginName: string, config: any): Promise<void> {
+  public async setConfig(pluginName: string, config: ConfigValue): Promise<void> {
     // Create a new config object to avoid mutations
     let currentConfig = { ...config };
     
@@ -64,29 +69,31 @@ export class ConfigManager {
       const schema = this.schemas.get(pluginName);
       
       // Create new object to store encrypted values
-      currentConfig = { ...config };
+      const encryptedConfig = { ...config };
       
       // Encrypt sensitive fields
-      for (const [key, value] of Object.entries(config)) {
-        if (schema.properties?.[key]?.sensitive && typeof value === 'string') {
-          try {
-            currentConfig[key] = await this.encryption.encrypt(value);
-          } catch (error) {
-            this.logger?.error(`Failed to encrypt field ${key}:`, error);
-            throw error;
+      if (schema?.properties) {
+        for (const [key, field] of Object.entries(schema.properties)) {
+          if (field.sensitive && typeof config[key] === 'string') {
+            try {
+              encryptedConfig[key] = await this.encryption.encrypt(config[key]);
+            } catch (error) {
+              this.logger?.error(`Failed to encrypt field ${key}`, { error });
+              throw error;
+            }
           }
         }
       }
+      
+      // Update current config with encrypted values
+      currentConfig = encryptedConfig;
     }
-
-    // Store the config and emit event
-    this.configs.set(pluginName, currentConfig);
     
     // Chain middlewares
-    const executeMiddleware = async (index: number, currentConfig: any = config): Promise<void> => {
+    const executeMiddleware = async (index: number, config: ConfigValue = currentConfig): Promise<void> => {
       if (index >= this.middlewares.length) {
-        // All middleware executed, save config
-        this.configs.set(pluginName, currentConfig);
+        // All middleware executed, store final config and emit event
+        this.configs.set(pluginName, config);
         await this.eventBus.emit({
           id: `config-changed-${Date.now()}`,
           type: 'CONFIG_CHANGED',
@@ -95,14 +102,14 @@ export class ConfigManager {
           timestamp: Date.now(),
           data: {
             pluginName,
-            config: currentConfig
+            config
           }
         });
         return;
       }
 
       try {
-        await this.middlewares[index](currentConfig, async (nextConfig) => {
+        await this.middlewares[index](config, async (nextConfig) => {
           await executeMiddleware(index + 1, nextConfig);
         });
       } catch (error) {
@@ -124,28 +131,16 @@ export class ConfigManager {
     await executeMiddleware(0);
   }
 
-  public async loadConfig(pluginName: string): Promise<PluginConfig | null> {
+  public async loadConfig(pluginName: string): Promise<ConfigValue | null> {
     try {
       const config = await this.storage.load(pluginName);
       if (!config) {
         return null;
       }
 
-      const validationResult = await this.middleware.validate(config);
-      if (!validationResult.isValid) {
-        await this.eventBus.emit({
-          id: `config-validation-failed-${Date.now()}`,
-          type: 'CONFIG_VALIDATION_FAILED',
-          channel: 'config',
-          source: this.source,
-          timestamp: Date.now(),
-          data: {
-            pluginName,
-            error: validationResult.errors[0]?.message || 'Unknown validation error'
-          }
-        });
-        return null;
-      }
+      await this.validationMiddleware(config, async (validConfig) => {
+        this.configs.set(pluginName, validConfig);
+      });
 
       return config;
     } catch (error) {
@@ -164,25 +159,13 @@ export class ConfigManager {
     }
   }
 
-  public async saveConfig(pluginName: string, config: PluginConfig): Promise<boolean> {
+  public async saveConfig(pluginName: string, config: ConfigValue): Promise<boolean> {
     try {
-      const validationResult = await this.middleware.validate(config);
-      if (!validationResult.isValid) {
-        await this.eventBus.emit({
-          id: `config-validation-failed-${Date.now()}`,
-          type: 'config:validation-failed',
-          channel: 'config',
-          source: this.source,
-          timestamp: Date.now(),
-          data: {
-            pluginName,
-            error: validationResult.errors[0]?.message || 'Unknown validation error'
-          }
-        });
-        return false;
-      }
+      await this.validationMiddleware(config, async (validConfig) => {
+        await this.storage.save(pluginName, validConfig);
+        this.configs.set(pluginName, validConfig);
+      });
 
-      await this.storage.save(pluginName, config);
       await this.eventBus.emit({
         id: `config-changed-${Date.now()}`,
         type: 'config:changed',

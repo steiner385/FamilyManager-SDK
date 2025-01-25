@@ -5,13 +5,20 @@
     "outDir": "../../dist/core",
     "rootDir": "..",
     "tsBuildInfoFile": "../../dist/core/.tsbuildinfo",
-    "types": ["node"]
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "paths": {
+      "@/*": ["../*"]
+    }
   },
   "include": [
     "./**/*.ts",
     "./**/*.tsx"
   ],
-  "references": [
-    { "path": "../types" }
+  "exclude": [
+    "**/__tests__/**/*",
+    "**/__mocks__/**/*",
+    "**/*.test.*",
+    "**/*.spec.*"
   ]
 }
