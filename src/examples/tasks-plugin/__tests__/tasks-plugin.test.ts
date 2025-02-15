@@ -1,12 +1,29 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
+// Mock Prisma Client
+jest.mock('../prisma/client', () => ({
+  prisma: {
+    task: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn()
+    },
+    $connect: jest.fn(),
+    $disconnect: jest.fn(),
+    $queryRaw: jest.fn()
+  }
+}));
+
 // Mock Request object
 global.Request = class Request {
   constructor(public url: string) {}
 } as any;
 import { TasksPlugin } from '../index';
 import { CustomPrismaClient } from '../prisma/client';
-import { Logger } from '../../../core/Logger';
+import { Logger, LogLevel } from '../../../core/Logger';
 import { EventBus } from '../../../events/EventBus';
 import { Event } from '../../../events/types';
 import { Context } from 'hono';
@@ -101,6 +118,9 @@ describe('TasksPlugin', () => {
   let mockLogger: jest.Mocked<Logger>;
 
   beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+    
     // Create mock Prisma client
     mockPrisma = {
       task: {
@@ -127,20 +147,25 @@ describe('TasksPlugin', () => {
     } as unknown as jest.Mocked<EventBus>;
 
     // Create mock logger
+    // @ts-ignore
     mockLogger = {
+      name: 'MockLogger',
       debug: jest.fn(),
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
       child: jest.fn(),
-      configure: jest.fn()
-    } as unknown as jest.Mocked<Logger>;
+      configure: jest.fn(),
+      createEntry: jest.fn(),
+      formatEntry: jest.fn()
+    } as jest.Mocked<Logger>;
 
     // Create plugin instance with mocked dependencies
     plugin = new TasksPlugin();
     (plugin as any).prisma = mockPrisma;
-    plugin.context.eventBus = mockEventBus;
+    // @ts-ignore
     plugin.context.logger = mockLogger;
+    plugin.context.eventBus = mockEventBus;
   });
 
   describe('Lifecycle', () => {
@@ -282,7 +307,7 @@ describe('TasksPlugin', () => {
       ];
 
       mockPrisma.task.findMany.mockResolvedValue(unassignedTasks);
-      mockPrisma.task.update.mockImplementation(async (args) => ({
+      mockPrisma.task.update.mockImplementation(async (args: any) => ({
         ...unassignedTasks.find(t => t.id === args.where.id)!,
         assignedTo: args.data.assignedTo
       }));

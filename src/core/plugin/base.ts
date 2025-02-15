@@ -47,10 +47,16 @@ export abstract class BasePlugin implements Plugin {
       }
     }
 
-    await this.onInitialize(context);
-    this.initialized = true;
-    pluginRegistry.setPluginState(this.id, PluginStatus.INACTIVE);
-    this.logger.info(`Plugin initialized: ${this.id}`);
+    try {
+      await this.onInitialize(context);
+      this.initialized = true;
+      pluginRegistry.setPluginState(this.id, PluginStatus.INACTIVE);
+      this.logger.info(`Plugin initialized: ${this.id}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error during initialization';
+      this.logger.error(message);
+      throw error;
+    }
   }
 
   async start(): Promise<void> {

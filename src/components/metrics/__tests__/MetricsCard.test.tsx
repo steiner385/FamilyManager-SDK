@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
-  render, 
-  screen, 
-  userEvent,
-  describe,
-  it,
-  expect 
-} from '../../../testing';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, jest } from '@jest/globals';
+import '@testing-library/jest-dom';
 import { MetricsCard } from '../MetricsCard';
+
+jest.mock('../../common/LoadingSkeleton', () => ({
+  LoadingSkeleton: () => <div data-testid="loading-skeleton" />
+}));
 
 describe('MetricsCard', () => {
   const mockData = {
@@ -80,9 +80,9 @@ describe('MetricsCard', () => {
     const change = screen.getByText('+15.2%');
     const timeframe = screen.getByText('vs last month');
 
-    expect(card).toHaveClass('bg-blue-100 p-6');
+    expect(card).toHaveClass('bg-blue-100', 'p-6');
     expect(title).toHaveClass('text-blue-800');
-    expect(value).toHaveClass('text-blue-900 text-3xl');
+    expect(value).toHaveClass('text-blue-900', 'text-3xl');
     expect(change).toHaveClass('text-blue-700');
     expect(timeframe).toHaveClass('text-blue-600');
   });

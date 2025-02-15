@@ -1,32 +1,50 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "baseUrl": ".",
-    "types": ["node", "jest", "react", "react-dom"],
-    "noEmit": true,
+    "types": [
+      "jest",
+      "@testing-library/jest-dom",
+      "node"
+    ],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/testing",
+      "./src/test-utils"
+    ],
+    "module": "esnext",
+    "target": "es2020",
+    "jsx": "react-jsx",
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@core/*": ["./src/core/*"],
-      "@components/*": ["./src/components/*"],
-      "@hooks/*": ["./src/hooks/*"],
-      "@utils/*": ["./src/utils/*"],
-      "@types/*": ["./types/*"],
-      "@contexts/*": ["./src/contexts/*"],
-      "@test/*": ["./test/*"]
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@core/*": ["src/core/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@utils/*": ["src/utils/*"],
+      "@testing/*": ["src/testing/*"],
+      "@contexts/*": ["src/contexts/*"],
+      "@test-utils/*": ["src/test-utils/*"]
     }
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "test/**/*.ts",
-    "test/**/*.tsx",
-    "**/__tests__/**/*",
-    "**/__mocks__/**/*",
-    "**/*.test.*",
-    "**/*.spec.*"
-  ]
+    "src",
+    "test",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "src/testing/types.d.ts",
+    "src/test-utils/**/*"
+  ],
+  "exclude": ["node_modules"]
 }

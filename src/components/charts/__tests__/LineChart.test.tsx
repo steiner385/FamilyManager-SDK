@@ -1,21 +1,16 @@
 import React from 'react';
-import { 
-  render, 
-  screen, 
-  userEvent,
-  describe,
-  it,
-  expect,
-  createMockData
-} from '../../../testing';
+import { render, screen } from '@testing-library/react';
 import { act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
+import { describe, it, expect } from '@jest/globals';
 import { LineChart } from '../LineChart';
 
 describe('LineChart', () => {
   const mockData = [
-    { timestamp: createMockData.timestamp('2024-01-01'), value: 10 },
-    { timestamp: createMockData.timestamp('2024-01-02'), value: 20 },
-    { timestamp: createMockData.timestamp('2024-01-03'), value: 15 }
+    { timestamp: new Date('2024-01-01').getTime(), value: 10 },
+    { timestamp: new Date('2024-01-02').getTime(), value: 20 },
+    { timestamp: new Date('2024-01-03').getTime(), value: 15 }
   ];
 
   it('renders with data', () => {
@@ -27,9 +22,10 @@ describe('LineChart', () => {
     );
     
     // Chart container should be present
-    expect(screen.getByTestId('line-chart')).toBeInTheDocument();
+    const container = screen.getByTestId('line-chart');
+    expect(container).toBeInTheDocument();
     
-    // SVG should be rendered
+    // SVG should be rendered with correct dimensions
     const svg = screen.getByTestId('line-chart-svg');
     expect(svg).toBeInTheDocument();
     expect(svg).toHaveAttribute('width', '400');
@@ -84,8 +80,9 @@ describe('LineChart', () => {
       />
     );
 
-    expect(screen.getByTestId('line-chart-empty')).toBeInTheDocument();
-    expect(screen.getByText('No data available')).toBeInTheDocument();
+    const emptyState = screen.getByTestId('line-chart-empty');
+    expect(emptyState).toBeInTheDocument();
+    expect(emptyState).toHaveTextContent('No data available');
   });
 
   it('handles data updates', () => {
@@ -98,7 +95,7 @@ describe('LineChart', () => {
 
     const newData = [
       ...mockData,
-      { timestamp: createMockData.timestamp('2024-01-04'), value: 25 }
+      { timestamp: new Date('2024-01-04').getTime(), value: 25 }
     ];
 
     rerender(
@@ -120,9 +117,9 @@ describe('LineChart', () => {
       />
     );
 
-    let svg = screen.getByTestId('line-chart-svg');
-    expect(svg).toHaveAttribute('width', '400');
-    expect(svg).toHaveAttribute('height', '300');
+    const initialSvg = screen.getByTestId('line-chart-svg');
+    expect(initialSvg).toHaveAttribute('width', '400');
+    expect(initialSvg).toHaveAttribute('height', '300');
 
     rerender(
       <LineChart
@@ -131,9 +128,9 @@ describe('LineChart', () => {
       />
     );
 
-    svg = screen.getByTestId('line-chart-svg');
-    expect(svg).toHaveAttribute('width', '600');
-    expect(svg).toHaveAttribute('height', '400');
+    const resizedSvg = screen.getByTestId('line-chart-svg');
+    expect(resizedSvg).toHaveAttribute('width', '600');
+    expect(resizedSvg).toHaveAttribute('height', '400');
   });
 
   it('renders tooltips on hover', async () => {
@@ -155,7 +152,6 @@ describe('LineChart', () => {
     const tooltip = screen.getByTestId('line-chart-tooltip');
     expect(tooltip).toBeInTheDocument();
     
-    // Use the same date formatting approach as the component
     const expectedDate = new Date(mockData[0].timestamp).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',

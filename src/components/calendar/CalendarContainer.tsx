@@ -5,7 +5,7 @@ import { usePlugins } from '../../hooks/usePlugins';
 import { CalendarPlugin, Plugin } from '../../core/plugin/types';
 
 interface CalendarContainerProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 interface CalendarChildProps {
@@ -18,6 +18,7 @@ interface CalendarChildProps {
 export function CalendarContainer({ children }: CalendarContainerProps) {
   const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { plugins } = usePlugins();
 
   const getRRuleFrequency = (freq: string): number => {
@@ -62,18 +63,27 @@ export function CalendarContainer({ children }: CalendarContainerProps) {
   useEffect(() => {
     const loadCalendarData = async () => {
       try {
+        setIsLoading(true);
+        const newCalendars: Calendar[] = [];
+        const newEvents: Event[] = [];
+
         // Load calendars and events from plugins
         for (const plugin of plugins) {
           if (isCalendarPlugin(plugin)) {
             const pluginCalendars = await plugin.getCalendars();
-            setCalendars(prev => [...prev, ...pluginCalendars]);
+            newCalendars.push(...pluginCalendars);
 
             const pluginEvents = await plugin.getEvents();
-            setEvents(prev => [...prev, ...pluginEvents]);
+            newEvents.push(...pluginEvents);
           }
         }
+
+        setCalendars(newCalendars);
+        setEvents(newEvents);
       } catch (error) {
         console.error('Failed to load calendar data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -121,6 +131,10 @@ export function CalendarContainer({ children }: CalendarContainerProps) {
     }
   };
 
+  if (isLoading) {
+    return <div data-testid="loading-state">Loading calendar...</div>;
+  }
+
   const childrenWithProps = React.Children.map(children, child => {
     if (React.isValidElement<Partial<CalendarChildProps>>(child)) {
       return React.cloneElement(child, {
@@ -134,8 +148,10 @@ export function CalendarContainer({ children }: CalendarContainerProps) {
   });
 
   return (
-    <div className="calendar-container">
+    <div data-testid="calendar-container" className="calendar-container">
       {childrenWithProps}
     </div>
   );
 }
+
+export default CalendarContainer;

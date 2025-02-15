@@ -3,6 +3,22 @@ import { render as rtlRender, screen, waitFor } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+declare module '@testing-library/jest-dom' {
+  export interface Matchers<R = void> {
+    toBeInTheDocument(): R;
+    toHaveTextContent(text: string | RegExp): R;
+  }
+}
+
+declare global {
+  namespace jest {
+    interface Matchers<R = void> {
+      toBeInTheDocument(): R;
+      toHaveTextContent(text: string | RegExp): R;
+    }
+  }
+}
+
 interface RenderOptions {
   wrapper?: React.ComponentType;
 }

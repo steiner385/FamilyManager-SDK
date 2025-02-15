@@ -55,6 +55,7 @@ export class EventBus {
 
     this.isRunning = false;
     this.handlers.clear();
+    this.channels.clear(); // Clear channels as well when stopping
     this.logger.info('EventBus stopped');
   }
 

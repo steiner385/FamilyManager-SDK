@@ -1,4 +1,10 @@
 import '@testing-library/jest-dom';
+import { TextEncoder, TextDecoder } from 'util';
+import { expect } from '@jest/globals';
+
+// Add TextEncoder/TextDecoder to global scope
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as any;
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
@@ -21,3 +27,6 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: jest.fn(),
   })),
 });
+
+// Import custom matchers
+import '../../../testing/matchers';

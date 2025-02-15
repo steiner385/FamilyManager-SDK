@@ -77,23 +77,14 @@ export class PluginManager {
     }
 
     // Check dependencies before registration
-    if (plugin.dependencies?.required) {
-      for (const [depId, version] of Object.entries(plugin.dependencies.required)) {
+    if (plugin.metadata?.dependencies) {
+      for (const [depId, version] of Object.entries(plugin.metadata.dependencies)) {
         if (!this.plugins.has(depId)) {
           const error = `Missing required dependency: ${depId}`;
           this.logger.error(error);
           throw new Error(error);
         }
       }
-    }
-
-    // Check optional dependencies
-    if (plugin.dependencies?.optional) {
-      Object.entries(plugin.dependencies.optional).forEach(([depId]) => {
-        if (!this.plugins.has(depId)) {
-          this.logger.warn(`Optional dependency not found: ${depId}`);
-        }
-      });
     }
 
     // Register routes if present
@@ -129,22 +120,21 @@ export class PluginManager {
       throw new Error(error);
     }
 
-    // Unregister routes if present
+    // Check for dependent plugins first
+    const dependentPlugins = Array.from(this.plugins.values()).filter(
+      p => p.metadata?.dependencies && Object.keys(p.metadata.dependencies).includes(pluginId)
+    );
+
+    if (dependentPlugins.length > 0) {
+      const dependentNames = dependentPlugins.map(p => p.id).join(', ');
+      throw new Error(`Cannot unregister plugin ${pluginId} because it is required by ${dependentNames}`);
+    }
+
+    // If no dependents, proceed with uninstallation
     if (plugin.routes) {
       for (const route of plugin.routes) {
         routeRegistry.unregisterRoute(plugin.id, route);
       }
-    }
-
-    // Check for dependent plugins
-    const dependentPlugins = Array.from(this.plugins.values()).filter(
-      p => p.dependencies?.required && Object.keys(p.dependencies.required).includes(pluginId)
-    );
-
-    if (dependentPlugins.length > 0) {
-      throw new Error(
-        `Cannot unregister plugin ${pluginId} because it is required by ${dependentPlugins.map(p => p.id).join(', ')}`
-      );
     }
 
     await this.stopPlugin(plugin);
@@ -161,8 +151,8 @@ export class PluginManager {
       throw new Error(`Plugin ${pluginId} is not registered`);
     }
 
-    if (plugin.dependencies?.required) {
-      for (const [depId, version] of Object.entries(plugin.dependencies.required)) {
+    if (plugin.metadata?.dependencies) {
+      for (const [depId, version] of Object.entries(plugin.metadata.dependencies)) {
         if (!this.plugins.has(depId)) {
           throw new Error(`Required dependency ${depId} (${version}) not found for plugin ${pluginId}`);
         }
@@ -181,7 +171,7 @@ export class PluginManager {
   async stopPlugin(plugin: Plugin): Promise<void> {
     // Check if any other plugins depend on this one
     const dependentPlugins = Array.from(this.plugins.values()).filter(
-      p => p.dependencies?.required && Object.keys(p.dependencies.required).includes(plugin.id)
+      p => p.metadata?.dependencies && Object.keys(p.metadata.dependencies).includes(plugin.id)
     );
 
     if (dependentPlugins.length > 0) {

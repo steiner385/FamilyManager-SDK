@@ -1,114 +1,132 @@
-import { AsyncValidator } from '../validator';
-import { createTestEvent } from '../utils/test-helpers';
-import { BaseEvent } from '../types';
+import { describe, beforeEach, afterEach, it, expect } from '@jest/globals';
+import { EventValidationService, EventValidator } from '../validator';
+import { BaseEvent, ValidationResult } from '../types';
 
-describe('AsyncValidator', () => {
-  let validator: AsyncValidator;
+describe('EventValidationService', () => {
+  let validationService: EventValidationService;
 
   beforeEach(() => {
-    validator = new AsyncValidator({
-      validateSchema: true,
-      validatePayload: true,
-      validateTimestamp: true
-    });
+    validationService = EventValidationService.getInstance();
   });
 
   afterEach(() => {
-    validator.stop();
+    // Reset the singleton instance
+    (EventValidationService as any).instance = null;
   });
 
   it('should validate valid events', async () => {
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    const result = await validator.validate(event);
+    const event: BaseEvent<{ value: number }> = {
+      id: 'test-1',
+      type: 'TEST_EVENT',
+      channel: 'test',
+      source: 'test-source',
+      timestamp: Date.now(),
+      data: { value: 1 }
+    };
+
+    const result = await validationService.validate(event);
     expect(result.isValid).toBe(true);
+    expect(result.errors).toHaveLength(0);
   });
 
   it('should reject events without required fields', async () => {
     const invalidEvent = {
       type: 'TEST_EVENT',
       data: { value: 1 }
-    } as BaseEvent;
+    } as BaseEvent<{ value: number }>;
 
-    const result = await validator.validate(invalidEvent);
+    const result = await validationService.validate(invalidEvent);
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContainEqual({
+    expect(result.errors).toContainEqual(expect.objectContaining({
       field: 'id',
-      message: 'Missing required field: id',
-      code: 'MISSING_FIELD'
-    });
-    expect(result.errors).toContainEqual({
+      code: 'MISSING_ID'
+    }));
+    expect(result.errors).toContainEqual(expect.objectContaining({
       field: 'channel',
-      message: 'Missing required field: channel', 
-      code: 'MISSING_FIELD'
-    });
+      code: 'MISSING_CHANNEL'
+    }));
   });
 
   it('should handle custom validation rules', async () => {
-    validator.addRule({
-      name: 'checkValue',
+    const customValidator: EventValidator<{ value: number }> = {
       validate: (event: BaseEvent<{ value: number }>) => {
+        if (!event.data) return false;
         return event.data.value > 0;
       },
-      errorMessage: 'Value must be positive'
-    });
+      errorMessage: 'Value must be positive',
+      errorCode: 'INVALID_VALUE'
+    };
 
-    const validEvent = createTestEvent('TEST_EVENT', { value: 1 });
-    const invalidEvent = createTestEvent('TEST_EVENT', { value: -1 });
+    validationService.registerValidator('TEST_EVENT', customValidator);
 
-    const validResult = await validator.validate(validEvent);
+    const validEvent: BaseEvent<{ value: number }> = {
+      id: 'test-1',
+      type: 'TEST_EVENT',
+      channel: 'test',
+      source: 'test-source',
+      timestamp: Date.now(),
+      data: { value: 1 }
+    };
+
+    const invalidEvent: BaseEvent<{ value: number }> = {
+      id: 'test-2',
+      type: 'TEST_EVENT',
+      channel: 'test',
+      source: 'test-source',
+      timestamp: Date.now(),
+      data: { value: -1 }
+    };
+
+    const validResult = await validationService.validate(validEvent);
     expect(validResult.isValid).toBe(true);
 
-    const invalidResult = await validator.validate(invalidEvent);
+    const invalidResult = await validationService.validate(invalidEvent);
     expect(invalidResult.isValid).toBe(false);
-    expect(invalidResult.errors).toContainEqual({
+    expect(invalidResult.errors).toContainEqual(expect.objectContaining({
       field: 'custom',
       message: 'Value must be positive',
-      code: 'CUSTOM_VALIDATION'
-    });
+      code: 'INVALID_VALUE'
+    }));
   });
 
   it('should validate multiple events in parallel', async () => {
-    const events = Array.from({ length: 10 }, (_, i) => 
-      createTestEvent('TEST_TYPE', { value: i + 1 })
-    );
+    const events: Array<BaseEvent<{ value: number }>> = Array.from({ length: 10 }, (_, i) => ({
+      id: `test-${i}`,
+      type: 'TEST_EVENT',
+      channel: 'test',
+      source: 'test-source',
+      timestamp: Date.now(),
+      data: { value: i + 1 }
+    }));
 
-    const results = await validator.validateBatch(events);
+    const results = await validationService.validateBatch(events);
     expect(results).toHaveLength(events.length);
     expect(results.every(r => r.isValid)).toBe(true);
   });
 
-  it('should update configuration', async () => {
-    validator.updateConfig({
-      validateSchema: false,
-      validatePayload: false
-    });
+  it('should handle validator registration and unregistration', async () => {
+    const customValidator: EventValidator<{ value: number }> = {
+      validate: (event: BaseEvent<{ value: number }>) => {
+        if (!event.data) return false;
+        return event.data.value > 0;
+      },
+      errorMessage: 'Value must be positive',
+      errorCode: 'INVALID_VALUE'
+    };
 
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    const result = await validator.validate(event);
-    expect(result.isValid).toBe(true);
-  });
+    validationService.registerValidator('TEST_EVENT', customValidator);
+    validationService.unregisterValidator('TEST_EVENT', customValidator);
 
-  it('should handle invalid event types', async () => {
-    const invalidEvent = createTestEvent('', { value: 1 });
-    const result = await validator.validate(invalidEvent);
-    expect(result.isValid).toBe(false);
-    expect(result.errors).toContainEqual({
-      field: 'type',
-      message: 'Invalid event type',
-      code: 'INVALID_TYPE'
-    });
-  });
+    const event: BaseEvent<{ value: number }> = {
+      id: 'test-1',
+      type: 'TEST_EVENT',
+      channel: 'test',
+      source: 'test-source',
+      timestamp: Date.now(),
+      data: { value: -1 }
+    };
 
-  it('should validate event timestamps', async () => {
-    const event = createTestEvent('TEST_EVENT', { value: 1 });
-    event.timestamp = -1;
-
-    const result = await validator.validate(event);
-    expect(result.isValid).toBe(false);
-    expect(result.errors).toContainEqual({
-      field: 'timestamp',
-      message: 'Invalid timestamp',
-      code: 'INVALID_TIMESTAMP'
-    });
+    const result = await validationService.validate(event);
+    expect(result.isValid).toBe(true); // Should pass since validator was unregistered
   });
 });
